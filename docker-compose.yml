@@ -1,0 +1,60 @@
+services:
+  db:
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: token_monitor
+      POSTGRES_USER: monitor
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-Otw2026Monitor!}
+    ports:
+      - "127.0.0.1:15432:5432"  # 避免与已有PG冲突
+    volumes:
+      - tm_pgdata:/var/lib/postgresql/data
+      - ./backend/migrations/init.sql:/docker-entrypoint-initdb.d/01_init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U monitor -d token_monitor"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/redis:7-alpine
+    restart: unless-stopped
+    # 不暴露主机端口，仅内部网络访问
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"  # 客户端上报 + API
+    environment:
+      DATABASE_URL: postgresql+asyncpg://monitor:${DB_PASSWORD:-Otw2026Monitor!}@db:5432/token_monitor
+      REDIS_URL: redis://redis:6379/0
+    env_file:
+      - ./backend/.env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    ports:
+      - "3080:80"  # 避免与已有nginx的80端口冲突
+    depends_on:
+      - backend
+
+volumes:
+  tm_pgdata:

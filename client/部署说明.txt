@@ -1,0 +1,23 @@
+AI Token 监控 — 傻瓜式部署（给同事看的）
+
+1. 把整个 client 文件夹拷到本机任意目录。
+2. 双击「开始使用.bat」。
+   - 第一次：按提示输入姓名等（多数直接回车），选「1」表示非侵入式模式（推荐，不改系统代理）。
+   - 监控窗口不要关；之后优先双击「启动-VSCode监控.bat」或「启动-Cursor监控.bat」。
+3. 以后每次开机：先双击「开始使用.bat」或「启动.bat」保持监控运行；要启动受管应用时，再双击对应启动器。
+4. 要改姓名/服务器/重装代理：双击「重新配置.bat」。
+5. 卸载：双击「卸载.bat」。
+
+当前默认是「不改系统代理」：推荐用受管启动器只影响目标应用。若确需整机导流，再使用「快速安装-系统代理.bat」或在 config.json 中显式开启 install_system_proxy。若已装 Proxifier：① 必须把 ai-monitor.exe 设为「直连」(Direct)，不要让它再走 127.0.0.1 的 SOCKS，否则本程序自己的出站会绕回自己，Copilot/上报会异常；② 避免同一流量被代理两次。
+
+一键启动器：
+- 启动-VSCode监控.bat：受管启动 VS Code
+- 启动-Cursor监控.bat：受管启动 Cursor
+- 启动-PowerShell监控.bat：先开带监控环境的 PowerShell，再在里面运行 CLI
+- 启动-CMD监控.bat：先开带监控环境的 CMD，再在里面运行 CLI
+
+VS Code 若「不能正常回复」：先检查 Proxifier 是否把 ai-monitor 进了代理（应直连）；再确认已安装本工具 CA；2.0.9 起 MITM 已支持 HTTP/2（与 Copilot 客户端一致）。
+
+用量说明：免费额度与付费调用只要经过 MITM 都会尽量记录；JSON 有官方 usage 为精确 [记录]，Cursor 等 gRPC 多为 [记录·估算]（体积粗算，非官方计费口径）。
+
+内置域名已覆盖常见 AI 开发工具，并针对：Cursor（*.cursor.sh 等）、GitHub Copilot（含 VS Code 等）、Claude Code（api.anthropic.com 等）、OpenCode 上游（OpenAI/Anthropic/Google/Bedrock 等已列）；另有 OpenRouter、Tabnine、Codeium/Windsurf、JetBrains AI、Sourcegraph Cody、Augment、Amazon Q/CodeWhisperer、fal 等。OpenCode 本机 opencode serve（如 127.0.0.1:4096）为直连、不经 MITM。若仍缺某内网网关，在 config.json 中配置 extra_monitor_hosts / extra_monitor_suffixes。

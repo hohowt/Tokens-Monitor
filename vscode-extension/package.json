@@ -1,0 +1,161 @@
+{
+  "name": "ai-token-monitor",
+  "displayName": "腾轩旅游集团 - AI Token 监控",
+  "description": "腾轩旅游集团 AI 编程助手用量监控平台 — 支持 Copilot、Cursor、Claude、Continue 等 10+ 工具的 Token 统计与上报",
+  "version": "0.1.15",
+  "publisher": "txly",
+  "author": {
+    "name": "Zhi.Chen",
+    "email": ""
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "homepage": "",
+  "bugs": {
+    "url": ""
+  },
+  "icon": "media/icon.png",
+  "galleryBanner": {
+    "color": "#e83428",
+    "theme": "dark"
+  },
+  "keywords": [
+    "ai",
+    "token",
+    "monitor",
+    "copilot",
+    "cursor",
+    "cline",
+    "continue"
+  ],
+  "badges": [],
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": ["Other"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./out/extension.js",
+  "contributes": {
+    "chatParticipants": [
+      {
+        "id": "token-monitor.otw",
+        "name": "otw",
+        "fullName": "腾轩 AI 监控",
+        "description": "与 AI 模型对话的同时自动记录 Token 用量",
+        "isSticky": false
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "ai-token-monitor",
+          "title": "腾轩 AI 监控",
+          "icon": "$(pulse)"
+        }
+      ]
+    },
+    "views": {
+      "ai-token-monitor": [
+        {
+          "type": "webview",
+          "id": "tokenMonitor.dashboard",
+          "name": "监控面板"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "tokenMonitor.showDashboard",
+        "title": "显示监控面板",
+        "category": "腾轩 AI 监控"
+      },
+      {
+        "command": "tokenMonitor.newChat",
+        "title": "新建监控对话",
+        "category": "腾轩 AI 监控",
+        "icon": "$(comment-discussion)"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "tokenMonitor.newChat",
+        "key": "ctrl+shift+m",
+        "mac": "cmd+shift+m"
+      }
+    ],
+    "configuration": {
+      "title": "腾轩 AI 监控",
+      "properties": {
+        "aiTokenMonitor.serverUrl": {
+          "type": "string",
+          "default": "http://192.168.0.135:8000",
+          "description": "后端服务器地址，用于上报 Token 用量数据"
+        },
+        "aiTokenMonitor.userId": {
+          "type": "string",
+          "default": "",
+          "description": "你的工号 / 用户 ID"
+        },
+        "aiTokenMonitor.userName": {
+          "type": "string",
+          "default": "",
+          "description": "你的姓名（显示名称）"
+        },
+        "aiTokenMonitor.department": {
+          "type": "string",
+          "default": "",
+          "description": "所属部门"
+        },
+        "aiTokenMonitor.transparentMode": {
+          "type": "boolean",
+          "default": true,
+          "description": "启用透明代理模式，自动将 VS Code 的 HTTP 代理切到本地 ai-monitor 代理"
+        },
+        "aiTokenMonitor.proxyPort": {
+          "type": "number",
+          "default": 18090,
+          "description": "本地 MITM 代理端口"
+        },
+        "aiTokenMonitor.gatewayPort": {
+          "type": "number",
+          "default": 18091,
+          "description": "本地 API 网关端口"
+        },
+        "aiTokenMonitor.upstreamProxy": {
+          "type": "string",
+          "default": "",
+          "description": "上游代理地址；留空时会自动沿用当前 http.proxy 作为上游"
+        },
+        "aiTokenMonitor.copilotOrg": {
+          "type": "string",
+          "default": "",
+          "description": "GitHub 组织名称，用于 Copilot Usage API（需 Business / Enterprise）"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "node ./scripts/prepare-bin.js && npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "package": "powershell -ExecutionPolicy Bypass -File ./build.ps1 -Platform win",
+    "package:win": "powershell -ExecutionPolicy Bypass -File ./build.ps1 -Platform win",
+    "package:mac": "powershell -ExecutionPolicy Bypass -File ./build.ps1 -Platform mac",
+    "package:mac-arm": "powershell -ExecutionPolicy Bypass -File ./build.ps1 -Platform mac-arm",
+    "package:linux": "powershell -ExecutionPolicy Bypass -File ./build.ps1 -Platform linux"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.0",
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.90.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.0",
+    "typescript": "^5.4.0",
+    "@vscode/vsce": "^2.24.0"
+  }
+}

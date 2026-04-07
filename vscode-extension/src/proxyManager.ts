@@ -1,0 +1,468 @@
+import * as vscode from 'vscode';
+import * as path from 'path';
+import * as fs from 'fs';
+import * as http from 'http';
+import * as net from 'net';
+import { spawn, ChildProcess } from 'child_process';
+import { MonitorConfig } from './config';
+
+export type ProxyStatus = 'external' | 'internal' | 'off';
+
+export interface ProxyStartResult {
+    status: ProxyStatus;
+    routingChanged: boolean;
+}
+
+export interface LocalProxyStatusSnapshot {
+    status?: string;
+    version?: string;
+    mode?: string;
+    user?: string;
+    department?: string;
+    source_app?: string;
+    server?: string;
+    ai_domains?: number;
+    ai_wildcard_patterns?: number;
+    extra_monitor_hosts?: number;
+    extra_monitor_suffixes?: number;
+    stats?: {
+        total_reported?: number;
+        total_tokens?: number;
+    };
+}
+
+export class ProxyManager {
+    private process: ChildProcess | null = null;
+    private outputChannel: vscode.OutputChannel;
+    private readonly recentOutputLines: string[] = [];
+    private partialOutputLine = '';
+
+    constructor(
+        private config: MonitorConfig,
+        private readonly context: vscode.ExtensionContext,
+    ) {
+        this.outputChannel = vscode.window.createOutputChannel('AI Token Monitor Proxy');
+    }
+
+    private pushRecentOutputLine(line: string): void {
+        const trimmed = line.trimEnd();
+        if (!trimmed) {
+            return;
+        }
+        this.recentOutputLines.push(trimmed);
+        if (this.recentOutputLines.length > 200) {
+            this.recentOutputLines.splice(0, this.recentOutputLines.length - 200);
+        }
+    }
+
+    private appendOutput(text: string): void {
+        this.outputChannel.append(text);
+        const normalized = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+        const combined = this.partialOutputLine + normalized;
+        const lines = combined.split('\n');
+        this.partialOutputLine = lines.pop() ?? '';
+        for (const line of lines) {
+            this.pushRecentOutputLine(line);
+        }
+    }
+
+    private appendOutputLine(line: string): void {
+        this.outputChannel.appendLine(line);
+        this.pushRecentOutputLine(line);
+    }
+
+    public get isRunning(): boolean {
+        return this.process !== null && this.process.exitCode === null;
+    }
+
+    public updateConfig(config: MonitorConfig): void {
+        this.config = config;
+    }
+
+    public getRecentOutputLines(limit = 40): string[] {
+        return this.recentOutputLines.slice(-Math.max(1, limit));
+    }
+
+    public async getLocalStatus(): Promise<LocalProxyStatusSnapshot | null> {
+        return new Promise(resolve => {
+            const req = http.request({
+                hostname: '127.0.0.1',
+                port: this.config.proxyPort,
+                path: '/status',
+                method: 'GET',
+                timeout: 1500,
+            }, res => {
+                let body = '';
+                res.on('data', chunk => {
+                    body += chunk.toString();
+                });
+                res.on('end', () => {
+                    if (!res.statusCode || res.statusCode < 200 || res.statusCode >= 300) {
+                        resolve(null);
+                        return;
+                    }
+                    try {
+                        resolve(JSON.parse(body) as LocalProxyStatusSnapshot);
+                    } catch {
+                        resolve(null);
+                    }
+                });
+            });
+            req.on('error', () => resolve(null));
+            req.on('timeout', () => {
+                req.destroy();
+                resolve(null);
+            });
+            req.end();
+        });
+    }
+
+    public async start(options?: { skipUpstreamDetect?: boolean }): Promise<ProxyStartResult> {
+        if (!this.config.transparentMode) {
+            this.appendOutputLine('[proxy] Transparent proxy disabled by configuration.');
+            await this.restoreHttpProxyIfMitmUnavailable();
+            return { status: 'off', routingChanged: false };
+        }
+
+        if (this.detectExternalProxy()) {
+            const routingChanged = await this.ensureVsCodeProxyRouting();
+            return { status: 'external', routingChanged };
+        }
+
+        if (this.isRunning || await this.isProxyAvailable()) {
+            const routingChanged = await this.ensureVsCodeProxyRouting();
+            return { status: this.isRunning ? 'internal' : 'external', routingChanged };
+        }
+
+        const binaryPath = this.findBinaryPath();
+        if (!binaryPath) {
+            this.appendOutputLine('[proxy] Binary not found. Falling back to in-process interception only.');
+            await this.restoreHttpProxyIfMitmUnavailable();
+            return { status: 'off', routingChanged: false };
+        }
+
+        const configPath = path.join(this.context.globalStorageUri.fsPath, 'proxy-config.json');
+        await fs.promises.mkdir(path.dirname(configPath), { recursive: true });
+
+        let upstreamProxy = options?.skipUpstreamDetect ? '' : this.resolveUpstreamProxy();
+        if (upstreamProxy && await this.shouldIgnoreUpstreamProxy(upstreamProxy)) {
+            this.appendOutputLine(`[proxy] Ignoring unreachable local upstream proxy: ${upstreamProxy}`);
+            upstreamProxy = '';
+        }
+        const proxyConfig: Record<string, unknown> = {
+            server_url: this.config.serverUrl,
+            user_name: this.config.userName,
+            user_id: this.config.userId,
+            department: this.config.department,
+            port: this.config.proxyPort,
+            gateway_port: this.config.gatewayPort,
+            report_opaque_traffic: true,
+        };
+        if (upstreamProxy) {
+            proxyConfig.upstream_proxy = upstreamProxy;
+        }
+
+        await fs.promises.writeFile(configPath, JSON.stringify(proxyConfig, null, 2), 'utf8');
+
+        const args = ['--config', configPath];
+        this.appendOutputLine(`[proxy] Starting: ${binaryPath} ${args.join(' ')}`);
+
+        const proc = spawn(binaryPath, args, {
+            stdio: ['pipe', 'pipe', 'pipe'],
+            detached: false,
+            windowsHide: true,
+            env: { ...process.env, AI_MONITOR_NO_CONSOLE: '1' }
+        });
+        this.process = proc;
+
+        proc.stdout?.on('data', (data: Buffer) => {
+            this.appendOutput(data.toString());
+        });
+        proc.stderr?.on('data', (data: Buffer) => {
+            this.appendOutput(data.toString());
+        });
+        proc.on('exit', (code) => {
+            this.appendOutputLine(`[proxy] Process exited with code ${code}`);
+            this.process = null;
+        });
+
+        const ready = await this.waitForProxyReady(8_000);
+        if (!ready) {
+            this.appendOutputLine('[proxy] Local proxy did not become ready.');
+            await this.restoreHttpProxyIfMitmUnavailable();
+            return { status: 'off', routingChanged: false };
+        }
+
+        this.appendOutputLine(`[proxy] Running on MITM:${this.config.proxyPort} Gateway:${this.config.gatewayPort}`);
+        const routingChanged = await this.ensureVsCodeProxyRouting();
+        return { status: 'internal', routingChanged };
+    }
+
+    public async restart(config?: MonitorConfig): Promise<ProxyStartResult> {
+        if (config) {
+            this.config = config;
+        }
+        await this.stop();
+        return this.start();
+    }
+
+    public async stop(): Promise<void> {
+        if (!this.process) {
+            return;
+        }
+
+        this.appendOutputLine('[proxy] Stopping...');
+        this.process.kill('SIGTERM');
+
+        await new Promise<void>((resolve) => {
+            const proc = this.process;
+            if (!proc) {
+                resolve();
+                return;
+            }
+
+            const timeout = setTimeout(() => {
+                if (this.process && this.process.exitCode === null) {
+                    this.process.kill('SIGKILL');
+                }
+                resolve();
+            }, 5000);
+
+            proc.once('exit', () => {
+                clearTimeout(timeout);
+                resolve();
+            });
+        });
+
+        this.process = null;
+        this.appendOutputLine('[proxy] Stopped');
+        await this.restoreHttpProxyIfMitmUnavailable();
+    }
+
+    public getGatewayUrl(): string {
+        return `http://127.0.0.1:${this.config.gatewayPort}`;
+    }
+
+    public getMitmProxyUrl(): string {
+        return `http://127.0.0.1:${this.config.proxyPort}`;
+    }
+
+    public detectExternalProxy(): boolean {
+        return process.env['AI_MONITOR_LAUNCH_MODE'] === '1';
+    }
+
+    public isProxyAvailable(): Promise<boolean> {
+        return new Promise(resolve => {
+            const req = http.request({
+                hostname: '127.0.0.1',
+                port: this.config.proxyPort,
+                path: '/status',
+                method: 'GET',
+            }, res => resolve(res.statusCode === 200));
+            req.setTimeout(1000, () => {
+                req.destroy();
+                resolve(false);
+            });
+            req.on('error', () => resolve(false));
+            req.end();
+        });
+    }
+
+    public async getProxyStatus(): Promise<ProxyStatus> {
+        if (this.detectExternalProxy()) {
+            return 'external';
+        }
+        if (this.isRunning) {
+            return 'internal';
+        }
+        return (await this.isProxyAvailable()) ? 'external' : 'off';
+    }
+
+    public findBinaryPath(): string | null {
+        const ext = process.platform === 'win32' ? '.exe' : '';
+        const binaryName = `ai-monitor${ext}`;
+
+        const bundledPath = path.join(this.context.extensionPath, 'bin', binaryName);
+        if (fs.existsSync(bundledPath)) {
+            return bundledPath;
+        }
+
+        const workspaceFolders = vscode.workspace.workspaceFolders ?? [];
+        for (const folder of workspaceFolders) {
+            const workspaceBin = path.join(folder.uri.fsPath, 'bin', binaryName);
+            if (fs.existsSync(workspaceBin)) {
+                return workspaceBin;
+            }
+
+            const siblingClient = path.resolve(folder.uri.fsPath, '..', 'client', binaryName);
+            if (fs.existsSync(siblingClient)) {
+                return siblingClient;
+            }
+
+            const nestedClient = path.join(folder.uri.fsPath, 'client', binaryName);
+            if (fs.existsSync(nestedClient)) {
+                return nestedClient;
+            }
+        }
+
+        const globalPath = path.join(this.context.globalStorageUri.fsPath, 'bin', binaryName);
+        if (fs.existsSync(globalPath)) {
+            return globalPath;
+        }
+
+        return null;
+    }
+
+    private normalizeProxyValue(value: string): string {
+        return value.trim().replace(/\/+$/, '');
+    }
+
+    private isMitmProxyValue(value: string): boolean {
+        const normalized = this.normalizeProxyValue(value);
+        if (!normalized) {
+            return false;
+        }
+
+        try {
+            const parsed = new URL(normalized);
+            const port = parsed.port ? Number(parsed.port) : (parsed.protocol === 'https:' ? 443 : 80);
+            return (parsed.hostname === '127.0.0.1' || parsed.hostname === 'localhost')
+                && port === this.config.proxyPort;
+        } catch {
+            return false;
+        }
+    }
+
+    private async waitForProxyReady(timeoutMs: number): Promise<boolean> {
+        const startedAt = Date.now();
+        while (Date.now() - startedAt < timeoutMs) {
+            if (await this.isProxyAvailable()) {
+                return true;
+            }
+            await new Promise(resolve => setTimeout(resolve, 250));
+        }
+        return false;
+    }
+
+    private async shouldIgnoreUpstreamProxy(proxyUrl: string): Promise<boolean> {
+        try {
+            const parsed = new URL(proxyUrl);
+            const isLoopback = parsed.hostname === '127.0.0.1' || parsed.hostname === 'localhost';
+            if (!isLoopback || this.isMitmProxyValue(proxyUrl)) {
+                return false;
+            }
+
+            const port = parsed.port ? Number(parsed.port) : (parsed.protocol === 'https:' ? 443 : 80);
+            return !(await this.isTcpPortReachable(parsed.hostname, port, 1000));
+        } catch {
+            return false;
+        }
+    }
+
+    private isTcpPortReachable(host: string, port: number, timeoutMs: number): Promise<boolean> {
+        return new Promise(resolve => {
+            const socket = net.createConnection({ host, port });
+            const finish = (result: boolean) => {
+                socket.removeAllListeners();
+                socket.destroy();
+                resolve(result);
+            };
+
+            socket.setTimeout(timeoutMs);
+            socket.once('connect', () => finish(true));
+            socket.once('timeout', () => finish(false));
+            socket.once('error', () => finish(false));
+        });
+    }
+
+    private resolveUpstreamProxy(): string {
+        const configured = this.normalizeProxyValue(this.config.upstreamProxy);
+        if (configured && !this.isMitmProxyValue(configured)) {
+            return configured;
+        }
+
+        const httpProxyConfig = vscode.workspace.getConfiguration('http');
+        const currentProxy = this.normalizeProxyValue(httpProxyConfig.get<string>('proxy', ''));
+        if (currentProxy && !this.isMitmProxyValue(currentProxy)) {
+            return currentProxy;
+        }
+
+        const previousProxy = this.normalizeProxyValue(
+            this.context.globalState.get<string>('aiTokenMonitor.previousHttpProxy', ''),
+        );
+        if (previousProxy && !this.isMitmProxyValue(previousProxy)) {
+            return previousProxy;
+        }
+
+        const configPath = path.join(this.context.globalStorageUri.fsPath, 'proxy-config.json');
+        try {
+            if (fs.existsSync(configPath)) {
+                const parsed = JSON.parse(fs.readFileSync(configPath, 'utf8')) as { upstream_proxy?: string };
+                const persistedProxy = this.normalizeProxyValue(parsed.upstream_proxy ?? '');
+                if (persistedProxy && !this.isMitmProxyValue(persistedProxy)) {
+                    return persistedProxy;
+                }
+            }
+        } catch {
+            // Ignore unreadable historical config and continue probing.
+        }
+
+        for (const key of ['HTTPS_PROXY', 'https_proxy', 'HTTP_PROXY', 'http_proxy', 'ALL_PROXY', 'all_proxy']) {
+            const envProxy = this.normalizeProxyValue(process.env[key] ?? '');
+            if (envProxy && !this.isMitmProxyValue(envProxy)) {
+                return envProxy;
+            }
+        }
+
+        return '';
+    }
+
+    /**
+     * If `http.proxy` points at this extension's MITM port but no proxy is reachable,
+     * restore the previously saved user proxy or clear the setting so VS Code networking works.
+     */
+    private async restoreHttpProxyIfMitmUnavailable(): Promise<boolean> {
+        const httpConfig = vscode.workspace.getConfiguration('http');
+        const currentProxy = this.normalizeProxyValue(httpConfig.get<string>('proxy', ''));
+
+        if (!this.isMitmProxyValue(currentProxy)) {
+            return false;
+        }
+
+        const proxyUp = this.isRunning || (await this.isProxyAvailable());
+        if (proxyUp) {
+            return false;
+        }
+
+        const previous = this.normalizeProxyValue(
+            this.context.globalState.get<string>('aiTokenMonitor.previousHttpProxy', ''),
+        );
+        await httpConfig.update('proxy', previous, vscode.ConfigurationTarget.Global);
+        this.appendOutputLine(
+            `[proxy] Restored VS Code http.proxy (MITM not running) -> ${previous || '(empty)'}`,
+        );
+        return true;
+    }
+
+    private async ensureVsCodeProxyRouting(): Promise<boolean> {
+        if (!this.config.transparentMode) {
+            return false;
+        }
+
+        const httpConfig = vscode.workspace.getConfiguration('http');
+        const currentProxy = this.normalizeProxyValue(httpConfig.get<string>('proxy', ''));
+        const mitmProxy = this.getMitmProxyUrl();
+
+        if (currentProxy && !this.isMitmProxyValue(currentProxy)) {
+            await this.context.globalState.update('aiTokenMonitor.previousHttpProxy', currentProxy);
+        }
+
+        if (currentProxy === mitmProxy) {
+            return false;
+        }
+
+        await httpConfig.update('proxy', mitmProxy, vscode.ConfigurationTarget.Global);
+        this.appendOutputLine(`[proxy] Updated VS Code http.proxy -> ${mitmProxy}`);
+        return true;
+    }
+}

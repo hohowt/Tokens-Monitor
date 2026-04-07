@@ -1,0 +1,14 @@
+node_modules
+.vscode-test/
+.vscode-test*/
+out/test
+src/**
+.github/
+scripts/
+build.ps1
+jest.config.js
+tsconfig.json
+*.vsix
+.git
+.gitignore
+*.md

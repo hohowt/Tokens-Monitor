@@ -1,0 +1,4 @@
+
+Greeting in ChineseMThis chat is a simple greeting in Chinese. 
+
+<name>Greeting in Chinese</name>

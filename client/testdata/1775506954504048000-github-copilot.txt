@@ -1,0 +1,10 @@
+data: {"choices":[{"delta":{"content":""},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":"895"},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":""},"index":0,"finish_reason":"stop"}]}
+
+data: {"choices":[],"usage":{"completion_tokens":2,"completion_tokens_details":{"accepted_prediction_tokens":0,"audio_tokens":0,"reasoning_tokens":0,"rejected_prediction_tokens":0},"prompt_tokens":3448,"prompt_tokens_details":{"audio_tokens":0,"cached_tokens":0},"total_tokens":3450}}
+
+data: [DONE]
+

@@ -1,0 +1,114 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: token-monitor-backend
+  labels:
+    app: token-monitor-backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: token-monitor-backend
+  template:
+    metadata:
+      labels:
+        app: token-monitor-backend
+    spec:
+      containers:
+        - name: backend
+          image: token-monitor-backend:latest
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - secretRef:
+                name: token-monitor-secrets
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: token-monitor-backend
+spec:
+  selector:
+    app: token-monitor-backend
+  ports:
+    - port: 8000
+      targetPort: 8000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: token-monitor-frontend
+  labels:
+    app: token-monitor-frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: token-monitor-frontend
+  template:
+    metadata:
+      labels:
+        app: token-monitor-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: token-monitor-frontend:latest
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: token-monitor-frontend
+spec:
+  selector:
+    app: token-monitor-frontend
+  ports:
+    - port: 80
+      targetPort: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: token-monitor
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+    - host: token-monitor.your-domain.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: token-monitor-frontend
+                port:
+                  number: 80
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: token-monitor-backend
+                port:
+                  number: 8000

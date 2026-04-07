@@ -1,0 +1,9 @@
+{
+  "server_url": "http://192.168.0.135:8000",
+  "user_name": "陈智",
+  "user_id": "10001",
+  "department": "公共技术部",
+  "port": 18090,
+  "install_system_proxy": true,
+  "install_ide_proxy": false
+}

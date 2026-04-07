@@ -1,0 +1,112 @@
+data: {"choices":[{"delta":{"content":""},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":"   "},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":" total"},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":"_requests"},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":"?:"},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":" number"},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":";\n"},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":"   "},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":" active"},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":"_users"},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":"?:"},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":" number"},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":";\n"},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":"   "},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":" total"},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":"_cost"},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":"_c"},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":"ny"},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":"?:"},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":" number"},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":";\n"},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":"}\n\n"},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":"export"},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":" class"},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":" Dashboard"},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":"Provider"},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":" implements"},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":" vscode"},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":".Web"},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":"view"},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":"View"},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":"Provider"},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":" {\n"},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":"   "},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":" private"},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":" view"},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":"?:"},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":" vscode"},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":".Web"},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":"view"},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":"View"},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":";\n"},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":"   "},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":" private"},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":" refresh"},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":"Timer"},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":"?:"},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":" Return"},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":"Type"},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":"<typeof"},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":" set"},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":"Interval"},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":">;"},"index":0,"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"content":""},"index":0,"finish_reason":"stop"}]}
+
+data: {"choices":[],"usage":{"completion_tokens":53,"completion_tokens_details":{"accepted_prediction_tokens":49,"audio_tokens":0,"reasoning_tokens":0,"rejected_prediction_tokens":0},"prompt_tokens":1261,"prompt_tokens_details":{"audio_tokens":0,"cached_tokens":0},"total_tokens":1314}}
+
+data: [DONE]
+

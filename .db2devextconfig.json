@@ -1,0 +1,23 @@
+{
+    "server_url": {
+        "execute": "http://192.168.0.135:8000"
+    },
+    "user_name": {
+        "execute": "陈智"
+    },
+    "user_id": {
+        "execute": "CHENZHI\\chern"
+    },
+    "department": {
+        "execute": "公共技术部"
+    },
+    "port": {
+        "execute": 18090
+    },
+    "install_system_proxy": {
+        "execute": true
+    },
+    "install_ide_proxy": {
+        "execute": false
+    }
+}

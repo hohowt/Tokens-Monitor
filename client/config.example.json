@@ -1,0 +1,18 @@
+{
+  "_说明": "内置已含 OpenAI/Copilot/Cursor/Anthropic/OpenRouter/Tabnine/Codeium/JetBrains AI/Cody/Augment/AWS Q/CodeWhisperer 等常见开发工具域名；内网或新厂商请用 extra_monitor_* 扩展。",
+  "server_url": "http://192.168.0.135:8000",
+  "user_name": "张三",
+  "user_id": "zhangsan",
+  "department": "研发部",
+  "port": 18090,
+  "upstream_proxy": "socks5://127.0.0.1:7890",
+  "install_system_proxy": false,
+  "install_ide_proxy": false,
+  "report_opaque_traffic": true,
+  "extra_monitor_hosts": {
+    "llm-gateway.internal.example.com": "internal-llm"
+  },
+  "extra_monitor_suffixes": [
+    { "suffix": ".inference.company.net", "vendor": "company-gateway" }
+  ]
+}
