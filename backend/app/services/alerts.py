@@ -2,9 +2,10 @@
 
 import logging
 from datetime import date, timedelta, datetime, timezone
+from zoneinfo import ZoneInfo
 
 import httpx
-from sqlalchemy import func, select
+from sqlalchemy import Date as SADate, cast, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
@@ -12,6 +13,26 @@ from app.database import async_session
 from app.models import Alert, DailyUsageSummary, Department, User
 
 logger = logging.getLogger(__name__)
+
+
+def _dashboard_tz() -> ZoneInfo:
+    try:
+        return ZoneInfo(settings.DASHBOARD_TIMEZONE)
+    except Exception:
+        return ZoneInfo("Asia/Shanghai")
+
+
+def _tz_today() -> date:
+    return datetime.now(_dashboard_tz()).date()
+
+
+def _month_start_local() -> date:
+    t = _tz_today()
+    return t.replace(day=1)
+
+
+def _alert_created_local_date():
+    return cast(func.timezone(settings.DASHBOARD_TIMEZONE, Alert.created_at), SADate)
 
 
 async def check_alerts():
@@ -25,15 +46,12 @@ async def check_alerts():
 
 async def _check_user_quota(db: AsyncSession):
     """检查用户日/月配额。"""
-    today = date.today()
-    month_start = today.replace(day=1)
+    month_start = _month_start_local()
 
-    # 获取所有有配额限制的活跃用户
     users = await db.execute(
         select(User).where(User.is_active.is_(True), User.quota_monthly > 0)
     )
     for user in users.scalars().all():
-        # 月消耗
         result = await db.execute(
             select(func.coalesce(func.sum(DailyUsageSummary.total_tokens), 0))
             .where(
@@ -53,8 +71,7 @@ async def _check_user_quota(db: AsyncSession):
 
 async def _check_department_budget(db: AsyncSession):
     """检查部门月度预算。"""
-    today = date.today()
-    month_start = today.replace(day=1)
+    month_start = _month_start_local()
 
     depts = await db.execute(select(Department).where(Department.budget_monthly > 0))
     for dept in depts.scalars().all():
@@ -75,8 +92,8 @@ async def _check_department_budget(db: AsyncSession):
 
 
 async def _check_spike(db: AsyncSession):
-    """检查 Token 消耗突增（日环比 > 200%）。"""
-    today = date.today()
+    """检查 Token 消耗突增（日环比超过 300%，即当日 > 前一日 × 3）。"""
+    today = _tz_today()
     yesterday = today - timedelta(days=1)
     day_before = today - timedelta(days=2)
 
@@ -97,7 +114,7 @@ async def _check_spike(db: AsyncSession):
     for uid, daily in user_daily.items():
         prev = daily.get(day_before, 0)
         curr = daily.get(yesterday, 0)
-        if prev > 0 and curr > prev * 3:  # 300% spike
+        if prev > 0 and curr > prev * 3:
             user = await db.get(User, uid)
             name = user.name if user else f"user#{uid}"
             await _create_alert(
@@ -111,16 +128,15 @@ async def _create_alert(
     db: AsyncSession, alert_type: str, target_type: str, target_id: int,
     message: str, threshold: int, actual: int,
 ):
-    # 避免重复告警（同类型同目标当天只报一次）
     existing = await db.execute(
         select(Alert).where(
             Alert.alert_type == alert_type,
             Alert.target_type == target_type,
             Alert.target_id == target_id,
-            func.date(Alert.created_at) == date.today(),
-        )
+            _alert_created_local_date() == _tz_today(),
+        ).limit(1)
     )
-    if existing.scalar_one_or_none():
+    if existing.scalars().first():
         return
 
     alert = Alert(
@@ -134,7 +150,6 @@ async def _create_alert(
     db.add(alert)
     await db.flush()
 
-    # 发送 Webhook 通知
     await _send_webhook(message)
     alert.notified_at = datetime.now(timezone.utc)
 

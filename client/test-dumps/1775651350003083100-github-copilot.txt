@@ -1,0 +1,440 @@
+event: message_start
+data: {"message":{"content":[],"id":"msg_bdrk_01VvNLn76hLhLSH8RWeJ9W2p","model":"claude-opus-4-6","role":"assistant","stop_reason":null,"stop_sequence":null,"type":"message","usage":{"cache_creation":{"ephemeral_1h_input_tokens":0,"ephemeral_5m_input_tokens":476},"cache_creation_input_tokens":476,"cache_read_input_tokens":63815,"input_tokens":1,"output_tokens":8}},"type":"message_start"}
+
+event: content_block_start
+data: {"content_block":{"signature":"","thinking":"","type":"thinking"},"index":0,"type":"content_block_start"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"I","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" see.","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" The 4th replacement was","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" about","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" changing","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" the","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" Parse","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"Response method to handle the new","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" APIs","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":". It was also","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" about inser","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"ting the","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" `","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"Parse","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"Sub","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"ImagesResponse` method. But the","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" first ","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"3 replacements already","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" succeeded, so the code","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" has","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" already been modified","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":". The","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" 4th replacement probably","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" failed because the","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" context","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" around","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" it didn","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"'t match exactly","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" after","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" the first","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" 3 replacements already","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" modified","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" the","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" file","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":".\n\nWait","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":", no","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":". The 4th replacement was","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" changing","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":":","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"\n```\n            ","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"var dataToken = root[\"Data\"];","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"\n            string? dataStr = ...","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"\n            ","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"...","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"\n            if","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" (action","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" is \"RecognizeInvoice","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"\" or \"RecognizeRoll","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"Ticket\")\n","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"\n\n```","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"\n\nAnd","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" the 5th replacement was inser","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"ting `","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"ParseSubImagesResponse`","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" method","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" before","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" the `","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"Parse","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"V","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"at","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"In","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"voice","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"` method.\n\nLet","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" me re","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"-read the current","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" state of the file after","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" the first 3 successful","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" replacements,","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" then apply the remaining changes.\n\nActually","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":", looking at the error","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":":","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" \"The following files were successfully edited\"","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" followed by \"String replacement failed\" --","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" the","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" multi_replace tool applies replacements sequ","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"entially. The first 3 succeeded","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":", the 4th failed, and","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" the 5th wasn't attempted (","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"or also failed). I","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" need to check what the actual","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" file","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" state","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" is now","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" and","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" figure","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" out why","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" the 4th replacement didn","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"'t match","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":".","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"\n\nFrom","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" the tool","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" description","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":", it applies","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" all","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" replacements and","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" provides","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" a","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" summary. So","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" the first","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" 3 succeeded","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" in","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" editing the file, but","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" the 4th and possibly","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" 5th failed because","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" the text","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" patterns","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" didn't match what","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" was expected.","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" Let","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" me read","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" the current file state and","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" re","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"apply the remaining changes with","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" the correct text","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" patterns.\n\n```","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"signature":"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","type":"signature_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_stop
+data: {"index":0,"type":"content_block_stop"}
+
+event: content_block_start
+data: {"content_block":{"text":"","type":"text"},"index":1,"type":"content_block_start"}
+
+event: content_block_delta
+data: {"delta":{"text":"The","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":" first","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":" 3 replacements succeeded. Let","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":" me apply the remaining ","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":"2 changes:","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_stop
+data: {"index":1,"type":"content_block_stop"}
+
+event: content_block_start
+data: {"content_block":{"id":"toolu_bdrk_017Mb6pbvSE7R459JD817BcU","input":{},"name":"read_file","type":"tool_use"},"index":2,"type":"content_block_start"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"{\"endLine","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\": 246","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":", \"filePath\"","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":": \"","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"d:\\\\Repo","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"s\\\\otw_invo","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ice_servi","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ce\\\\Servic","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"es\\\\O","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"crService","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"Impl.cs","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\"","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":", \"start","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"Line","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\": 233}","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_stop
+data: {"index":2,"type":"content_block_stop"}
+
+event: message_delta
+data: {"copilot_usage":{"token_details":null,"total_nano_aiu":0},"delta":{"stop_reason":"tool_use","stop_sequence":null},"type":"message_delta","usage":{"cache_creation_input_tokens":476,"cache_read_input_tokens":63815,"input_tokens":1,"output_tokens":646}}
+
+event: message_stop
+data: {"amazon-bedrock-invocationMetrics":{"cacheReadInputTokenCount":63815,"cacheWriteInputTokenCount":952,"firstByteLatency":3329,"inputTokenCount":1,"invocationLatency":19417,"outputTokenCount":646},"type":"message_stop"}
+
+data: [DONE]
+

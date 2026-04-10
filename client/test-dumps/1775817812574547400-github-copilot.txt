@@ -1,0 +1,737 @@
+event: message_start
+data: {"message":{"content":[],"id":"msg_vrtx_01XvL9vqAV6LnjDMuAsRwRT1","model":"claude-opus-4-6","role":"assistant","stop_details":null,"stop_reason":null,"stop_sequence":null,"type":"message","usage":{"cache_creation":{"ephemeral_1h_input_tokens":0,"ephemeral_5m_input_tokens":599},"cache_creation_input_tokens":599,"cache_read_input_tokens":120169,"input_tokens":1,"output_tokens":8}},"type":"message_start"}
+
+event: content_block_start
+data: {"content_block":{"signature":"","thinking":"","type":"thinking"},"index":0,"type":"content_block_start"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"The","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" committed","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" version (`","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"HEAD","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"`)","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" has the","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" old,","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" full","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" ","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"2384","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"-","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"line dashboard.ts (","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"the one matching","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" the screenshot","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" with","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" the nice","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" UI). The","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" current working","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" tree has a","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" simplified","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" ","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"663-line version","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":".\n\nThe user","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" wants to","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" go","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" back to the committed","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" version (the","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" VS","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"IX's","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" version","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":",","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" ","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"0","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":".1.9","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":").","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" But","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" actually","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":", the","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" VSIX compiled","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" JS","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" is 1698 lines, and","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" the committed","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" ","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"TS is 2384 lines.","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" Let","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" me check if the","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" committed","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" version","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" matches","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" the","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" VSIX version.\n\nWait","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" -","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" the user","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" said","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" \"这","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"个","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"扩展代","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"码是老","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"板","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"的","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"新","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"版的","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"\" - meaning","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" the current","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" code","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" is the boss","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"'s newer","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" version. ","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"\n\nSo","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" the","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" current working tree is","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" the boss's simplified","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" version","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":",","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" the","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" committed HEAD is the older","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" full","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" version with","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" the nice UI from","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" the screenshot, and I","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" need to figure","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" out which","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" one to restore.","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" The committed","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" version at","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" 2384 lines is likely","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" what","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" they","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" want since","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" it matches","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" the screenshot","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" they","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"'re","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" showing","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" me","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":".","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"\n\nLet me just","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" restore the committed version with","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" a","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" git","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" checkout command","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":",","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" but I should","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" double","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"-check what","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" the","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" user","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" actually","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" wants since","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" their","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" message","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" in","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" Chinese","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" is a bit unclear","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" about","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" whether","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" the","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" current code","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" is the","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" old or","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" new version.","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" So","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" they","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" want me","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" to extract","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" the dashboard","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":".ts source","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" code from that","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" VSIX file","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" on","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" their","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" desktop and use","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" it to replace the current","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" old","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" version in","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" the","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" repo. The","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" VSIX contains","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" the new version with the UI","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" shown in the screenshot,","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" but","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" I","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"'ll","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" need to un","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"pack it","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" first","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" since","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" it only","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" has","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" compiled JavaScript and","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" source","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" maps","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" without","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" the","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" original","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" TypeScript source.","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" I","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"'m","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" seeing","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" the","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" VSIX includes","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" UI","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" elements","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" like token","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" statistics, request","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" counts","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":", and settings","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" sections","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" that","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" match the screenshot","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":",","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" so","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" I","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" need","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" to directly","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" compare the HEAD version against","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" the compiled","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" VSIX output to","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" determine","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" which","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" one","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" actually","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" corresponds","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" to what","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"'s deployed","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":".","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"signature":"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","type":"signature_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_stop
+data: {"index":0,"type":"content_block_stop"}
+
+event: content_block_start
+data: {"content_block":{"text":"","type":"text"},"index":1,"type":"content_block_start"}
+
+event: content_block_delta
+data: {"delta":{"text":"HEAD","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":" ","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":"版本 dashboard","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":".ts 有","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":" 2384 行，当","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":"前工作区","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":"被","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":"简化到","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":" 663 行。让","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":"我确","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":"认 ","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":"HEAD 的","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":"版本是否就","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":"是 VSIX 对","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":"应的版本。","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_stop
+data: {"index":1,"type":"content_block_stop"}
+
+event: content_block_start
+data: {"content_block":{"id":"toolu_vrtx_012VUFxkj8JPoGcPgGkDSLcr","input":{},"name":"Bash","type":"tool_use"},"index":2,"type":"content_block_start"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"{\"comma","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"nd\": \"cd \\\"d","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":":/Repos/tok","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"en-监控\\\" \u0026\u0026 ","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"git show ","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"HE","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"AD:vscode-ex","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ten","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"sion/src/da","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"shboard.t","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"s | ","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"grep -n \\\"","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"今日 ","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"TOKENS\\\\|今日请","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"求\\\\|基础设置\\\\|","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"高级设置\\","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\\|监控代理\\\\|运","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"行中\\","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\\|在线\\\" | h","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ead -20\"","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":", \"descr","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"iptio","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"n\": \"Check ","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"HEAD ","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"da","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"shbo","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ard f","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"or","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":" VSIX ","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"UI","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":" ele","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"me","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"nts\"}","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_stop
+data: {"index":2,"type":"content_block_stop"}
+
+event: message_delta
+data: {"context_management":{"applied_edits":[]},"copilot_usage":{"token_details":null,"total_nano_aiu":0},"delta":{"stop_details":null,"stop_reason":"tool_use","stop_sequence":null},"type":"message_delta","usage":{"cache_creation_input_tokens":599,"cache_read_input_tokens":120169,"input_tokens":1,"output_tokens":1412}}
+
+event: message_stop
+data: {"type":"message_stop"}
+
+data: [DONE]
+

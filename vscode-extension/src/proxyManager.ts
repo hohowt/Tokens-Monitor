@@ -36,6 +36,7 @@ export class ProxyManager {
     private outputChannel: vscode.OutputChannel;
     private readonly recentOutputLines: string[] = [];
     private partialOutputLine = '';
+    private healthCheckTimer?: ReturnType<typeof setInterval>;
 
     constructor(
         private config: MonitorConfig,
@@ -124,13 +125,23 @@ export class ProxyManager {
             return { status: 'off', routingChanged: false };
         }
 
+        // Clean up stale MITM routing left over from a previous session
+        const httpConfig = vscode.workspace.getConfiguration('http');
+        const currentProxy = this.normalizeProxyValue(httpConfig.get<string>('proxy', ''));
+        if (this.isMitmProxyValue(currentProxy) && !this.isRunning && !(await this.isProxyAvailable())) {
+            this.appendOutputLine('[proxy] Stale MITM proxy detected on startup — clearing before re-init');
+            await this.restoreHttpProxyIfMitmUnavailable();
+        }
+
         if (this.detectExternalProxy()) {
             const routingChanged = await this.ensureVsCodeProxyRouting();
+            this.startHealthCheck();
             return { status: 'external', routingChanged };
         }
 
         if (this.isRunning || await this.isProxyAvailable()) {
             const routingChanged = await this.ensureVsCodeProxyRouting();
+            this.startHealthCheck();
             return { status: this.isRunning ? 'internal' : 'external', routingChanged };
         }
 
@@ -184,6 +195,8 @@ export class ProxyManager {
         proc.on('exit', (code) => {
             this.appendOutputLine(`[proxy] Process exited with code ${code}`);
             this.process = null;
+            this.stopHealthCheck();
+            void this.restoreHttpProxyIfMitmUnavailable();
         });
 
         const ready = await this.waitForProxyReady(8_000);
@@ -195,6 +208,7 @@ export class ProxyManager {
 
         this.appendOutputLine(`[proxy] Running on MITM:${this.config.proxyPort} Gateway:${this.config.gatewayPort}`);
         const routingChanged = await this.ensureVsCodeProxyRouting();
+        this.startHealthCheck();
         return { status: 'internal', routingChanged };
     }
 
@@ -207,6 +221,7 @@ export class ProxyManager {
     }
 
     public async stop(): Promise<void> {
+        this.stopHealthCheck();
         if (!this.process) {
             return;
         }
@@ -311,6 +326,27 @@ export class ProxyManager {
         }
 
         return null;
+    }
+
+    private startHealthCheck(): void {
+        this.stopHealthCheck();
+        this.healthCheckTimer = setInterval(async () => {
+            const proxyUp = await this.isProxyAvailable();
+            if (!proxyUp) {
+                this.appendOutputLine('[proxy] Health check failed — proxy unreachable');
+                const restored = await this.restoreHttpProxyIfMitmUnavailable();
+                if (restored) {
+                    this.stopHealthCheck();
+                }
+            }
+        }, 30_000);
+    }
+
+    private stopHealthCheck(): void {
+        if (this.healthCheckTimer) {
+            clearInterval(this.healthCheckTimer);
+            this.healthCheckTimer = undefined;
+        }
     }
 
     private normalizeProxyValue(value: string): string {
@@ -421,7 +457,7 @@ export class ProxyManager {
      * If `http.proxy` points at this extension's MITM port but no proxy is reachable,
      * restore the previously saved user proxy or clear the setting so VS Code networking works.
      */
-    private async restoreHttpProxyIfMitmUnavailable(): Promise<boolean> {
+    public async restoreHttpProxyIfMitmUnavailable(): Promise<boolean> {
         const httpConfig = vscode.workspace.getConfiguration('http');
         const currentProxy = this.normalizeProxyValue(httpConfig.get<string>('proxy', ''));
 

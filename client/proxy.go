@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -217,27 +218,31 @@ var legacyRoutes = map[string]string{
 // ProxyServer is a forward proxy with selective MITM for AI domains
 // and backward-compatible reverse proxy for /vendor/path routes.
 type ProxyServer struct {
-	cfg       *Config
-	reporter  *Reporter
-	certMgr   *CertManager
-	transport *http.Transport
+	cfg            *Config
+	reporter       *Reporter
+	certMgr        *CertManager
+	transport      *http.Transport
+	upstreamProxy  *url.URL // parsed upstream proxy; nil = direct
 }
 
 func NewProxyServer(cfg *Config, reporter *Reporter, certMgr *CertManager) *ProxyServer {
 	proxyFunc := func(*http.Request) (*url.URL, error) { return nil, nil }
+	var upstreamURL *url.URL
 	if cfg != nil && strings.TrimSpace(cfg.UpstreamProxy) != "" {
 		proxyURL, err := url.Parse(cfg.UpstreamProxy)
 		if err != nil {
 			log.Printf("[proxy] invalid upstream_proxy %q: %v (fall back direct)", cfg.UpstreamProxy, err)
 		} else {
 			proxyFunc = http.ProxyURL(proxyURL)
+			upstreamURL = proxyURL
 			log.Printf("[proxy] upstream proxy enabled: %s", proxyURL.Redacted())
 		}
 	}
 	return &ProxyServer{
-		cfg:      cfg,
-		reporter: reporter,
-		certMgr:  certMgr,
+		cfg:           cfg,
+		reporter:      reporter,
+		certMgr:       certMgr,
+		upstreamProxy: upstreamURL,
 		transport: &http.Transport{
 			// 默认直连，避免外连 AI 再次进本机代理形成环路；仅在显式配置 upstream_proxy 时走上游代理。
 			Proxy:               proxyFunc,
@@ -321,8 +326,17 @@ func (s *ProxyServer) handleConnect(w http.ResponseWriter, r *http.Request) {
 
 func (s *ProxyServer) tunnelConnection(clientConn net.Conn, host string) {
 	defer clientConn.Close()
-	serverConn, err := net.DialTimeout("tcp", host, 15*time.Second)
+
+	var serverConn net.Conn
+	var err error
+
+	if s.upstreamProxy != nil {
+		serverConn, err = s.dialViaUpstreamProxy(host)
+	} else {
+		serverConn, err = net.DialTimeout("tcp", host, 15*time.Second)
+	}
 	if err != nil {
+		log.Printf("[tunnel] dial %s: %v", host, err)
 		return
 	}
 	defer serverConn.Close()
@@ -330,6 +344,59 @@ func (s *ProxyServer) tunnelConnection(clientConn net.Conn, host string) {
 	go func() { io.Copy(serverConn, clientConn); done <- struct{}{} }()
 	go func() { io.Copy(clientConn, serverConn); done <- struct{}{} }()
 	<-done
+}
+
+// dialViaUpstreamProxy establishes a TCP tunnel through the upstream HTTP proxy
+// by sending a CONNECT request. This ensures non-AI HTTPS traffic also chains
+// through the user's corporate/VPN proxy.
+func (s *ProxyServer) dialViaUpstreamProxy(targetHost string) (net.Conn, error) {
+	proxyAddr := s.upstreamProxy.Host
+	if !strings.Contains(proxyAddr, ":") {
+		port := s.upstreamProxy.Port()
+		if port == "" {
+			if s.upstreamProxy.Scheme == "https" {
+				port = "443"
+			} else {
+				port = "80"
+			}
+		}
+		proxyAddr = net.JoinHostPort(s.upstreamProxy.Hostname(), port)
+	}
+
+	proxyConn, err := net.DialTimeout("tcp", proxyAddr, 15*time.Second)
+	if err != nil {
+		return nil, fmt.Errorf("connect upstream proxy %s: %w", proxyAddr, err)
+	}
+
+	connectReq := fmt.Sprintf("CONNECT %s HTTP/1.1\r\nHost: %s\r\n", targetHost, targetHost)
+	if s.upstreamProxy.User != nil {
+		// Basic auth for upstream proxy
+		password, _ := s.upstreamProxy.User.Password()
+		auth := s.upstreamProxy.User.Username() + ":" + password
+		encoded := base64.StdEncoding.EncodeToString([]byte(auth))
+		connectReq += "Proxy-Authorization: Basic " + encoded + "\r\n"
+	}
+	connectReq += "\r\n"
+
+	if _, err := proxyConn.Write([]byte(connectReq)); err != nil {
+		proxyConn.Close()
+		return nil, fmt.Errorf("write CONNECT to upstream: %w", err)
+	}
+
+	br := bufio.NewReader(proxyConn)
+	resp, err := http.ReadResponse(br, nil)
+	if err != nil {
+		proxyConn.Close()
+		return nil, fmt.Errorf("read CONNECT response from upstream: %w", err)
+	}
+	resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		proxyConn.Close()
+		return nil, fmt.Errorf("upstream proxy CONNECT returned %d", resp.StatusCode)
+	}
+
+	return proxyConn, nil
 }
 
 // mitmConnection intercepts TLS traffic for AI domains.

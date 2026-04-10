@@ -28,10 +28,15 @@ router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
 ESTIMATE_SOURCE = "client-mitm-estimate"
 
 
+def _request_count_expr():
+    return func.coalesce(TokenUsageLog.request_count, 1)
+
+
 def _source_display_name(source: str | None) -> str:
     mapping = {
         "gateway": "网关同步",
         "client": "本地精确解析",
+        "tokscale": "Tokscale 扫描",
         ESTIMATE_SOURCE: "本地估算补齐",
     }
     return mapping.get(source or "", source or "unknown")
@@ -41,8 +46,29 @@ def _source_app_display_name(source_app: str | None) -> str:
     if not source_app:
         return "未标记应用"
     mapping = {
+        # IDE / 编辑器
         "vscode": "VS Code",
+        "vscode-insiders": "VS Code Insiders",
         "cursor": "Cursor",
+        # Tokscale 支持的 AI 客户端
+        "claude": "Claude Code",
+        "opencode": "OpenCode",
+        "openclaw": "OpenClaw",
+        "codex": "Codex CLI",
+        "gemini": "Gemini CLI",
+        "amp": "Amp",
+        "droid": "Droid",
+        "hermes": "Hermes Agent",
+        "pi": "Pi",
+        "kimi": "Kimi CLI",
+        "qwen": "Qwen CLI",
+        "roocode": "Roo Code",
+        "kilocode": "Kilo Code",
+        "kilo": "Kilo CLI",
+        "mux": "Mux",
+        "crush": "Crush",
+        "synthetic": "Synthetic",
+        # 其他
         "powershell": "PowerShell",
         "cmd": "CMD",
         "gateway-sync": "网关同步",
@@ -112,10 +138,10 @@ async def get_overview(
         select(
             func.coalesce(func.sum(TokenUsageLog.total_tokens), 0),
             func.coalesce(func.sum(TokenUsageLog.cost_cny), 0),
-            func.count(TokenUsageLog.id),
+            func.coalesce(func.sum(_request_count_expr()), 0),
             func.count(func.distinct(TokenUsageLog.user_id)),
             func.coalesce(func.sum(case((TokenUsageLog.source == ESTIMATE_SOURCE, TokenUsageLog.total_tokens), else_=0)), 0),
-            func.coalesce(func.sum(case((TokenUsageLog.source == ESTIMATE_SOURCE, 1), else_=0)), 0),
+            func.coalesce(func.sum(case((TokenUsageLog.source == ESTIMATE_SOURCE, _request_count_expr()), else_=0)), 0),
         ).where(TokenUsageLog.request_at.between(start_ts, end_ts)),
         source_app,
     )
@@ -175,7 +201,7 @@ async def get_trend(
             func.sum(TokenUsageLog.input_tokens),
             func.sum(TokenUsageLog.output_tokens),
             func.sum(TokenUsageLog.cost_cny),
-            func.count(TokenUsageLog.id),
+            func.coalesce(func.sum(_request_count_expr()), 0),
         )
         .where(TokenUsageLog.request_at.between(start_ts, end_ts))
         .group_by(dt)
@@ -212,7 +238,7 @@ async def get_by_user(
             User.id, User.name,
             func.sum(TokenUsageLog.total_tokens),
             func.sum(TokenUsageLog.cost_cny),
-            func.count(TokenUsageLog.id),
+            func.coalesce(func.sum(_request_count_expr()), 0),
         )
         .join(User, TokenUsageLog.user_id == User.id)
         .where(TokenUsageLog.request_at.between(start_ts, end_ts))
@@ -243,7 +269,7 @@ async def get_by_department(
             Department.name,
             func.sum(TokenUsageLog.total_tokens),
             func.sum(TokenUsageLog.cost_cny),
-            func.count(TokenUsageLog.id),
+            func.coalesce(func.sum(_request_count_expr()), 0),
         )
         .join(User, TokenUsageLog.user_id == User.id)
         .join(Department, User.department_id == Department.id)

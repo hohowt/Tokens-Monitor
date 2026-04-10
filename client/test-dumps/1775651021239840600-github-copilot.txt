@@ -1,0 +1,383 @@
+event: message_start
+data: {"message":{"content":[],"id":"msg_bdrk_019E4uwwTMG1zCkzCBnMhwHw","model":"claude-opus-4-6","role":"assistant","stop_reason":null,"stop_sequence":null,"type":"message","usage":{"cache_creation":{"ephemeral_1h_input_tokens":0,"ephemeral_5m_input_tokens":26690},"cache_creation_input_tokens":26690,"cache_read_input_tokens":12499,"input_tokens":1,"output_tokens":8}},"type":"message_start"}
+
+event: content_block_start
+data: {"content_block":{"signature":"","thinking":"","type":"thinking"},"index":0,"type":"content_block_start"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"Now","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" I have a much","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" cle","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"arer picture. Looking","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" at the bottom","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" of the page","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":", I","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" can see:","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"\n\n```\n-","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" [OC","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"R统一识别 Recogn","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"izeAllText](https://api.","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"aliyun.com/api/","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"ocr-api/2021-","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"07-07/RecognizeAll","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"Text)\n- [通用票","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"证抽取 Recognize","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"GeneralStructure](https://api","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":".aliyun.com/api","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"/ocr-api/2021","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"-07-07/Recognize","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"GeneralStructure)\n```","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"\n\nSo","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" both","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" `","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"RecognizeAllText` and `","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"RecognizeGeneralStructure`","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" are valid","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" API","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" action","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" names.\n","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"signature":"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","type":"signature_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_stop
+data: {"index":0,"type":"content_block_stop"}
+
+event: content_block_start
+data: {"content_block":{"text":"","type":"text"},"index":1,"type":"content_block_start"}
+
+event: content_block_delta
+data: {"delta":{"text":"现","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":"在我明","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":"白了。从","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":"文","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":"档中确","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":"认：","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":"\n\n1. `","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":"RecognizeAllText` 是","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":"**","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":"OC","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":"R统一识别**接","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":"口，**","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":"必","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":"须**传","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":" ","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":"`Type` 查","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":"询参数（","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":"如","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":" `Advanced","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":"`、`General`、`Invoice","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":"`","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":" 等）\n2. `Rec","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":"ognizeGeneralStructure` ","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":"是**通用票证抽","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":"取**接口，是","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":"有","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":"效","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":"的 Action","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":"\n\n`","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":"unm","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":"atchedImageType` 错误","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":"是","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":"因为 `RecognizeAll","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":"Text` ","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":"缺少必","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":"需的 `Type` 参","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":"数。让","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":"我看看当","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":"前代","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":"码和","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":" ","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":"`Rec","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":"ognizeGeneralStructure` ","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":"的","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":"具体要","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":"求。","type":"text_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_stop
+data: {"index":1,"type":"content_block_stop"}
+
+event: content_block_start
+data: {"content_block":{"id":"toolu_bdrk_01BwCiF3zw1fMHQkKwAeX8Q4","input":{},"name":"read_file","type":"tool_use"},"index":2,"type":"content_block_start"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"{\"filePa","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"th\":","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":" \"d:\\","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\\Rep","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"os\\\\otw_i","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"nvo","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ice_service","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\\\\Se","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"rvices\\\\Ocr","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ServiceIm","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"pl.cs\"","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":", \"startLine","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\": 1","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":", \"endLine\"","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":": 250}","type":"input_json_delta"},"index":2,"type":"content_block_delta"}
+
+event: content_block_stop
+data: {"index":2,"type":"content_block_stop"}
+
+event: content_block_start
+data: {"content_block":{"id":"toolu_bdrk_01GecC4wp3fJLQ9PnMXH4aUS","input":{},"name":"fetch_webpage","type":"tool_use"},"index":3,"type":"content_block_start"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"","type":"input_json_delta"},"index":3,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"{\"","type":"input_json_delta"},"index":3,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"que","type":"input_json_delta"},"index":3,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ry\": \"R","type":"input_json_delta"},"index":3,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ecogn","type":"input_json_delta"},"index":3,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"izeGener","type":"input_json_delta"},"index":3,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"al","type":"input_json_delta"},"index":3,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"Struc","type":"input_json_delta"},"index":3,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ture 请求参数","type":"input_json_delta"},"index":3,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":" body Url","type":"input_json_delta"},"index":3,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":" Type\"","type":"input_json_delta"},"index":3,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":", \"urls\"","type":"input_json_delta"},"index":3,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":": [\"https://","type":"input_json_delta"},"index":3,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"api.ali","type":"input_json_delta"},"index":3,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"yun.com/","type":"input_json_delta"},"index":3,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"docum","type":"input_json_delta"},"index":3,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ent/ocr-api/","type":"input_json_delta"},"index":3,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"2021-07-0","type":"input_json_delta"},"index":3,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"7/R","type":"input_json_delta"},"index":3,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ecogni","type":"input_json_delta"},"index":3,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"zeGeneralSt","type":"input_json_delta"},"index":3,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ructure\"]}","type":"input_json_delta"},"index":3,"type":"content_block_delta"}
+
+event: content_block_stop
+data: {"index":3,"type":"content_block_stop"}
+
+event: message_delta
+data: {"copilot_usage":{"token_details":null,"total_nano_aiu":0},"delta":{"stop_reason":"tool_use","stop_sequence":null},"type":"message_delta","usage":{"cache_creation_input_tokens":26690,"cache_read_input_tokens":12499,"input_tokens":1,"output_tokens":994}}
+
+event: message_stop
+data: {"amazon-bedrock-invocationMetrics":{"cacheReadInputTokenCount":12499,"cacheWriteInputTokenCount":53380,"firstByteLatency":2991,"inputTokenCount":1,"invocationLatency":19423,"outputTokenCount":994},"type":"message_stop"}
+
+data: [DONE]
+

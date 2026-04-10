@@ -18,23 +18,6 @@ interface ProxyStatusData {
     reloadRequired: boolean;
 }
 
-interface DiagnosticCheck {
-    label: string;
-    status: 'ok' | 'warn' | 'error' | 'info';
-    detail: string;
-}
-
-interface DiagnosticReport {
-    summary: 'ok' | 'warn' | 'error';
-    headline: string;
-    checks: DiagnosticCheck[];
-    recentLogs: string[];
-}
-
-interface DiagnosticAckData {
-    startedAt: number;
-}
-
 export class DashboardProvider implements vscode.WebviewViewProvider {
     private view?: vscode.WebviewView;
     private refreshTimer?: ReturnType<typeof setInterval>;
@@ -101,50 +84,8 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
                 await vscode.commands.executeCommand('tokenMonitor.stopProxy');
             } else if (msg.type === 'reloadWindow') {
                 await vscode.commands.executeCommand('workbench.action.reloadWindow');
-            } else if (msg.type === 'runDiagnostics') {
-                this.view?.webview.postMessage({
-                    type: 'diagnosticsAck',
-                    data: { startedAt: Date.now() } satisfies DiagnosticAckData,
-                });
-                await this.runDiagnosticsWithTimeout();
             }
         });
-    }
-
-    private async runDiagnosticsWithTimeout(): Promise<void> {
-        const timeoutMs = 12_000;
-        let finished = false;
-
-        const timeoutPromise = new Promise<void>((resolve) => {
-            setTimeout(() => {
-                if (finished) {
-                    resolve();
-                    return;
-                }
-                finished = true;
-                this.postDiagnosticsResult({
-                    summary: 'error',
-                    headline: '诊断执行超时，已自动中断。请检查扩展输出日志并重载窗口后重试。',
-                    checks: [{
-                        label: '诊断超时',
-                        status: 'error',
-                        detail: `扩展侧在 ${Math.round(timeoutMs / 1000)} 秒内未完成诊断流程，可能存在本地阻塞或通信异常。`,
-                    }],
-                    recentLogs: this.proxyManager ? this.filterDiagnosticLogs(this.proxyManager.getRecentOutputLines(80)) : [],
-                });
-                resolve();
-            }, timeoutMs);
-        });
-
-        await Promise.race([
-            (async () => {
-                await this.runDiagnostics();
-                if (!finished) {
-                    finished = true;
-                }
-            })(),
-            timeoutPromise,
-        ]);
     }
 
     private getStats() {
@@ -198,271 +139,11 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
         });
     }
 
-    private postDiagnosticsResult(data: DiagnosticReport): void {
-        this.view?.webview.postMessage({
-            type: 'diagnosticsResult',
-            data,
-        });
-    }
 
     private normalizeValue(value: string | undefined | null): string {
         return (value || '').trim().replace(/\/+$/, '');
     }
 
-    private async fetchJsonWithTimeout<T>(url: string, timeoutMs = 5000): Promise<T | null> {
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), timeoutMs);
-        try {
-            const response = await fetch(url, { signal: controller.signal });
-            if (!response.ok) {
-                return null;
-            }
-            return await response.json() as T;
-        } catch {
-            return null;
-        } finally {
-            clearTimeout(timer);
-        }
-    }
-
-    private filterDiagnosticLogs(lines: string[]): string[] {
-        const important = lines.filter(line => /\[上报\]|\[心跳\]|\[MITM|\[记录|\[网络\]|\[启动\]|HTTP 409|identity_conflict|冲突|Process exited|Local proxy did not become ready|Binary not found|Updated VS Code http\.proxy/i.test(line));
-        const selected = important.length > 0 ? important : lines;
-        return selected.slice(-10);
-    }
-
-    private async runDiagnostics(): Promise<void> {
-        const checks: DiagnosticCheck[] = [];
-        let summary: DiagnosticReport['summary'] = 'ok';
-        const userId = this.config.userId.trim();
-        const userName = this.config.userName.trim();
-        const serverUrl = this.normalizeValue(this.config.serverUrl);
-        const reloadRequired = this.globalState.get<boolean>(PROXY_RELOAD_PENDING_KEY, false);
-        const currentHttpProxy = this.normalizeValue(vscode.workspace.getConfiguration('http').get<string>('proxy', ''));
-        const recentLogs = this.proxyManager ? this.filterDiagnosticLogs(this.proxyManager.getRecentOutputLines(80)) : [];
-
-        const addCheck = (status: DiagnosticCheck['status'], label: string, detail: string) => {
-            checks.push({ status, label, detail });
-            if (status === 'error') {
-                summary = 'error';
-                return;
-            }
-            if (status === 'warn' && summary === 'ok') {
-                summary = 'warn';
-            }
-        };
-
-        try {
-            if (!serverUrl || !userId || !userName) {
-                addCheck('error', '基础配置', '上报地址、工号、姓名未填写完整，当前无法建立完整上报链路。');
-            } else {
-                addCheck('ok', '基础配置', `当前身份为 ${userName}（${userId}），上报地址 ${serverUrl}`);
-            }
-
-            let serverHealthy = false;
-            if (serverUrl) {
-                const health = await this.fetchJsonWithTimeout<{ status?: string }>(`${serverUrl}/health`, 4000);
-                serverHealthy = health?.status === 'ok';
-                addCheck(
-                    serverHealthy ? 'ok' : 'error',
-                    '服务端连接',
-                    serverHealthy ? '服务端 /health 检查通过。' : '无法访问服务端 /health，地址错误或网络不通时会卡在这里。',
-                );
-            }
-
-            const identityStatus = await this.fetchIdentityStatus();
-            if (identityStatus.status === 'conflict') {
-                addCheck('error', '身份校验', identityStatus.message);
-            } else if (identityStatus.status === 'warning' || identityStatus.status === 'unavailable') {
-                addCheck('warn', '身份校验', identityStatus.message);
-            } else if (identityStatus.status === 'incomplete') {
-                addCheck('error', '身份校验', identityStatus.message);
-            } else {
-                addCheck('ok', '身份校验', identityStatus.message);
-            }
-
-            if (!this.proxyManager) {
-                addCheck('error', '本地监控代理', '当前扩展实例没有可用的代理管理器。');
-                this.postDiagnosticsResult({
-                    summary,
-                    headline: '本地监控代理不可用',
-                    checks,
-                    recentLogs,
-                });
-                return;
-            }
-
-            const binaryPath = this.proxyManager.findBinaryPath();
-            addCheck(
-                binaryPath ? 'ok' : 'error',
-                '本地监控程序',
-                binaryPath ? `已找到本地 ai-monitor：${binaryPath}` : '未找到 ai-monitor，可导致只有心跳和面板同步，没有真实请求进入本地代理。',
-            );
-
-            const proxyStatus = await this.proxyManager.getProxyStatus();
-            addCheck(
-                proxyStatus === 'off' ? 'error' : 'ok',
-                '代理进程状态',
-                proxyStatus === 'internal'
-                    ? '扩展内置代理正在运行。'
-                    : proxyStatus === 'external'
-                        ? '检测到外部代理实例正在提供监控能力。'
-                        : '当前没有可用的本地监控代理。',
-            );
-
-            if (!this.config.transparentMode) {
-                addCheck('warn', '透明代理', '透明代理已关闭，Copilot 等网络请求可能不会进入本地监控。');
-            } else {
-                const expectedProxy = this.normalizeValue(this.proxyManager.getMitmProxyUrl());
-                addCheck(
-                    currentHttpProxy === expectedProxy ? 'ok' : 'error',
-                    'VS Code 代理设置',
-                    currentHttpProxy === expectedProxy
-                        ? `http.proxy 已指向 ${expectedProxy}`
-                        : (currentHttpProxy
-                            ? `当前 http.proxy 为 ${currentHttpProxy}，不是监控代理 ${expectedProxy}`
-                            : `当前 http.proxy 为空，尚未指向监控代理 ${expectedProxy}`),
-                );
-            }
-
-            if (reloadRequired) {
-                addCheck('error', '窗口状态', '当前窗口还没有重载。最常见的现象就是 users / clients 已有记录，但没有任何 Token 进入 /api/collect。');
-            } else {
-                addCheck('ok', '窗口状态', '当前窗口不处于待重载状态。');
-            }
-
-            const localStatus = await this.proxyManager.getLocalStatus();
-            if (localStatus) {
-                this.applyProxyRuntimeChecks(localStatus, checks, addCheck, serverUrl, userName);
-            } else if (proxyStatus !== 'off') {
-                addCheck('warn', '本地代理状态页', '本地代理正在运行，但 /status 暂时不可读。通常是刚启动、端口冲突或进程异常。');
-            }
-
-            if (recentLogs.length === 0) {
-                addCheck('info', '最近代理日志', '最近没有关键日志，通常意味着当前窗口里还没有 AI 请求进入本地监控。');
-            } else if (recentLogs.some(line => /HTTP 409|identity_conflict|冲突/i.test(line))) {
-                addCheck('error', '最近代理日志', '代理已经尝试上报，但最近日志里出现了冲突或 409 拒绝。');
-            } else if (recentLogs.some(line => /\[上报\].*最终失败|\[网络\].*POST \/api\/collect/i.test(line))) {
-                addCheck('error', '最近代理日志', '代理已经抓到请求，但最近发送 /api/collect 失败了。');
-            } else if (recentLogs.some(line => /\[记录|\[MITM/i.test(line))) {
-                addCheck('warn', '最近代理日志', '已经看到 AI 请求流经本地代理，但还没有看到成功上报。');
-            } else {
-                addCheck('info', '最近代理日志', '最近没有看到 AI 请求流经本地代理的明显迹象。');
-            }
-
-            const headline = this.buildDiagnosticHeadline({
-                reloadRequired,
-                serverHealthy,
-                identityStatus,
-                proxyStatus,
-                currentHttpProxy,
-                expectedProxy: this.config.transparentMode ? this.normalizeValue(this.proxyManager.getMitmProxyUrl()) : '',
-                localStatus,
-                recentLogs,
-                hasConfig: Boolean(serverUrl && userId && userName),
-            });
-
-            this.postDiagnosticsResult({
-                summary,
-                headline,
-                checks,
-                recentLogs,
-            });
-        } catch (error) {
-            const message = error instanceof Error ? error.message : String(error);
-            checks.push({
-                status: 'error',
-                label: '诊断执行',
-                detail: `诊断过程发生异常：${message}`,
-            });
-            this.postDiagnosticsResult({
-                summary: 'error',
-                headline: '诊断执行异常，请重试。若持续异常，请重载窗口后再试。',
-                checks,
-                recentLogs,
-            });
-        }
-    }
-
-    private applyProxyRuntimeChecks(
-        localStatus: LocalProxyStatusSnapshot,
-        _checks: DiagnosticCheck[],
-        addCheck: (status: DiagnosticCheck['status'], label: string, detail: string) => void,
-        serverUrl: string,
-        userName: string,
-    ): void {
-        const runtimeServer = this.normalizeValue(localStatus.server);
-        const reported = Number(localStatus.stats?.total_reported ?? 0);
-        const totalTokens = Number(localStatus.stats?.total_tokens ?? 0);
-
-        addCheck(
-            runtimeServer && runtimeServer !== serverUrl ? 'warn' : 'ok',
-            '代理运行配置',
-            runtimeServer && runtimeServer !== serverUrl
-                ? `本地代理当前上报到 ${runtimeServer}，与面板配置的 ${serverUrl} 不一致。`
-                : `本地代理版本 ${localStatus.version || 'unknown'}，状态 ${localStatus.status || 'running'}。`,
-        );
-
-        addCheck(
-            localStatus.user && userName && localStatus.user !== userName ? 'warn' : 'ok',
-            '代理当前身份',
-            localStatus.user && userName && localStatus.user !== userName
-                ? `本地代理当前用户是 ${localStatus.user}，与面板填写的 ${userName} 不一致。`
-                : `本地代理当前用户 ${localStatus.user || '未知'}。`,
-        );
-
-        addCheck(
-            reported > 0 ? 'ok' : 'warn',
-            '本地成功上报',
-            reported > 0
-                ? `本地代理已成功上报 ${reported} 条记录，共 ${totalTokens.toLocaleString()} Tokens。`
-                : '本地代理最近还没有成功上报任何 Token 记录。',
-        );
-    }
-
-    private buildDiagnosticHeadline(args: {
-        reloadRequired: boolean;
-        serverHealthy: boolean;
-        identityStatus: IdentityStatusData;
-        proxyStatus: string;
-        currentHttpProxy: string;
-        expectedProxy: string;
-        localStatus: LocalProxyStatusSnapshot | null;
-        recentLogs: string[];
-        hasConfig: boolean;
-    }): string {
-        if (!args.hasConfig) {
-            return '基础配置还没填完整，当前无法建立有效上报链路。';
-        }
-        if (!args.serverHealthy) {
-            return '服务端健康检查失败，先确认上报地址和网络连通性。';
-        }
-        if (args.identityStatus.status === 'conflict') {
-            return '工号和姓名与服务器记录冲突，服务端会拒绝写入。';
-        }
-        if (args.reloadRequired) {
-            return '当前窗口还没有重载，这是最可能导致“用户已入库但没有 Token 记录”的原因。';
-        }
-        if (args.proxyStatus === 'off') {
-            return '本地监控代理没有运行，请先让请求真正进入本地代理。';
-        }
-        if (args.expectedProxy && args.currentHttpProxy !== args.expectedProxy) {
-            return 'VS Code 当前没有把网络请求路由到本地监控代理。';
-        }
-        if (Number(args.localStatus?.stats?.total_reported ?? 0) > 0) {
-            return '本地代理已经出现成功上报，当前链路基本正常。';
-        }
-        if (args.recentLogs.some(line => /HTTP 409|identity_conflict|冲突/i.test(line))) {
-            return '代理抓到了请求，但服务端最近拒绝了上报。';
-        }
-        if (args.recentLogs.some(line => /\[上报\].*最终失败|\[网络\].*POST \/api\/collect/i.test(line))) {
-            return '代理抓到了请求，但发送到服务端失败。';
-        }
-        if (args.recentLogs.some(line => /\[记录|\[MITM/i.test(line))) {
-            return '代理已经抓到 AI 请求，但还没有成功写到服务端。';
-        }
-        return '当前还没有看到 AI 请求流经本地代理。若你刚安装扩展，先重载窗口再发起一次真实请求。';
-    }
 
     private getDefaultIdentityStatus(): IdentityStatusData {
         const userId = this.config.userId.trim();
@@ -1082,140 +763,6 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
         border-top-color: rgba(255, 255, 255, 0.92);
         animation: spin 0.75s linear infinite;
     }
-    .diagnostic-panel {
-        display: grid;
-        gap: 12px;
-        padding: 14px;
-    }
-    .diagnostic-head {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-    }
-    .diagnostic-title {
-        font-size: 13px;
-        font-weight: 700;
-        color: var(--text-main);
-    }
-    .diagnostic-caption {
-        margin-top: 4px;
-        font-size: 11px;
-        color: var(--text-sub);
-    }
-    .diagnostic-btn {
-        min-width: 96px;
-    }
-    .diagnostic-btn.is-loading {
-        pointer-events: none;
-        opacity: 0.75;
-    }
-    .diagnostic-summary {
-        padding: 11px 12px;
-        border-radius: 12px;
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        background: rgba(255, 255, 255, 0.03);
-        font-size: 12px;
-        line-height: 1.6;
-        color: var(--text-sub);
-    }
-    .diagnostic-summary.checking {
-        color: var(--text-main);
-        border-color: rgba(255, 184, 77, 0.24);
-        background: rgba(255, 184, 77, 0.08);
-    }
-    .diagnostic-summary.ok {
-        color: rgba(220, 255, 236, 0.92);
-        border-color: rgba(56, 217, 139, 0.22);
-        background: rgba(56, 217, 139, 0.08);
-    }
-    .diagnostic-summary.warn {
-        color: rgba(255, 235, 204, 0.92);
-        border-color: rgba(255, 184, 77, 0.24);
-        background: rgba(255, 184, 77, 0.09);
-    }
-    .diagnostic-summary.error {
-        color: rgba(255, 222, 230, 0.94);
-        border-color: rgba(255, 83, 119, 0.28);
-        background: rgba(255, 83, 119, 0.1);
-    }
-    .diagnostic-list {
-        display: grid;
-        gap: 8px;
-    }
-    .diagnostic-item {
-        display: grid;
-        grid-template-columns: auto 1fr;
-        gap: 10px;
-        align-items: start;
-        padding: 10px 12px;
-        border-radius: 12px;
-        border: 1px solid rgba(255, 255, 255, 0.06);
-        background: rgba(255, 255, 255, 0.02);
-    }
-    .diagnostic-badge {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        min-width: 44px;
-        padding: 4px 8px;
-        border-radius: 999px;
-        font-size: 10px;
-        font-weight: 700;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-    }
-    .diagnostic-item.ok .diagnostic-badge {
-        background: rgba(56, 217, 139, 0.14);
-        color: var(--success);
-    }
-    .diagnostic-item.warn .diagnostic-badge {
-        background: rgba(255, 184, 77, 0.14);
-        color: #ffb84d;
-    }
-    .diagnostic-item.error .diagnostic-badge {
-        background: rgba(255, 83, 119, 0.16);
-        color: var(--error);
-    }
-    .diagnostic-item.info .diagnostic-badge {
-        background: rgba(255, 255, 255, 0.08);
-        color: var(--text-sub);
-    }
-    .diagnostic-item-title {
-        font-size: 12px;
-        font-weight: 600;
-        color: var(--text-main);
-    }
-    .diagnostic-item-detail {
-        margin-top: 4px;
-        font-size: 11px;
-        line-height: 1.55;
-        color: var(--text-sub);
-    }
-    .diagnostic-logs-wrap.hidden {
-        display: none;
-    }
-    .diagnostic-logs-title {
-        font-size: 10px;
-        font-weight: 700;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
-        color: rgba(255, 255, 255, 0.42);
-    }
-    .diagnostic-logs {
-        margin: 0;
-        padding: 12px;
-        border-radius: 12px;
-        border: 1px solid rgba(255, 255, 255, 0.06);
-        background: rgba(7, 10, 15, 0.42);
-        color: rgba(232, 238, 248, 0.9);
-        font-size: 11px;
-        line-height: 1.55;
-        font-family: var(--font-mono);
-        white-space: pre-wrap;
-        max-height: 220px;
-        overflow: auto;
-    }
 
     .grid {
         display: grid;
@@ -1720,23 +1267,7 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
             </div>
         </div>
 
-        <div class="diagnostic-panel glass-panel">
-            <div class="diagnostic-head">
-                <div>
-                    <div class="diagnostic-title">一键检查</div>
-                    <div class="diagnostic-caption">检查当前配置、本地代理、服务端连通性和最近代理日志，定位为什么没有 Token 上报。</div>
-                </div>
-                <button class="btn btn-secondary diagnostic-btn" id="diagnosticBtn" type="button">一键检查</button>
-            </div>
-            <div class="diagnostic-summary" id="diagnosticSummary">点“一键检查”后，会直接告诉你最可能的问题位置。</div>
-            <div class="diagnostic-list" id="diagnosticList"></div>
-            <div class="diagnostic-logs-wrap hidden" id="diagnosticLogsWrap">
-                <div class="diagnostic-logs-title">最近代理日志</div>
-                <pre class="diagnostic-logs" id="diagnosticLogs"></pre>
-            </div>
-        </div>
-
-        <div class="grid">
+        <div class=”grid”>
             <div class="card glass-panel">
                 <div class="card-title">今日 Tokens</div>
                 <div class="card-value tokens" id="todayTokens">${stats.todayTokens.toLocaleString()}</div>
@@ -1813,10 +1344,6 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
     const vscode = acquireVsCodeApi();
     let isRefreshInFlight = false;
     let manualRefreshPending = false;
-    let diagnosticsInFlight = false;
-    let diagnosticsAcked = false;
-    let diagnosticsStartedAt = 0;
-    let diagnosticsAckTimeout = 0;
     let refreshTimeout;
 
     function vscMsg(type, data) {
@@ -1904,83 +1431,6 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
             .replace(/"/g, '&quot;');
     }
 
-    function setDiagnosticsLoading(loading) {
-        diagnosticsInFlight = Boolean(loading);
-        diagnosticsStartedAt = diagnosticsInFlight ? Date.now() : 0;
-        const btn = document.getElementById('diagnosticBtn');
-        const summary = document.getElementById('diagnosticSummary');
-        if (btn) {
-            btn.disabled = diagnosticsInFlight;
-            btn.classList.toggle('is-loading', diagnosticsInFlight);
-            btn.textContent = diagnosticsInFlight ? '检查中' : '一键检查';
-        }
-        if (summary && diagnosticsInFlight) {
-            summary.className = 'diagnostic-summary checking';
-            summary.textContent = '正在检查本地配置、服务端连接和代理运行状态…';
-        }
-    }
-
-    let diagnosticsTimeout = 0;
-
-    function runDiagnostics() {
-        if (diagnosticsInFlight) return;
-        diagnosticsAcked = false;
-        setDiagnosticsLoading(true);
-        clearTimeout(diagnosticsAckTimeout);
-        diagnosticsAckTimeout = setTimeout(() => {
-            if (!diagnosticsInFlight || diagnosticsAcked) return;
-            setDiagnosticsLoading(false);
-            const summary = document.getElementById('diagnosticSummary');
-            if (summary) {
-                summary.className = 'diagnostic-summary error';
-                summary.textContent = '未收到扩展响应，诊断消息可能未送达。请重载窗口后重试。';
-            }
-            showToast('诊断通道异常');
-        }, 3000);
-        clearTimeout(diagnosticsTimeout);
-        diagnosticsTimeout = setTimeout(() => {
-            if (!diagnosticsInFlight) return;
-            setDiagnosticsLoading(false);
-            const summary = document.getElementById('diagnosticSummary');
-            if (summary) {
-                summary.className = 'diagnostic-summary error';
-                summary.textContent = '诊断请求超时。请确认上报地址可访问，并重载窗口后重试。';
-            }
-            showToast('一键检查超时');
-        }, 15000);
-        vscMsg('runDiagnostics');
-    }
-
-    function renderDiagnostics(report) {
-        clearTimeout(diagnosticsAckTimeout);
-        clearTimeout(diagnosticsTimeout);
-        const summary = document.getElementById('diagnosticSummary');
-        const list = document.getElementById('diagnosticList');
-        const logsWrap = document.getElementById('diagnosticLogsWrap');
-        const logs = document.getElementById('diagnosticLogs');
-        setDiagnosticsLoading(false);
-        if (!summary || !list || !logsWrap || !logs) return;
-
-        summary.className = 'diagnostic-summary ' + (report?.summary || 'warn');
-        summary.textContent = report?.headline || '未拿到诊断结果，请稍后重试。';
-
-        const checks = Array.isArray(report?.checks) ? report.checks : [];
-        list.innerHTML = checks.map(item => {
-            const status = item?.status || 'info';
-            const badgeText = status === 'ok' ? '正常' : status === 'warn' ? '注意' : status === 'error' ? '异常' : '信息';
-            return '<div class="diagnostic-item ' + status + '">' +
-                '<div class="diagnostic-badge">' + badgeText + '</div>' +
-                '<div>' +
-                    '<div class="diagnostic-item-title">' + escapeHtml(item?.label || '检查项') + '</div>' +
-                    '<div class="diagnostic-item-detail">' + escapeHtml(item?.detail || '') + '</div>' +
-                '</div>' +
-            '</div>';
-        }).join('');
-
-        const recentLogs = Array.isArray(report?.recentLogs) ? report.recentLogs : [];
-        logsWrap.classList.toggle('hidden', recentLogs.length === 0);
-        logs.textContent = recentLogs.join('\n');
-    }
 
     function toggleSection(id) {
         const sec = document.getElementById(id + 'Section');
@@ -2028,12 +1478,6 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
         if (refreshBtn && refreshBtn.dataset.boundClick !== '1') {
             refreshBtn.dataset.boundClick = '1';
             refreshBtn.addEventListener('click', triggerManualRefresh);
-        }
-
-        const diagnosticBtn = document.getElementById('diagnosticBtn');
-        if (diagnosticBtn && diagnosticBtn.dataset.boundClick !== '1') {
-            diagnosticBtn.dataset.boundClick = '1';
-            diagnosticBtn.addEventListener('click', runDiagnostics);
         }
 
         const proxyBtn = document.getElementById('proxyBtn');
@@ -2339,42 +1783,10 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
                 }
             }
 
-            if (msg.type === 'diagnosticsResult') {
-                renderDiagnostics(msg.data);
-            }
-
-            if (msg.type === 'diagnosticsAck') {
-                diagnosticsAcked = true;
-                clearTimeout(diagnosticsAckTimeout);
-            }
         } catch (error) {
-            setDiagnosticsLoading(false);
             showToast('面板渲染异常，已自动恢复');
             console.error('[dashboard] message handler error:', error);
         }
-    });
-
-    setInterval(() => {
-        if (!diagnosticsInFlight || !diagnosticsStartedAt) {
-            return;
-        }
-        if (Date.now() - diagnosticsStartedAt > 20000) {
-            setDiagnosticsLoading(false);
-            const summary = document.getElementById('diagnosticSummary');
-            if (summary) {
-                summary.className = 'diagnostic-summary error';
-                summary.textContent = '诊断等待超时，可能是面板通信异常。请重载窗口后重试。';
-            }
-            showToast('诊断已超时，已解除卡住状态');
-        }
-    }, 1000);
-
-    window.addEventListener('error', () => {
-        setDiagnosticsLoading(false);
-    });
-
-    window.addEventListener('unhandledrejection', () => {
-        setDiagnosticsLoading(false);
     });
 </script>
 </body>

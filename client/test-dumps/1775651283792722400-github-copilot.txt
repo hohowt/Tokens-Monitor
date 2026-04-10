@@ -1,0 +1,1082 @@
+event: message_start
+data: {"message":{"content":[],"id":"msg_bdrk_01E3Spg4spWfTsiCATJZ3KZ5","model":"claude-opus-4-6","role":"assistant","stop_reason":null,"stop_sequence":null,"type":"message","usage":{"cache_creation":{"ephemeral_1h_input_tokens":0,"ephemeral_5m_input_tokens":192},"cache_creation_input_tokens":192,"cache_read_input_tokens":53222,"input_tokens":1,"output_tokens":8}},"type":"message_start"}
+
+event: content_block_start
+data: {"content_block":{"signature":"","thinking":"","type":"thinking"},"index":0,"type":"content_block_start"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"Now","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" I have","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" the","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" full","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" picture. Let me plan","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" the fix","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":":\n\n1. **`","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"Rec","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"ognizeAllText`**","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" requires","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" a `Type` query parameter. This","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" is the main cause","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" of the `","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"unm","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"atchedImageType` error. I","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" need to:\n   -","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" Modify `CallAliyunOcr","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"V3Async` to support","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" query","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" parameters\n   - When","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" action is `RecognizeAllText","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"`, pass","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" `Type=Advanced` (","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"or a config","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"urable type","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":")\n   ","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"\n2. **`","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"Rec","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"ognizeGeneralStructure`**","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" takes","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" `","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"body","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"` and optional","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" `Keys","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"[]","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"` parameter","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":". This should","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" work","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" with our","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" current binary","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" body","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" approach","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":".","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" But","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" the","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" `","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"Keys","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"`","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" parameter is a","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" query","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" parameter (","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"or","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" body param","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"?","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"). ","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"\n\nLooking","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" at the API","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" documentation more","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" carefully, `","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"Keys` is a","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" query parameter for","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" spec","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"ifying which fields to extract","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":",","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" and","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" if","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" it's not","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" provided the","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" API","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" will auto","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"-detect","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":".","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" The","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" `","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"unm","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"atchedImageType` error for","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" `RecognizeAllText` makes","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" sense since","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" `","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"Type` is required but","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" missing","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":",","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" but","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" this","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" error shouldn","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"'t appear","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" for","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" `RecognizeGeneralStructure","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"` based","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" on its","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" documented","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" error","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" codes.","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" The API","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" supports","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" multiple","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" image","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" formats","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" including","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" PNG, JPG, JPEG,","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" PDF, and","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" BMP,","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" so the","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" issue","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" is likely that","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" both","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" endpoints","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" are failing","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" because","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" `","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"Rec","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"ognizeAllText` is definitely","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" missing the required","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" `Type` parameter.","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"\n\nFor","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" `RecognizeGeneralStructure","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"`, I","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" notice","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" the response structure","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" is","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" completely","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" different from what","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" I","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"'d","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" expect—","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"it returns","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" nested","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" `","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"Sub","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"Images","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"` with","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" `KvInfo` containing JSON","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" data rather than a flat","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" key","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"-value structure. This different","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" response","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" format might","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" be causing parsing","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" issues downstream","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":".","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" The","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" issue","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" is that `","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"RecognizeGeneralStructure`","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" is being called for air itiner","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"aries, but it's returning","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" the","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" `","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"unmatchedImageType` error,","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" which means","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" the API","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" itself","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" is rej","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"ecting the request","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" rather","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" than a","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" parsing","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" problem","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":".","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" I","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" need","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" to figure","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" out why the API","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" is rejecting this","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" specific","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" image","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" type when","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" calling","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" `RecognizeGeneralStructure","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"`.","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" The","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" issue","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" is that `","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"RecognizeGener","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"alStruct","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"ure` should","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" handle","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" any","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" image","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" type","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":",","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" so","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" the","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" `unm","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"atch","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"edImage","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"Type","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"` error","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" suggests","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" either","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" the","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" user","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"'s","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" account","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" hasn","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"'t enabled","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" the","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" service","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":",","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" or the error","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" is actually","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" coming","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" from a different API","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" call","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":". I","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"'m","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" going","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" to focus","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" on the concrete","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" fixes","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":":","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" add","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" query parameter support to","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" the","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" API","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" caller","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":", set `Type=Advanced` for","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" `RecognizeAllText`, and","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" update","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" the response parsing to handle the different","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" structure","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" where","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" data","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" comes","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" through","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" `Sub","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"Images` instead of being","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" a direct","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" JSON string.","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"\n\nImplementing","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" the parameter","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" handling","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" and","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" response extraction","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"...","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" I","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"'m","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" real","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"izing the","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" response","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" structure","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" differs","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" between","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" these","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" APIs","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"—","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"for","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" `","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"Rec","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"ognizeAll","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"Text","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"` with","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" `Type","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"=","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"Advanced","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"`, the","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" `","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"Data","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"` field is","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" an","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" object","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" containing","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" `Sub","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"Images` with","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" text","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" blocks","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":", while `","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"RecognizeGeneralStructure`","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" has","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" the","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" K","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"V data","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" nested","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" under","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" `Sub","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"Images[","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"0].","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"KvInfo.","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"Data`","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" as","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" a JSON string.","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" I","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" need","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" to handle","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" both cases in","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" the response","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" parsing","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":",","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" extract","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"ing either","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" the block","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" content or the KV data depending","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" on which","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" API was","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" called","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":".","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" I","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"'m","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" ref","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"ining the","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" parsing","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" logic for","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" the K","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"V info","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" structure","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" in","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" Rec","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"ognizeAllText responses","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":",","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" specifically","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" how","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" to","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" extract","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" and","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" organize","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" the key","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":"-value pairs when","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" Type=Advanced is","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":" used","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"thinking":".","type":"thinking_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"signature":"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","type":"signature_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_stop
+data: {"index":0,"type":"content_block_stop"}
+
+event: content_block_start
+data: {"content_block":{"id":"toolu_bdrk_01CPBMBQddeVqNxmLinVucgT","input":{},"name":"manage_todo_list","type":"tool_use"},"index":1,"type":"content_block_start"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"{\"todoList\"","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":": [{\"i","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"d\":1,\"tit","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"le\":\"Fix","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":" Recogni","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"zeAllT","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ext q","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"uery param","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"s\",\"st","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"atus\":\"in-p","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ro","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"gress","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\"}","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":",{\"id\":","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"2,\"title\":","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\"Handle","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":" new A","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"PI respons","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"e parsin","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"g\",\"stat","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"us\":\"n","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ot-","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"started","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\"},{","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\"id","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\":3,\"title\":","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\"Build and","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":" verify\",\"","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"status\":\"n","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ot-st","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"arted\"}]}","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_stop
+data: {"index":1,"type":"content_block_stop"}
+
+event: message_delta
+data: {"copilot_usage":{"token_details":null,"total_nano_aiu":0},"delta":{"stop_reason":"tool_use","stop_sequence":null},"type":"message_delta","usage":{"cache_creation_input_tokens":192,"cache_read_input_tokens":53222,"input_tokens":1,"output_tokens":6649}}
+
+event: message_stop
+data: {"amazon-bedrock-invocationMetrics":{"cacheReadInputTokenCount":53222,"cacheWriteInputTokenCount":384,"firstByteLatency":2515,"inputTokenCount":1,"invocationLatency":105070,"outputTokenCount":6649},"type":"message_stop"}
+
+data: [DONE]
+

@@ -174,6 +174,7 @@ class Deployer:
             "backend/app/database.py",
             "backend/app/models.py",
             "backend/app/schemas.py",
+            "backend/app/pricing.py",
             "backend/app/routers/dashboard.py",
             "backend/app/routers/collect.py",
             "backend/app/services/sync_newapi.py",
@@ -181,6 +182,9 @@ class Deployer:
             "backend/app/services/alerts.py",
             "backend/app/services/scheduler.py",
             "backend/migrations/init.sql",
+            "backend/migrations/20260408_daily_summary_dept_provider_keys.sql",
+            "backend/scripts/rebuild_daily_summary.py",
+            "backend/scripts/audit_tokscale.py",
         ]
         
         for f in backend_files:

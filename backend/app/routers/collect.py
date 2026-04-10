@@ -3,16 +3,19 @@ Data collection endpoints for client-reported AI token usage.
 Receives batched usage records from the Go client applications.
 """
 
-from datetime import datetime, timedelta, timezone
+import hashlib
+from datetime import date, datetime, time as dt_time, timedelta, timezone
+from zoneinfo import ZoneInfo
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel
-from sqlalchemy import func, select, update
+from sqlalchemy import case, delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.database import get_db
 from app.models import Client, Department, ModelPricing, TokenUsageLog, User
+from app.schemas import TokscaleSubmitRequest
 
 router = APIRouter(prefix="/api", tags=["collect"])
 
@@ -23,17 +26,24 @@ class UsageRecordIn(BaseModel):
     user_name: str
     user_id: str
     department: str | None = None
-    request_id: str | None = None
-    source_app: str | None = None
-    vendor: str
+    source: str | None = None
     model: str
-    endpoint: str | None = None
+    vendor: str
     prompt_tokens: int = 0
     completion_tokens: int = 0
     total_tokens: int = 0
     request_time: str
-    # client: JSON 解析；client-mitm-estimate: gRPC/二进制体积粗算
-    source: str | None = "client"
+    request_id: str | None = None
+    source_app: str | None = None
+    endpoint: str | None = None
+
+
+class IdentityCheckResponse(BaseModel):
+    status: str
+    message: str
+    existing_name: str | None = None
+    other_employee_ids: list[str] = []
+    known_apps: list[str] = []
 
 
 class ClientHeartbeatIn(BaseModel):
@@ -44,17 +54,36 @@ class ClientHeartbeatIn(BaseModel):
     hostname: str | None = None
     version: str | None = None
 
+
 class MyStatsResponse(BaseModel):
     today_tokens: int
     today_requests: int
 
 
-class IdentityCheckResponse(BaseModel):
-    status: str
-    message: str
-    existing_name: str | None = None
-    other_employee_ids: list[str] = []
-    known_apps: list[str] = []
+class MyDailyUsagePoint(BaseModel):
+    date: str
+    total_tokens: int
+    input_tokens: int
+    output_tokens: int
+    cost_usd: float
+    cost_cny: float
+    requests: int
+    exact_tokens: int = 0
+    estimated_tokens: int = 0
+    exact_requests: int = 0
+    estimated_requests: int = 0
+
+
+class MyDailyUsageResponse(BaseModel):
+    points: list[MyDailyUsagePoint]
+    total_tokens: int
+    total_cost_usd: float
+    total_cost_cny: float
+    total_requests: int
+    exact_tokens: int = 0
+    estimated_tokens: int = 0
+    exact_requests: int = 0
+    estimated_requests: int = 0
 
 
 class IdentityConflictError(Exception):
@@ -137,9 +166,29 @@ def _source_app_display_name(source_app: str | None) -> str:
     if not normalized:
         return "未标记应用"
     mapping = {
+        # IDE / 编辑器
         "vscode": "VS Code",
         "vscode-insiders": "VS Code Insiders",
         "cursor": "Cursor",
+        # Tokscale 支持的 AI 客户端
+        "claude": "Claude Code",
+        "opencode": "OpenCode",
+        "openclaw": "OpenClaw",
+        "codex": "Codex CLI",
+        "gemini": "Gemini CLI",
+        "amp": "Amp",
+        "droid": "Droid",
+        "hermes": "Hermes Agent",
+        "pi": "Pi",
+        "kimi": "Kimi CLI",
+        "qwen": "Qwen CLI",
+        "roocode": "Roo Code",
+        "kilocode": "Kilo Code",
+        "kilo": "Kilo CLI",
+        "mux": "Mux",
+        "crush": "Crush",
+        "synthetic": "Synthetic",
+        # 其他
         "powershell": "PowerShell",
         "cmd": "CMD",
         "gateway-sync": "网关同步",
@@ -159,6 +208,68 @@ def _raise_identity_conflict(exc: IdentityConflictError) -> None:
             "message": f"工号 {exc.employee_id} 已绑定姓名“{exc.existing_name}”，与当前填写的“{exc.provided_name}”不一致。",
         },
     )
+
+
+def _safe_non_negative_int(value: int | None) -> int:
+    return max(int(value or 0), 0)
+
+
+def _sum_tokscale_tokens(tokens) -> int:
+    return (
+        _safe_non_negative_int(tokens.input)
+        + _safe_non_negative_int(tokens.output)
+        + _safe_non_negative_int(tokens.cacheRead)
+        + _safe_non_negative_int(tokens.cacheWrite)
+        + _safe_non_negative_int(tokens.reasoning)
+    )
+
+
+def _tokscale_input_tokens(tokens) -> int:
+    """input + cacheRead + cacheWrite (all input-side tokens)"""
+    return (
+        _safe_non_negative_int(tokens.input)
+        + _safe_non_negative_int(tokens.cacheRead)
+        + _safe_non_negative_int(tokens.cacheWrite)
+    )
+
+
+def _tokscale_output_tokens(tokens) -> int:
+    """output + reasoning (all output-side tokens)"""
+    return (
+        _safe_non_negative_int(tokens.output)
+        + _safe_non_negative_int(tokens.reasoning)
+    )
+
+
+def _dashboard_tz() -> ZoneInfo:
+    try:
+        return ZoneInfo(settings.DASHBOARD_TIMEZONE)
+    except Exception:
+        return ZoneInfo("Asia/Shanghai")
+
+
+def _tokscale_request_at(day: str, timestamp_ms: int | None) -> datetime:
+    if timestamp_ms:
+        return datetime.fromtimestamp(timestamp_ms / 1000, tz=timezone.utc)
+
+    local_date = date.fromisoformat(day)
+    local_midday = datetime.combine(local_date, dt_time(hour=12), tzinfo=_dashboard_tz())
+    return local_midday.astimezone(timezone.utc)
+
+
+def _tokscale_range(day_start: str, day_end: str) -> tuple[datetime, datetime]:
+    tz = _dashboard_tz()
+    start_date = date.fromisoformat(day_start)
+    end_date = date.fromisoformat(day_end)
+    start_ts = datetime.combine(start_date, dt_time.min, tzinfo=tz).astimezone(timezone.utc)
+    end_ts = datetime.combine(end_date, dt_time(23, 59, 59, 999999), tzinfo=tz).astimezone(timezone.utc)
+    return start_ts, end_ts
+
+
+def _build_tokscale_request_id(user_id: str, day: str, client: str, provider: str | None, model: str) -> str:
+    raw = f"{user_id}|{day}|{client}|{provider or ''}|{model}"
+    digest = hashlib.sha1(raw.encode("utf-8")).hexdigest()[:24]
+    return f"ts:{day}:{digest}"
 
 
 async def _get_existing_user_by_employee_id(db: AsyncSession, employee_id: str) -> User | None:
@@ -236,7 +347,7 @@ async def _get_or_create_user(db: AsyncSession, employee_id: str, name: str, dep
         cached_user = await db.get(User, _user_cache[normalized_employee_id])
         if cached_user:
             if normalized_name and not _same_person_name(cached_user.name, normalized_name):
-                raise IdentityConflictError(normalized_employee_id, cached_user.name, normalized_name)
+                cached_user.name = normalized_name
             if department_id != cached_user.department_id:
                 cached_user.department_id = department_id
             await db.flush()
@@ -246,7 +357,7 @@ async def _get_or_create_user(db: AsyncSession, employee_id: str, name: str, dep
     user = await _get_existing_user_by_employee_id(db, normalized_employee_id)
     if user:
         if normalized_name and not _same_person_name(user.name, normalized_name):
-            raise IdentityConflictError(normalized_employee_id, user.name, normalized_name)
+            user.name = normalized_name
         if department_id != user.department_id:
             user.department_id = department_id
         await db.flush()
@@ -262,6 +373,50 @@ async def _get_or_create_user(db: AsyncSession, employee_id: str, name: str, dep
     await db.flush()
     _user_cache[normalized_employee_id] = user.id
     return user.id
+
+
+async def _upsert_client_presence(
+    db: AsyncSession,
+    *,
+    client_id: str,
+    user_name: str,
+    user_id: str,
+    department: str | None,
+    hostname: str | None,
+    version: str | None,
+    ip_address: str | None,
+) -> None:
+    result = await db.execute(
+        select(Client).where(Client.client_id == client_id)
+    )
+    client = result.scalar_one_or_none()
+
+    if client:
+        await db.execute(
+            update(Client)
+            .where(Client.client_id == client_id)
+            .values(
+                last_seen=datetime.now(timezone.utc),
+                ip_address=ip_address,
+                version=version,
+                user_name=user_name,
+                user_id=user_id,
+                department=department,
+                hostname=hostname,
+            )
+        )
+        return
+
+    db.add(Client(
+        client_id=client_id,
+        user_name=user_name,
+        user_id=user_id,
+        department=department,
+        hostname=hostname,
+        ip_address=ip_address,
+        version=version,
+        last_seen=datetime.now(timezone.utc),
+    ))
 
 
 @router.get("/clients/identity-check", response_model=IdentityCheckResponse)
@@ -388,6 +543,7 @@ async def collect_usage(records: list[UsageRecordIn], db: AsyncSession = Depends
             input_tokens=rec.prompt_tokens,
             output_tokens=rec.completion_tokens,
             total_tokens=rec.total_tokens,
+            request_count=1,
             cost_usd=cost_usd,
             cost_cny=cost_cny,
             request_id=rec.request_id,
@@ -400,6 +556,101 @@ async def collect_usage(records: list[UsageRecordIn], db: AsyncSession = Depends
 
     await db.commit()
     return {"status": "ok", "inserted": inserted, "skipped_duplicates": skipped_duplicates}
+
+
+@router.post("/collect/tokscale")
+async def collect_tokscale_usage(
+    data: TokscaleSubmitRequest,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    contributions = data.payload.contributions
+    if not contributions:
+        return {"status": "ok", "inserted": 0, "replaced": 0, "sources": []}
+
+    normalized_user_id = _normalize_identity_value(data.user_id)
+    normalized_user_name = _normalize_identity_value(data.user_name)
+    normalized_department = _normalize_department_value(data.department)
+    if not _has_complete_identity(normalized_user_id, normalized_user_name):
+        raise HTTPException(status_code=400, detail="missing_identity")
+
+    try:
+        internal_user_id = await _get_or_create_user(db, normalized_user_id, normalized_user_name, normalized_department)
+    except IdentityConflictError as exc:
+        _raise_identity_conflict(exc)
+
+    ip = request.client.host if request.client else None
+    await _upsert_client_presence(
+        db,
+        client_id=data.client_id,
+        user_name=normalized_user_name,
+        user_id=normalized_user_id,
+        department=normalized_department,
+        hostname=data.hostname,
+        version=data.version,
+        ip_address=ip,
+    )
+
+    submitted_clients = sorted({
+        client.client.strip()
+        for contribution in contributions
+        for client in contribution.clients
+        if client.client and client.client.strip()
+    })
+    range_start = data.payload.meta.dateRange.start
+    range_end = data.payload.meta.dateRange.end
+    start_ts, end_ts = _tokscale_range(range_start, range_end)
+
+    delete_stmt = delete(TokenUsageLog).where(
+        TokenUsageLog.user_id == internal_user_id,
+        TokenUsageLog.source == "tokscale",
+        TokenUsageLog.request_at.between(start_ts, end_ts),
+    )
+    if submitted_clients:
+        delete_stmt = delete_stmt.where(TokenUsageLog.source_app.in_(submitted_clients))
+    delete_result = await db.execute(delete_stmt)
+    replaced = delete_result.rowcount or 0
+
+    inserted = 0
+    for contribution in contributions:
+        request_at = _tokscale_request_at(contribution.date, contribution.timestampMs)
+        single_client_fallback = len(contribution.clients) == 1
+
+        for client_contrib in contribution.clients:
+            source_app = client_contrib.client.strip() or "unknown-app"
+            provider = (client_contrib.providerId or "").strip() or "unknown"
+            model = client_contrib.modelId.strip()
+            total_tokens = _sum_tokscale_tokens(client_contrib.tokens)
+            request_count = _safe_non_negative_int(client_contrib.messages)
+            if request_count == 0 and single_client_fallback:
+                request_count = _safe_non_negative_int(contribution.totals.messages)
+
+            db.add(TokenUsageLog(
+                user_id=internal_user_id,
+                model_name=model,
+                provider=provider,
+                source="tokscale",
+                source_app=source_app,
+                endpoint=None,
+                input_tokens=_tokscale_input_tokens(client_contrib.tokens),
+                output_tokens=_tokscale_output_tokens(client_contrib.tokens),
+                total_tokens=total_tokens,
+                request_count=request_count,
+                cost_usd=round(max(float(client_contrib.cost or 0.0), 0.0), 6),
+                cost_cny=round(max(float(client_contrib.cost or 0.0), 0.0) * settings.USD_TO_CNY, 4),
+                request_id=_build_tokscale_request_id(normalized_user_id, contribution.date, source_app, provider, model),
+                request_at=request_at,
+            ))
+            inserted += 1
+
+    await db.commit()
+    return {
+        "status": "ok",
+        "inserted": inserted,
+        "replaced": replaced,
+        "sources": submitted_clients,
+        "date_range": {"start": range_start, "end": range_end},
+    }
 
 
 @router.post("/clients/heartbeat")
@@ -459,7 +710,7 @@ async def client_heartbeat(
     return {"status": "ok"}
 
 
-from app.routers.dashboard import _ts_range
+from app.routers.dashboard import ESTIMATE_SOURCE, _request_local_date_column, _ts_range
 
 @router.get("/clients/my-stats", response_model=MyStatsResponse)
 async def get_my_stats(
@@ -482,7 +733,10 @@ async def get_my_stats(
     await db.commit()
     start_ts, end_ts = _ts_range(1)
     
-    stmt = select(func.sum(TokenUsageLog.total_tokens), func.count(TokenUsageLog.id)).where(
+    stmt = select(
+        func.sum(TokenUsageLog.total_tokens),
+        func.coalesce(func.sum(TokenUsageLog.request_count), 0),
+    ).where(
         TokenUsageLog.user_id == internal_user_id,
         TokenUsageLog.request_at.between(start_ts, end_ts)
     )
@@ -493,6 +747,118 @@ async def get_my_stats(
     today_requests = row[1] or 0 if row else 0
 
     return MyStatsResponse(today_tokens=int(today_tokens), today_requests=int(today_requests))
+
+
+@router.get("/clients/my-daily-usage", response_model=MyDailyUsageResponse)
+async def get_my_daily_usage(
+    user_id: str,
+    user_name: str,
+    department: str | None = None,
+    days: int = Query(30, ge=1, le=365),
+    start_date: date | None = None,
+    end_date: date | None = None,
+    include_tokscale: bool = False,
+    db: AsyncSession = Depends(get_db),
+):
+    normalized_user_id = _normalize_identity_value(user_id)
+    normalized_user_name = _normalize_identity_value(user_name)
+    normalized_department = _normalize_department_value(department)
+
+    if not _has_complete_identity(normalized_user_id, normalized_user_name):
+        return MyDailyUsageResponse(
+            points=[],
+            total_tokens=0,
+            total_cost_usd=0.0,
+            total_cost_cny=0.0,
+            total_requests=0,
+        )
+
+    try:
+        internal_user_id = await _get_or_create_user(db, normalized_user_id, normalized_user_name, normalized_department)
+    except IdentityConflictError as exc:
+        _raise_identity_conflict(exc)
+    await db.commit()
+
+    start_ts, end_ts = _ts_range(days, start_date, end_date)
+    local_day = _request_local_date_column()
+    request_count_expr = func.coalesce(TokenUsageLog.request_count, 1)
+
+    stmt = (
+        select(
+            local_day.label("d"),
+            func.coalesce(func.sum(TokenUsageLog.total_tokens), 0),
+            func.coalesce(func.sum(TokenUsageLog.input_tokens), 0),
+            func.coalesce(func.sum(TokenUsageLog.output_tokens), 0),
+            func.coalesce(func.sum(TokenUsageLog.cost_usd), 0),
+            func.coalesce(func.sum(TokenUsageLog.cost_cny), 0),
+            func.coalesce(func.sum(request_count_expr), 0),
+            func.coalesce(func.sum(case((TokenUsageLog.source == ESTIMATE_SOURCE, TokenUsageLog.total_tokens), else_=0)), 0),
+            func.coalesce(func.sum(case((TokenUsageLog.source == ESTIMATE_SOURCE, request_count_expr), else_=0)), 0),
+        )
+        .where(
+            TokenUsageLog.user_id == internal_user_id,
+            TokenUsageLog.request_at.between(start_ts, end_ts),
+        )
+        .group_by(local_day)
+        .order_by(local_day)
+    )
+    if not include_tokscale:
+        stmt = stmt.where(TokenUsageLog.source != "tokscale")
+
+    result = await db.execute(stmt)
+    points: list[MyDailyUsagePoint] = []
+    total_tokens = 0
+    total_cost_usd = 0.0
+    total_cost_cny = 0.0
+    total_requests = 0
+    exact_tokens = 0
+    estimated_tokens = 0
+    exact_requests = 0
+    estimated_requests = 0
+
+    for row in result.all():
+        day, day_total_tokens, input_tokens, output_tokens, cost_usd, cost_cny, requests, day_estimated_tokens, day_estimated_requests = row
+        day_total_tokens = int(day_total_tokens or 0)
+        day_requests = int(requests or 0)
+        day_estimated_tokens = int(day_estimated_tokens or 0)
+        day_estimated_requests = int(day_estimated_requests or 0)
+        day_exact_tokens = max(day_total_tokens - day_estimated_tokens, 0)
+        day_exact_requests = max(day_requests - day_estimated_requests, 0)
+
+        points.append(MyDailyUsagePoint(
+            date=day.isoformat(),
+            total_tokens=day_total_tokens,
+            input_tokens=int(input_tokens or 0),
+            output_tokens=int(output_tokens or 0),
+            cost_usd=round(float(cost_usd or 0), 6),
+            cost_cny=round(float(cost_cny or 0), 4),
+            requests=day_requests,
+            exact_tokens=day_exact_tokens,
+            estimated_tokens=day_estimated_tokens,
+            exact_requests=day_exact_requests,
+            estimated_requests=day_estimated_requests,
+        ))
+
+        total_tokens += day_total_tokens
+        total_cost_usd += float(cost_usd or 0)
+        total_cost_cny += float(cost_cny or 0)
+        total_requests += day_requests
+        exact_tokens += day_exact_tokens
+        estimated_tokens += day_estimated_tokens
+        exact_requests += day_exact_requests
+        estimated_requests += day_estimated_requests
+
+    return MyDailyUsageResponse(
+        points=points,
+        total_tokens=total_tokens,
+        total_cost_usd=round(total_cost_usd, 6),
+        total_cost_cny=round(total_cost_cny, 4),
+        total_requests=total_requests,
+        exact_tokens=exact_tokens,
+        estimated_tokens=estimated_tokens,
+        exact_requests=exact_requests,
+        estimated_requests=estimated_requests,
+    )
 
 
 @router.get("/clients/online")

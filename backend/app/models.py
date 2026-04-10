@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import BigInteger, Boolean, Date, DateTime, ForeignKey, Integer, Numeric, String, Text
+from sqlalchemy import BigInteger, Boolean, Date, DateTime, ForeignKey, Integer, Numeric, String, Text, UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -61,6 +61,7 @@ class TokenUsageLog(Base):
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"))
     project_id: Mapped[int | None] = mapped_column(ForeignKey("projects.id"))
+    department_id: Mapped[int | None] = mapped_column(ForeignKey("departments.id", ondelete="SET NULL"))
     model_name: Mapped[str] = mapped_column(String(100))
     provider: Mapped[str] = mapped_column(String(50))
     source: Mapped[str] = mapped_column(String(30), default="gateway")
@@ -69,6 +70,7 @@ class TokenUsageLog(Base):
     input_tokens: Mapped[int] = mapped_column(BigInteger, default=0)
     output_tokens: Mapped[int] = mapped_column(BigInteger, default=0)
     total_tokens: Mapped[int] = mapped_column(BigInteger, default=0)
+    request_count: Mapped[int] = mapped_column(Integer, default=1)
     cost_usd: Mapped[float] = mapped_column(Numeric(12, 6), default=0)
     cost_cny: Mapped[float] = mapped_column(Numeric(12, 4), default=0)
     request_id: Mapped[str | None] = mapped_column(String(100))
@@ -78,13 +80,27 @@ class TokenUsageLog(Base):
 
 class DailyUsageSummary(Base):
     __tablename__ = "daily_usage_summary"
+    __table_args__ = (
+        UniqueConstraint(
+            "date",
+            "user_id",
+            "proj_key",
+            "model_name",
+            "provider",
+            "dept_key",
+            name="uq_daily_usage_summary_key",
+        ),
+    )
+
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     date: Mapped[datetime] = mapped_column(Date)
     user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"))
     project_id: Mapped[int | None] = mapped_column(ForeignKey("projects.id"))
+    proj_key: Mapped[int] = mapped_column(Integer, default=-1, nullable=False)
     department_id: Mapped[int | None] = mapped_column(ForeignKey("departments.id"))
-    model_name: Mapped[str | None] = mapped_column(String(100))
-    provider: Mapped[str | None] = mapped_column(String(50))
+    dept_key: Mapped[int] = mapped_column(Integer, default=-1, nullable=False)
+    model_name: Mapped[str] = mapped_column(String(100), default="")
+    provider: Mapped[str] = mapped_column(String(50), default="")
     total_requests: Mapped[int] = mapped_column(Integer, default=0)
     input_tokens: Mapped[int] = mapped_column(BigInteger, default=0)
     output_tokens: Mapped[int] = mapped_column(BigInteger, default=0)

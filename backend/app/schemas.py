@@ -103,3 +103,82 @@ class DateRangeParams(BaseModel):
     start_date: date | None = None
     end_date: date | None = None
     days: int = 15  # 默认近 15 天
+
+
+# === Tokscale submit payload ===
+class TokscaleDateRange(BaseModel):
+    start: str
+    end: str
+
+
+class TokscaleTokenBreakdown(BaseModel):
+    input: int = 0
+    output: int = 0
+    cacheRead: int = 0
+    cacheWrite: int = 0
+    reasoning: int = 0
+
+
+class TokscaleDailyTotals(BaseModel):
+    tokens: int = 0
+    cost: float = 0.0
+    messages: int = 0
+
+
+class TokscaleClientContribution(BaseModel):
+    client: str
+    modelId: str
+    providerId: str | None = None
+    tokens: TokscaleTokenBreakdown
+    cost: float = 0.0
+    messages: int = 0
+
+
+class TokscaleDailyContribution(BaseModel):
+    date: str
+    timestampMs: int | None = None
+    totals: TokscaleDailyTotals
+    intensity: int = 0
+    tokenBreakdown: TokscaleTokenBreakdown
+    clients: list[TokscaleClientContribution] = []
+
+
+class TokscaleYearSummary(BaseModel):
+    year: str
+    totalTokens: int = 0
+    totalCost: float = 0.0
+    range: TokscaleDateRange
+
+
+class TokscaleDataSummary(BaseModel):
+    totalTokens: int = 0
+    totalCost: float = 0.0
+    totalDays: int = 0
+    activeDays: int = 0
+    averagePerDay: float = 0.0
+    maxCostInSingleDay: float = 0.0
+    clients: list[str] = []
+    models: list[str] = []
+
+
+class TokscaleExportMeta(BaseModel):
+    generatedAt: str
+    version: str
+    dateRange: TokscaleDateRange
+
+
+class TokscaleContributionPayload(BaseModel):
+    meta: TokscaleExportMeta
+    summary: TokscaleDataSummary
+    years: list[TokscaleYearSummary] = []
+    contributions: list[TokscaleDailyContribution] = []
+
+
+class TokscaleSubmitRequest(BaseModel):
+    client_id: str
+    user_name: str
+    user_id: str
+    department: str | None = None
+    hostname: str | None = None
+    version: str | None = None
+    payload: TokscaleContributionPayload

@@ -12,9 +12,14 @@ REMOTE_BASE = "/opt/token-monitor/backend"
 ROOT = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
 FILES = [
     "backend/app/config.py",
+    "backend/app/models.py",
+    "backend/app/schemas.py",
     "backend/app/routers/dashboard.py",
     "backend/app/routers/collect.py",
     "backend/app/services/aggregator.py",
+    "backend/migrations/20260402_add_source_app.sql",
+    "backend/migrations/20260407_add_endpoint.sql",
+    "backend/migrations/20260407_add_request_count.sql",
 ]
 
 if not PWD:
@@ -26,7 +31,7 @@ def main():
     c = paramiko.SSHClient()
     c.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     c.connect(HOST, username=USER, password=PWD, timeout=25)
-    c.exec_command("mkdir -p /opt/token-monitor/backend/app/routers /opt/token-monitor/backend/app/services")
+    c.exec_command("mkdir -p /opt/token-monitor/backend/app/routers /opt/token-monitor/backend/app/services /opt/token-monitor/backend/migrations")
     t = c.get_transport()
     sftp = paramiko.SFTPClient.from_transport(t)
     for rel in FILES:

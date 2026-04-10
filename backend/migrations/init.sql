@@ -52,6 +52,7 @@ CREATE TABLE token_usage_logs (
     id BIGSERIAL PRIMARY KEY,
     user_id INT REFERENCES users(id),
     project_id INT REFERENCES projects(id),
+    department_id INT REFERENCES departments(id) ON DELETE SET NULL,
     model_name VARCHAR(100) NOT NULL,
     provider VARCHAR(50) NOT NULL,
     source VARCHAR(30) NOT NULL DEFAULT 'gateway',  -- gateway, proxy, billing_api
@@ -60,6 +61,7 @@ CREATE TABLE token_usage_logs (
     input_tokens BIGINT NOT NULL DEFAULT 0,
     output_tokens BIGINT NOT NULL DEFAULT 0,
     total_tokens BIGINT NOT NULL DEFAULT 0,
+    request_count INT NOT NULL DEFAULT 1,
     cost_usd NUMERIC(12, 6) DEFAULT 0,   -- 美元成本
     cost_cny NUMERIC(12, 4) DEFAULT 0,   -- 人民币成本
     request_id VARCHAR(100),
@@ -80,16 +82,18 @@ CREATE TABLE daily_usage_summary (
     date DATE NOT NULL,
     user_id INT REFERENCES users(id),
     project_id INT REFERENCES projects(id),
+    proj_key INT NOT NULL DEFAULT -1,
     department_id INT REFERENCES departments(id),
-    model_name VARCHAR(100),
-    provider VARCHAR(50),
+    dept_key INT NOT NULL DEFAULT -1,
+    model_name VARCHAR(100) NOT NULL DEFAULT '',
+    provider VARCHAR(50) NOT NULL DEFAULT '',
     total_requests INT DEFAULT 0,
     input_tokens BIGINT DEFAULT 0,
     output_tokens BIGINT DEFAULT 0,
     total_tokens BIGINT DEFAULT 0,
     cost_usd NUMERIC(12, 6) DEFAULT 0,
     cost_cny NUMERIC(12, 4) DEFAULT 0,
-    UNIQUE(date, user_id, project_id, model_name)
+    CONSTRAINT uq_daily_usage_summary_key UNIQUE (date, user_id, proj_key, model_name, provider, dept_key)
 );
 CREATE INDEX idx_daily_date ON daily_usage_summary(date);
 CREATE INDEX idx_daily_user ON daily_usage_summary(user_id, date);
