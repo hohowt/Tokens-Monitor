@@ -218,11 +218,11 @@ var legacyRoutes = map[string]string{
 // ProxyServer is a forward proxy with selective MITM for AI domains
 // and backward-compatible reverse proxy for /vendor/path routes.
 type ProxyServer struct {
-	cfg            *Config
-	reporter       *Reporter
-	certMgr        *CertManager
-	transport      *http.Transport
-	upstreamProxy  *url.URL // parsed upstream proxy; nil = direct
+	cfg           *Config
+	reporter      *Reporter
+	certMgr       *CertManager
+	transport     *http.Transport
+	upstreamProxy *url.URL // parsed upstream proxy; nil = direct
 }
 
 func NewProxyServer(cfg *Config, reporter *Reporter, certMgr *CertManager) *ProxyServer {
