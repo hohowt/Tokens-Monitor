@@ -3,11 +3,12 @@
 Usage: python scripts/deploy.py [action] [options]
 
 Actions:
-    all         完整部署（检查→上传→构建→启动）
+    all         完整部署（检查→上传→构建→启动→迁移）
     check       仅检查服务器环境
     upload      仅上传文件
     build       仅构建镜像
     start       仅启动服务
+    migrate     执行增量数据库迁移（不重启服务）
     status      查看服务状态
     logs        查看日志
     stop        停止服务
@@ -163,78 +164,54 @@ class Deployer:
     def upload_project(self):
         """Upload project files."""
         print("\n=== 2. Upload Project Files ===")
-        
-        # Core backend files
-        backend_files = [
-            "backend/Dockerfile",
-            "backend/requirements.txt",
-            "backend/.env.example",
-            "backend/app/main.py",
-            "backend/app/config.py",
-            "backend/app/database.py",
-            "backend/app/models.py",
-            "backend/app/schemas.py",
-            "backend/app/pricing.py",
-            "backend/app/canonical.py",
-            "backend/app/routers/dashboard.py",
-            "backend/app/routers/collect.py",
-            "backend/app/services/sync_newapi.py",
-            "backend/app/services/aggregator.py",
-            "backend/app/services/alerts.py",
-            "backend/app/services/scheduler.py",
-            "backend/migrations/init.sql",
-            "backend/migrations/20260408_daily_summary_dept_provider_keys.sql",
-            "backend/scripts/rebuild_daily_summary.py",
-            "backend/scripts/audit_tokscale.py",
-        ]
-        
-        for f in backend_files:
-            self.upload_file(f)
-        
-        # Frontend files
-        frontend_files = [
-            "frontend/Dockerfile",
-            "frontend/package-lock.json",
-            "frontend/package.json",
-            "frontend/vite.config.ts",
-            "frontend/tsconfig.json",
-            "frontend/index.html",
-            "frontend/nginx.conf",
-            "frontend/src/main.tsx",
-            "frontend/src/App.tsx",
-            "frontend/src/DashboardChart.tsx",
-            "frontend/src/api.ts",
-            "frontend/src/utils.ts",
-            "frontend/src/index.css",
-            "frontend/src/AnimatedNumber.tsx",
-            "frontend/src/AutoScroll.tsx",
-            "frontend/src/vite-env.d.ts",
-        ]
-        
-        for f in frontend_files:
-            self.upload_file(f)
-        
+
+        # Backend — 整目录上传，Docker COPY . . 需要完整文件
+        self.upload_dir(
+            "backend",
+            f"{self.REMOTE_DIR}/backend",
+            exclude={".git", "__pycache__", ".venv", "venv", "*.pyc", ".env", "pgdata"},
+        )
+
+        # Frontend — 整目录上传，Docker build 需要完整文件
+        self.upload_dir(
+            "frontend",
+            f"{self.REMOTE_DIR}/frontend",
+            exclude={".git", "node_modules", "dist"},
+        )
+
         # Deploy configs
         self.upload_file("docker-compose.yml")
         self.upload_file("deploy/k8s.yaml")
-        
+
         print("  ✓ Upload complete")
     
     def generate_env(self):
         """Generate environment configuration."""
         print("\n=== 3. Generate Configuration ===")
-        
+
         db_password = os.environ.get("DB_PASSWORD", "AiMon!2026Secure")
-        
+        collect_api_key = os.environ.get("COLLECT_API_KEY", "CHANGE_ME_GENERATE_A_STRONG_KEY")
+        admin_password = os.environ.get("ADMIN_PASSWORD", "CHANGE_ME_GENERATE_A_STRONG_PASSWORD")
+        cors_origins = os.environ.get("CORS_ALLOWED_ORIGINS", f"http://{self.host}:3080")
+
         env_content = f"""DATABASE_URL=postgresql+asyncpg://monitor:{db_password}@db:5432/token_monitor
 REDIS_URL=redis://redis:6379/0
+COLLECT_API_KEY={collect_api_key}
+ADMIN_PASSWORD={admin_password}
+CORS_ALLOWED_ORIGINS={cors_origins}
 NEWAPI_BASE_URL={os.environ.get('NEWAPI_BASE_URL', '')}
 NEWAPI_ADMIN_TOKEN={os.environ.get('NEWAPI_ADMIN_TOKEN', '')}
 USD_TO_CNY=7.25
 ALERT_WEBHOOK_URL={os.environ.get('ALERT_WEBHOOK_URL', '')}
 SYNC_INTERVAL_MINUTES=10
 """
-        
+
+        # Warn if using placeholder values
+        if "CHANGE_ME" in collect_api_key:
+            print("  ⚠ COLLECT_API_KEY 使用占位符，请设置 COLLECT_API_KEY 环境变量")
+        if "CHANGE_ME" in admin_password:
+            print("  ⚠ ADMIN_PASSWORD 使用占位符，请设置 ADMIN_PASSWORD 环境变量")
+
         # Write to remote
         self.run(f"cat > {self.REMOTE_DIR}/backend/.env << 'EOF'\n{env_content}EOF", print_output=False)
         print("  ✓ Generated backend/.env")
@@ -289,6 +266,47 @@ SYNC_INTERVAL_MINUTES=10
         print("\n=== Stopping Services ===")
         self.run(f"cd {self.REMOTE_DIR} && docker compose down")
         print("  ✓ Services stopped")
+
+    def run_migration(self):
+        """Run incremental database migrations."""
+        print("\n=== Database Migration ===")
+
+        migration_dir = project_root / "backend" / "migrations"
+        migration_files = sorted(
+            f for f in migration_dir.glob("*.sql")
+            if f.name != "init.sql"
+        )
+
+        if not migration_files:
+            print("  No migration files found (excluding init.sql)")
+            return
+
+        remote_migration_dir = f"{self.REMOTE_DIR}/backend/migrations"
+        self.run(f"mkdir -p {remote_migration_dir}", print_output=False)
+
+        for mf in migration_files:
+            remote_path = f"{remote_migration_dir}/{mf.name}"
+            self.sftp.put(str(mf), remote_path)
+            print(f"  ↑ {mf.name}")
+
+            # CONCURRENTLY 索引不能在事务内创建，用 psql 通过 stdin 执行
+            print(f"  Executing {mf.name} ...")
+            out, err, code = self.run(
+                f"cd {self.REMOTE_DIR} && docker compose exec -T db "
+                f"psql -U monitor -d token_monitor --set ON_ERROR_STOP=1 "
+                f"< {remote_path}",
+                timeout=300,
+            )
+            if code != 0:
+                # CONCURRENTLY 索引在已存在时会报 notice 但不会失败（IF NOT EXISTS）
+                if "already exists" in (out + err).lower():
+                    print(f"  ✓ {mf.name} (indexes already exist, skipped)")
+                else:
+                    print(f"  ⚠ {mf.name} returned exit code {code}")
+            else:
+                print(f"  ✓ {mf.name} applied")
+
+        print("  ✓ Migration complete")
     
     def close(self):
         """Close connections."""
@@ -312,7 +330,8 @@ SYNC_INTERVAL_MINUTES=10
             if not self.build_and_start():
                 print("\n✗ Deployment failed")
                 return 1
-            
+
+            self.run_migration()
             self.status()
             
             print("\n" + "="*50)
@@ -332,7 +351,7 @@ SYNC_INTERVAL_MINUTES=10
 
 def main():
     parser = argparse.ArgumentParser(description="AI Token Monitor Deployment")
-    parser.add_argument("action", choices=["all", "check", "upload", "build", "start", "status", "logs", "stop"],
+    parser.add_argument("action", choices=["all", "check", "upload", "build", "start", "status", "logs", "stop", "migrate"],
                        default="all", nargs="?", help="Action to perform")
     parser.add_argument("--host", help="Server host (or SSH_HOST env)")
     parser.add_argument("--user", help="SSH user (or SSH_USER env)")
@@ -364,6 +383,8 @@ def main():
             deployer.logs(args.tail)
         elif args.action == "stop":
             deployer.stop()
+        elif args.action == "migrate":
+            deployer.run_migration()
         
         deployer.close()
         return 0
