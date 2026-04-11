@@ -190,8 +190,8 @@ class Deployer:
         print("\n=== 3. Generate Configuration ===")
 
         db_password = os.environ.get("DB_PASSWORD", "AiMon!2026Secure")
-        collect_api_key = os.environ.get("COLLECT_API_KEY", "CHANGE_ME_GENERATE_A_STRONG_KEY")
-        admin_password = os.environ.get("ADMIN_PASSWORD", "CHANGE_ME_GENERATE_A_STRONG_PASSWORD")
+        collect_api_key = os.environ.get("COLLECT_API_KEY", "")
+        admin_password = os.environ.get("ADMIN_PASSWORD", "")
         cors_origins = os.environ.get("CORS_ALLOWED_ORIGINS", f"http://{self.host}:3080")
 
         env_content = f"""DATABASE_URL=postgresql+asyncpg://monitor:{db_password}@db:5432/token_monitor
@@ -206,11 +206,14 @@ ALERT_WEBHOOK_URL={os.environ.get('ALERT_WEBHOOK_URL', '')}
 SYNC_INTERVAL_MINUTES=10
 """
 
-        # Warn if using placeholder values
-        if "CHANGE_ME" in collect_api_key:
-            print("  ⚠ COLLECT_API_KEY 使用占位符，请设置 COLLECT_API_KEY 环境变量")
-        if "CHANGE_ME" in admin_password:
-            print("  ⚠ ADMIN_PASSWORD 使用占位符，请设置 ADMIN_PASSWORD 环境变量")
+        if collect_api_key:
+            print(f"  ✓ COLLECT_API_KEY 已配置")
+        else:
+            print("  ⚠ COLLECT_API_KEY 未配置，上报接口将处于宽限期（无认证）")
+        if admin_password:
+            print(f"  ✓ ADMIN_PASSWORD 已配置")
+        else:
+            print("  ⚠ ADMIN_PASSWORD 未配置，管理接口将返回 503")
 
         # Write to remote
         self.run(f"cat > {self.REMOTE_DIR}/backend/.env << 'EOF'\n{env_content}EOF", print_output=False)

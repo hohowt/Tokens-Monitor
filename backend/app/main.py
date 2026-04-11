@@ -15,7 +15,8 @@ def _get_cors_origins() -> list[str]:
     raw = settings.CORS_ALLOWED_ORIGINS
     if raw:
         return [o.strip() for o in raw.split(",") if o.strip()]
-    return ["http://localhost:3080", "http://localhost:5173"]
+    # 未配置时允许所有来源，确保大屏等只读页面可正常访问
+    return ["*"]
 
 
 @asynccontextmanager
@@ -33,12 +34,14 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="AI Token Monitor", version="1.0.0", lifespan=lifespan)
 
+_origins = _get_cors_origins()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=_get_cors_origins(),
-    allow_credentials=True,
-    allow_methods=["GET", "POST"],
-    allow_headers=["Content-Type", "X-API-Key", "Authorization"],
+    allow_origins=_origins,
+    # allow_credentials 不可与 allow_origins=["*"] 同时使用
+    allow_credentials=("*" not in _origins),
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.include_router(dashboard.router)

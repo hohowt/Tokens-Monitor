@@ -7,7 +7,7 @@ services:
       POSTGRES_USER: monitor
       POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD environment variable must be set}
     ports:
-      - "127.0.0.1:15432:5432"  # 避免与已有PG冲突
+      - "15432:5432"  # 允许远程连接
     volumes:
       - tm_pgdata:/var/lib/postgresql/data
       - ./backend/migrations/init.sql:/docker-entrypoint-initdb.d/01_init.sql
