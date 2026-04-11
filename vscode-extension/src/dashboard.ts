@@ -2088,7 +2088,7 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
                         ? '当前窗口还没有重载，Copilot / AI 请求可能仍走旧连接，所以暂时不会进入 Token 上报。'
                         : (running
                             ? '监控代理已运行，新的 AI 请求会通过本地监控链路上报。'
-                            : '监控代理未启动；启动后若收到重载提示，请立即重载窗口。');
+                            : '监控代理默认关闭；启用时会自动安装当前用户证书，并尽量沿用现有系统或公司代理。');
                     hint.classList.toggle('warning', reloadRequired);
                 }
                 if (reloadBtn) {

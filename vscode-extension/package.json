@@ -2,7 +2,7 @@
   "name": "ai-token-monitor",
   "displayName": "腾轩旅游集团 - AI Token 监控",
   "description": "腾轩旅游集团 AI 编程助手用量监控平台 — 支持 Copilot、Cursor、Claude、Continue 等 10+ 工具的 Token 统计与上报",
-  "version": "0.1.24",
+  "version": "0.1.25",
   "publisher": "txly",
   "author": {
     "name": "Zhi.Chen",
@@ -181,8 +181,8 @@
         },
         "aiTokenMonitor.transparentMode": {
           "type": "boolean",
-          "default": true,
-          "description": "启用透明代理模式，自动将 VS Code 的 HTTP 代理切到本地 ai-monitor 代理"
+          "default": false,
+          "description": "启用透明代理模式后，扩展会自动安装当前用户证书，并将 VS Code 的 HTTP 代理切到本地 ai-monitor 代理"
         },
         "aiTokenMonitor.proxyPort": {
           "type": "number",
@@ -197,7 +197,7 @@
         "aiTokenMonitor.upstreamProxy": {
           "type": "string",
           "default": "",
-          "description": "上游代理地址；留空时会自动沿用当前 http.proxy 作为上游"
+          "description": "上游代理地址；留空时会自动沿用当前 http.proxy、系统代理或环境变量作为上游"
         },
         "aiTokenMonitor.copilotOrg": {
           "type": "string",

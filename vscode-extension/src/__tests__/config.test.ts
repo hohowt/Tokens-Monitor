@@ -32,7 +32,7 @@ describe('config', () => {
             expect(cfg.userName).toBe('');
             expect(cfg.department).toBe('');
             expect(cfg.copilotOrg).toBe('');
-            expect(cfg.transparentMode).toBe(true);
+            expect(cfg.transparentMode).toBe(false);
             expect(cfg.proxyPort).toBe(18090);
             expect(cfg.gatewayPort).toBe(18091);
             expect(cfg.upstreamProxy).toBe('');

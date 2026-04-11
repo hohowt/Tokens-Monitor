@@ -3,7 +3,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as http from 'http';
 import * as net from 'net';
-import { spawn, ChildProcess } from 'child_process';
+import { spawn, ChildProcess, execFileSync } from 'child_process';
 import { MonitorConfig } from './config';
 
 export type ProxyStatus = 'external' | 'internal' | 'off';
@@ -43,6 +43,7 @@ export class ProxyManager {
     private healthCheckTimer?: ReturnType<typeof setInterval>;
     /** When set, overrides config.proxyPort — used when we discover an existing instance on a different port */
     private activePort?: number;
+    private certificatePrepared = false;
 
     constructor(
         private config: MonitorConfig,
@@ -131,6 +132,38 @@ export class ProxyManager {
             return { status: 'off', routingChanged: false };
         }
 
+        const binaryPath = this.findBinaryPath();
+        const configPath = path.join(this.context.globalStorageUri.fsPath, 'proxy-config.json');
+        await fs.promises.mkdir(path.dirname(configPath), { recursive: true });
+
+        let upstreamProxy = options?.skipUpstreamDetect ? '' : this.resolveUpstreamProxy();
+        if (upstreamProxy && await this.shouldIgnoreUpstreamProxy(upstreamProxy)) {
+            this.appendOutputLine(`[proxy] Ignoring unreachable local upstream proxy: ${upstreamProxy}`);
+            upstreamProxy = '';
+        }
+        const proxyConfig: Record<string, unknown> = {
+            server_url: this.config.serverUrl,
+            user_name: this.config.userName,
+            user_id: this.config.userId,
+            department: this.config.department,
+            port: this.config.proxyPort,
+            gateway_port: this.config.gatewayPort,
+            report_opaque_traffic: true,
+        };
+        if (upstreamProxy) {
+            proxyConfig.upstream_proxy = upstreamProxy;
+        }
+
+        await fs.promises.writeFile(configPath, JSON.stringify(proxyConfig, null, 2), 'utf8');
+
+        if (binaryPath) {
+            const certificateReady = await this.ensureCertificateInstalled(binaryPath, configPath);
+            if (!certificateReady) {
+                await this.restoreHttpProxyIfMitmUnavailable();
+                return { status: 'off', routingChanged: false };
+            }
+        }
+
         // NOTE: We intentionally do NOT clear stale MITM routing here.
         // If the proxy is about to (re)start, clearing http.proxy then re-setting it
         // causes ensureVsCodeProxyRouting() to return routingChanged=true, triggering
@@ -159,35 +192,11 @@ export class ProxyManager {
             return { status: 'external', routingChanged };
         }
 
-        const binaryPath = this.findBinaryPath();
         if (!binaryPath) {
             this.appendOutputLine('[proxy] Binary not found. Falling back to in-process interception only.');
             await this.restoreHttpProxyIfMitmUnavailable();
             return { status: 'off', routingChanged: false };
         }
-
-        const configPath = path.join(this.context.globalStorageUri.fsPath, 'proxy-config.json');
-        await fs.promises.mkdir(path.dirname(configPath), { recursive: true });
-
-        let upstreamProxy = options?.skipUpstreamDetect ? '' : this.resolveUpstreamProxy();
-        if (upstreamProxy && await this.shouldIgnoreUpstreamProxy(upstreamProxy)) {
-            this.appendOutputLine(`[proxy] Ignoring unreachable local upstream proxy: ${upstreamProxy}`);
-            upstreamProxy = '';
-        }
-        const proxyConfig: Record<string, unknown> = {
-            server_url: this.config.serverUrl,
-            user_name: this.config.userName,
-            user_id: this.config.userId,
-            department: this.config.department,
-            port: this.config.proxyPort,
-            gateway_port: this.config.gatewayPort,
-            report_opaque_traffic: true,
-        };
-        if (upstreamProxy) {
-            proxyConfig.upstream_proxy = upstreamProxy;
-        }
-
-        await fs.promises.writeFile(configPath, JSON.stringify(proxyConfig, null, 2), 'utf8');
 
         const args = ['--config', configPath];
         this.appendOutputLine(`[proxy] Starting: ${binaryPath} ${args.join(' ')}`);
@@ -544,6 +553,11 @@ export class ProxyManager {
             return previousProxy;
         }
 
+        const systemProxy = this.normalizeProxyValue(this.readWindowsSystemProxy());
+        if (systemProxy && !this.isMitmProxyValue(systemProxy)) {
+            return systemProxy;
+        }
+
         const configPath = path.join(this.context.globalStorageUri.fsPath, 'proxy-config.json');
         try {
             if (fs.existsSync(configPath)) {
@@ -565,6 +579,97 @@ export class ProxyManager {
         }
 
         return '';
+    }
+
+    private readWindowsSystemProxy(): string {
+        if (process.platform !== 'win32') {
+            return '';
+        }
+
+        try {
+            const enableOutput = execFileSync(
+                'reg',
+                ['query', 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings', '/v', 'ProxyEnable'],
+                { encoding: 'utf8', windowsHide: true },
+            );
+            if (!enableOutput.includes('0x1')) {
+                return '';
+            }
+
+            const serverOutput = execFileSync(
+                'reg',
+                ['query', 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings', '/v', 'ProxyServer'],
+                { encoding: 'utf8', windowsHide: true },
+            );
+            const line = serverOutput
+                .split(/\r?\n/)
+                .map(value => value.trim())
+                .find(value => value.startsWith('ProxyServer'));
+            if (!line) {
+                return '';
+            }
+
+            const parts = line.split(/REG_SZ/i);
+            if (parts.length < 2) {
+                return '';
+            }
+
+            const value = parts[1].trim();
+            if (!value) {
+                return '';
+            }
+            return value.includes('://') ? value : `http://${value}`;
+        } catch {
+            return '';
+        }
+    }
+
+    private async ensureCertificateInstalled(binaryPath: string, configPath: string): Promise<boolean> {
+        if (this.certificatePrepared || process.platform !== 'win32') {
+            this.certificatePrepared = true;
+            return true;
+        }
+
+        return new Promise(resolve => {
+            const proc = spawn(binaryPath, ['--install', '--install-cert-only', '--config', configPath], {
+                stdio: ['ignore', 'pipe', 'pipe'],
+                detached: false,
+                windowsHide: true,
+                env: { ...process.env, AI_MONITOR_NO_CONSOLE: '1' },
+            });
+
+            let output = '';
+            const timeout = setTimeout(() => {
+                output += '\ncertificate installation timed out';
+                proc.kill();
+            }, 15000);
+
+            proc.stdout?.on('data', (data: Buffer) => {
+                output += data.toString();
+            });
+            proc.stderr?.on('data', (data: Buffer) => {
+                output += data.toString();
+            });
+            proc.on('exit', code => {
+                clearTimeout(timeout);
+                if (code === 0) {
+                    this.certificatePrepared = true;
+                    this.appendOutputLine('[proxy] Ensured current-user CA certificate is installed');
+                    resolve(true);
+                    return;
+                }
+
+                const trimmed = output.trim();
+                this.appendOutputLine('[proxy] Failed to install current-user CA certificate automatically');
+                if (trimmed) {
+                    this.appendOutputLine(trimmed);
+                }
+                void vscode.window.showWarningMessage(
+                    'AI Token 监控无法自动安装当前用户证书，已停止接管网络。请先允许证书安装后再启用监控代理。',
+                );
+                resolve(false);
+            });
+        });
     }
 
     /**

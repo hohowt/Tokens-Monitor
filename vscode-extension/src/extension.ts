@@ -8,7 +8,7 @@ import { CopilotMetrics } from './copilotMetrics';
 import { getConfig } from './config';
 import { EventBus } from './eventBus';
 import { NetworkInterceptor } from './networkInterceptor';
-import { ProxyManager } from './proxyManager';
+import { ProxyManager, ProxyStartResult } from './proxyManager';
 import { CursorCollector } from './collectors/cursorCollector';
 import { ClineCollector } from './collectors/clineCollector';
 import { ContinueCollector } from './collectors/continueCollector';
@@ -31,8 +31,10 @@ export async function activate(context: vscode.ExtensionContext) {
 
     const proxyManager = new ProxyManager(cfg, context);
     let interceptor: NetworkInterceptor | undefined;
+    let tracker: TokenTracker | undefined;
     let statusBar: StatusBarManager | undefined;
     let dashboardProvider: DashboardProvider | undefined;
+    let suppressConfigWatcher = false;
 
     const stopInterceptor = () => {
         if (!interceptor) {
@@ -52,6 +54,25 @@ export async function activate(context: vscode.ExtensionContext) {
             vscode.window.showWarningMessage(`AI Token 拦截器启动失败: ${err}`);
             interceptor = undefined;
         }
+    };
+
+    const refreshConfigConsumers = (config = getConfig()) => {
+        proxyManager.updateConfig(config);
+        tracker?.updateConfig(config);
+        statusBar?.refresh();
+        dashboardProvider?.updateConfig(config);
+    };
+
+    const setTransparentMode = async (enabled: boolean) => {
+        suppressConfigWatcher = true;
+        try {
+            await cfgSection.update('transparentMode', enabled, vscode.ConfigurationTarget.Global);
+        } finally {
+            suppressConfigWatcher = false;
+        }
+        const nextCfg = getConfig();
+        refreshConfigConsumers(nextCfg);
+        return nextCfg;
     };
 
     const syncReloadPendingState = async (pending: boolean) => {
@@ -86,8 +107,8 @@ export async function activate(context: vscode.ExtensionContext) {
         config = getConfig(),
         restartProxy = false,
         reason: 'startup' | 'config-change' = 'startup',
-    ) => {
-        proxyManager.updateConfig(config);
+    ): Promise<ProxyStartResult> => {
+        refreshConfigConsumers(config);
         // 如果上次设置了"待重载"，说明这次激活就是用户重载后的结果，应直接清除标记
         const wasReloadPending = context.globalState.get<boolean>(PROXY_RELOAD_PENDING_KEY, false);
 
@@ -95,7 +116,7 @@ export async function activate(context: vscode.ExtensionContext) {
         if (result.status === 'off') {
             await syncReloadPendingState(false);
             startInterceptor(config.serverUrl);
-            return;
+            return result;
         }
 
         stopInterceptor();
@@ -106,13 +127,15 @@ export async function activate(context: vscode.ExtensionContext) {
             console.log('[Extension] Transparent proxy routing updated. Reload window to route existing connections.');
             void promptReloadForProxyRouting(reason);
         }
+
+        return result;
     };
 
     await applyTransportMode(cfg, false, 'startup');
     context.subscriptions.push({ dispose: () => { stopInterceptor(); void proxyManager.stop(); } });
 
     // Core services
-    const tracker = new TokenTracker(cfg, context.globalState, eventBus);
+    tracker = new TokenTracker(cfg, context.globalState, eventBus);
     statusBar = new StatusBarManager(tracker);
     statusBar.setReloadPending(context.globalState.get<boolean>(PROXY_RELOAD_PENDING_KEY, false));
 
@@ -148,28 +171,19 @@ export async function activate(context: vscode.ExtensionContext) {
             vscode.commands.executeCommand('workbench.action.chat.open', { query: '@otw ' });
         }),
         vscode.commands.registerCommand('tokenMonitor.startProxy', async () => {
-            const startCfg = { ...getConfig(), transparentMode: true };
-            proxyManager.updateConfig(startCfg);
-            const result = await proxyManager.start({ skipUpstreamDetect: true });
+            const startCfg = await setTransparentMode(true);
+            const result = await applyTransportMode(startCfg, false, 'config-change');
             if (result.status === 'off') {
                 await syncReloadPendingState(false);
                 startInterceptor(startCfg.serverUrl);
                 vscode.window.showWarningMessage('监控代理启动失败，请检查 Output 面板“AI Token Monitor Proxy”');
-            } else {
-                stopInterceptor();
-                if (result.routingChanged) {
-                    void promptReloadForProxyRouting('config-change');
-                } else if (context.globalState.get<boolean>(PROXY_RELOAD_PENDING_KEY, false)) {
-                    await syncReloadPendingState(false);
-                }
             }
-            await dashboardProvider.notifyProxyStatus();
+            await dashboardProvider?.notifyProxyStatus();
         }),
         vscode.commands.registerCommand('tokenMonitor.stopProxy', async () => {
-            await proxyManager.stop();
-            await syncReloadPendingState(false);
-            startInterceptor(getConfig().serverUrl);
-            await dashboardProvider.notifyProxyStatus();
+            const stopCfg = await setTransparentMode(false);
+            await applyTransportMode(stopCfg, true, 'config-change');
+            await dashboardProvider?.notifyProxyStatus();
         }),
         vscode.commands.registerCommand('tokenMonitor.checkUpdate', async () => {
             return await checkForUpdates(context, getConfig().serverUrl, true);
@@ -206,11 +220,12 @@ export async function activate(context: vscode.ExtensionContext) {
     // Listen for config changes — auto-apply
     context.subscriptions.push(
         vscode.workspace.onDidChangeConfiguration(e => {
+            if (suppressConfigWatcher) {
+                return;
+            }
             if (e.affectsConfiguration('aiTokenMonitor') || e.affectsConfiguration('http.proxy')) {
                 const newCfg = getConfig();
-                tracker.updateConfig(newCfg);
-                statusBar.refresh();
-                dashboardProvider.updateConfig(newCfg);
+                refreshConfigConsumers(newCfg);
                 void applyTransportMode(newCfg, true, 'config-change');
             }
         })
@@ -231,11 +246,20 @@ export async function activate(context: vscode.ExtensionContext) {
     const tipShown = context.globalState.get<boolean>('monitorTipShown', false);
     if (!tipShown) {
         context.globalState.update('monitorTipShown', true);
-        const action = await vscode.window.showInformationMessage(
-            '腾轩 AI 监控已启动。通过 @otw、LM Tools 和 Copilot Metrics API 自动记录 AI 使用情况。',
-            '打开面板'
-        );
-        if (action === '打开面板') {
+        const action = cfg.transparentMode
+            ? await vscode.window.showInformationMessage(
+                '腾轩 AI 监控已启动。通过本地 ai-monitor 代理、@otw、LM Tools 和 Copilot Metrics API 自动记录 AI 使用情况。',
+                '打开面板'
+            )
+            : await vscode.window.showInformationMessage(
+                '腾轩 AI 监控已启动。为兼容现有桌面代理，当前不会自动接管 VS Code 网络。需要采集 Copilot / AI 请求时，可启用本地 ai-monitor 代理；启用时会自动安装当前用户证书，并尽量沿用现有系统代理作为上游。',
+                '启用监控代理',
+                '打开面板',
+                '稍后'
+            );
+        if (action === '启用监控代理') {
+            void vscode.commands.executeCommand('tokenMonitor.startProxy');
+        } else if (action === '打开面板') {
             vscode.commands.executeCommand('tokenMonitor.dashboard.focus');
         }
     }

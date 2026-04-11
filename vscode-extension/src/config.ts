@@ -52,7 +52,7 @@ export function getConfig(): MonitorConfig {
         userName: cfg.get<string>('userName', '') || identity?.user_name || '',
         department: cfg.get<string>('department', '') || identity?.department || '',
         copilotOrg: cfg.get<string>('copilotOrg', ''),
-        transparentMode: cfg.get<boolean>('transparentMode', true),
+        transparentMode: cfg.get<boolean>('transparentMode', false),
         proxyPort: getPort(cfg.get<number>('proxyPort', 18090), 18090),
         gatewayPort: getPort(cfg.get<number>('gatewayPort', 18091), 18091),
         upstreamProxy: cfg.get<string>('upstreamProxy', '').trim(),
