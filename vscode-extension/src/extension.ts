@@ -12,6 +12,7 @@ import { ProxyManager } from './proxyManager';
 import { CursorCollector } from './collectors/cursorCollector';
 import { ClineCollector } from './collectors/clineCollector';
 import { ContinueCollector } from './collectors/continueCollector';
+import { checkForUpdates } from './updater';
 
 const PROXY_RELOAD_PENDING_KEY = 'aiTokenMonitor.proxyReloadPending';
 
@@ -130,8 +131,9 @@ export async function activate(context: vscode.ExtensionContext) {
     registerTools(context, tracker, eventBus);
 
     // Dashboard WebView
+    const extensionVersion = context.extension.packageJSON.version ?? '0.0.0';
     dashboardProvider = new DashboardProvider(
-        context.extensionUri, tracker, cfg, context.globalState, context.secrets, proxyManager
+        context.extensionUri, tracker, cfg, context.globalState, context.secrets, proxyManager, extensionVersion
     );
     context.subscriptions.push(
         vscode.window.registerWebviewViewProvider('tokenMonitor.dashboard', dashboardProvider)
@@ -168,6 +170,9 @@ export async function activate(context: vscode.ExtensionContext) {
             await syncReloadPendingState(false);
             startInterceptor(getConfig().serverUrl);
             await dashboardProvider.notifyProxyStatus();
+        }),
+        vscode.commands.registerCommand('tokenMonitor.checkUpdate', async () => {
+            return await checkForUpdates(context, getConfig().serverUrl, true);
         })
     );
 
@@ -234,6 +239,9 @@ export async function activate(context: vscode.ExtensionContext) {
             vscode.commands.executeCommand('tokenMonitor.dashboard.focus');
         }
     }
+
+    // Self-update check (non-blocking, silent on failure)
+    void checkForUpdates(context, cfg.serverUrl);
 }
 
 export function deactivate() {

@@ -35,8 +35,11 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://monitor:${DB_PASSWORD:-Otw2026Monitor!}@db:5432/token_monitor
       REDIS_URL: redis://redis:6379/0
+      EXTENSION_DIR: /data/extensions
     env_file:
       - ./backend/.env
+    volumes:
+      - ./extensions:/data/extensions
     depends_on:
       db:
         condition: service_healthy

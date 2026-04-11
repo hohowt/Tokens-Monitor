@@ -18,6 +18,13 @@ interface ProxyStatusData {
     reloadRequired: boolean;
 }
 
+interface UpdateCheckResultData {
+    status: string;
+    message: string;
+    version?: string;
+    currentVersion?: string;
+}
+
 export class DashboardProvider implements vscode.WebviewViewProvider {
     private view?: vscode.WebviewView;
     private refreshTimer?: ReturnType<typeof setInterval>;
@@ -30,6 +37,7 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
         private readonly globalState: vscode.Memento,
         private readonly secrets: vscode.SecretStorage,
         private readonly proxyManager?: ProxyManager,
+        private readonly extensionVersion: string = '0.0.0',
     ) {
         this.config = initialConfig;
     }
@@ -89,6 +97,21 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
                 this.selectedDays = days;
                 this.tracker.setSelectedDays(days);
                 await this.refreshDashboard();
+            } else if (msg.type === 'checkUpdate') {
+                this.view?.webview.postMessage({ type: 'updateCheckState', data: { checking: true } });
+                try {
+                    const result = await vscode.commands.executeCommand<UpdateCheckResultData>('tokenMonitor.checkUpdate');
+                    this.view?.webview.postMessage({
+                        type: 'updateCheckState',
+                        data: { checking: false, result: result ?? { status: 'cancelled', message: '已取消更新。' } }
+                    });
+                } catch (error) {
+                    const message = error instanceof Error ? error.message : '未知错误';
+                    this.view?.webview.postMessage({
+                        type: 'updateCheckState',
+                        data: { checking: false, result: { status: 'error', message: `检查更新失败：${message}` } }
+                    });
+                }
             }
         });
     }
@@ -583,6 +606,50 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
         font-size: 10px;
         color: rgba(255, 255, 255, 0.54);
         font-family: var(--font-mono);
+    }
+    .header-version {
+        margin-top: 6px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .header-version .version-label {
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.45);
+        font-family: var(--font-mono);
+    }
+    .header-version .btn-update {
+        padding: 2px 8px;
+        font-size: 10px;
+        color: rgba(255, 255, 255, 0.6);
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .header-version .btn-update:hover {
+        color: #fff;
+        background: rgba(255, 255, 255, 0.15);
+        border-color: rgba(255, 255, 255, 0.25);
+    }
+    .header-version .btn-update.is-loading {
+        pointer-events: none;
+        color: rgba(255, 255, 255, 0.9);
+        background: rgba(255, 91, 80, 0.14);
+        border-color: rgba(255, 91, 80, 0.32);
+    }
+    .header-version .btn-update.is-loading::before {
+        content: '';
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        margin-right: 6px;
+        vertical-align: -1px;
+        border-radius: 50%;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        border-top-color: rgba(255, 255, 255, 0.92);
+        animation: spin 0.75s linear infinite;
     }
     .user-status {
         display: inline-flex;
@@ -1366,6 +1433,10 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
             <div class="header-title">AI Token 监控</div>
             <div class="header-subline">本地采集、自动上报、统一汇总。</div>
             <div class="header-author">Powered by Zhi.Chen</div>
+            <div class="header-version">
+                <span class="version-label">v${this.esc(this.extensionVersion)}</span>
+                <button class="btn-update" id="checkUpdateBtn" type="button">检查更新</button>
+            </div>
         </div>
         <div class="header-identity${cfgData.userName ? '' : ' empty'}${stats.totalFailed > 0 ? ' offline' : ''}" id="headerIdentity" data-section="basic" title="点击修改基础设置">
             <div class="identity-kicker">当前身份</div>
@@ -1584,6 +1655,23 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
         vscMsg('refresh');
     }
 
+    function setUpdateButtonState(checking, result) {
+        const btn = document.getElementById('checkUpdateBtn');
+        if (!btn) return;
+        if (checking) {
+            btn.disabled = true;
+            btn.classList.add('is-loading');
+            btn.textContent = '检查中';
+            return;
+        }
+        btn.disabled = false;
+        btn.classList.remove('is-loading');
+        btn.textContent = '检查更新';
+        if (result && result.message) {
+            showToast(result.message);
+        }
+    }
+
     function escapeHtml(value) {
         return String(value || '')
             .replace(/&/g, '&amp;')
@@ -1654,6 +1742,16 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
         if (reloadBtn && reloadBtn.dataset.boundClick !== '1') {
             reloadBtn.dataset.boundClick = '1';
             reloadBtn.addEventListener('click', reloadWindow);
+        }
+
+        const checkUpdateBtn = document.getElementById('checkUpdateBtn');
+        if (checkUpdateBtn && checkUpdateBtn.dataset.boundClick !== '1') {
+            checkUpdateBtn.dataset.boundClick = '1';
+            checkUpdateBtn.addEventListener('click', () => {
+                if (checkUpdateBtn.disabled) return;
+                setUpdateButtonState(true);
+                vscMsg('checkUpdate');
+            });
         }
 
         document.querySelectorAll('.date-btn').forEach(btn => {
@@ -1956,6 +2054,10 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
 
             if (msg.type === 'identityStatus') {
                 updateIdentityCheck(msg.data);
+            }
+
+            if (msg.type === 'updateCheckState') {
+                setUpdateButtonState(Boolean(msg.data && msg.data.checking), msg.data && msg.data.result);
             }
 
             if (msg.type === 'proxyStatus') {

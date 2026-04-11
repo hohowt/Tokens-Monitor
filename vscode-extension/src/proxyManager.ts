@@ -588,6 +588,13 @@ export class ProxyManager {
             this.context.globalState.get<string>('aiTokenMonitor.previousHttpProxy', ''),
         );
         await httpConfig.update('proxy', previous, vscode.ConfigurationTarget.Global);
+
+        // Restore proxyStrictSSL
+        const prevStrictSSL = this.context.globalState.get<boolean | undefined>('aiTokenMonitor.previousProxyStrictSSL');
+        if (prevStrictSSL !== undefined) {
+            await httpConfig.update('proxyStrictSSL', prevStrictSSL, vscode.ConfigurationTarget.Global);
+        }
+
         this.appendOutputLine(
             `[proxy] Restored VS Code http.proxy (MITM not running) -> ${previous || '(empty)'}`,
         );
@@ -608,11 +615,24 @@ export class ProxyManager {
         }
 
         if (currentProxy === mitmProxy) {
+            // Ensure proxyStrictSSL is disabled even if proxy was already set
+            const strictSSL = httpConfig.get<boolean>('proxyStrictSSL', true);
+            if (strictSSL) {
+                await this.context.globalState.update('aiTokenMonitor.previousProxyStrictSSL', strictSSL);
+                await httpConfig.update('proxyStrictSSL', false, vscode.ConfigurationTarget.Global);
+                this.appendOutputLine('[proxy] Disabled http.proxyStrictSSL for MITM proxy');
+                return true;
+            }
             return false;
         }
 
+        // Save previous proxyStrictSSL before overriding
+        const prevStrictSSL = httpConfig.get<boolean>('proxyStrictSSL', true);
+        await this.context.globalState.update('aiTokenMonitor.previousProxyStrictSSL', prevStrictSSL);
+
         await httpConfig.update('proxy', mitmProxy, vscode.ConfigurationTarget.Global);
-        this.appendOutputLine(`[proxy] Updated VS Code http.proxy -> ${mitmProxy}`);
+        await httpConfig.update('proxyStrictSSL', false, vscode.ConfigurationTarget.Global);
+        this.appendOutputLine(`[proxy] Updated VS Code http.proxy -> ${mitmProxy}, proxyStrictSSL -> false`);
         return true;
     }
 }

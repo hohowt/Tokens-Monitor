@@ -21,6 +21,9 @@ class Settings(BaseSettings):
     # 同步间隔（分钟）
     SYNC_INTERVAL_MINUTES: int = 10
 
+    # 扩展分发目录
+    EXTENSION_DIR: str = "/opt/token-monitor/extensions"
+
     # Tokscale 等上报失败时是否在 API 响应中带简短错误信息（便于排障；生产可关）
     EXPOSE_INTERNAL_ERRORS: bool = False
 

@@ -8,10 +8,10 @@ import (
 )
 
 var (
-	modkernel32                = syscall.NewLazyDLL("kernel32.dll")
-	procOpenProcess            = modkernel32.NewProc("OpenProcess")
-	procCloseHandle            = modkernel32.NewProc("CloseHandle")
-	procGetExitCodeProcess     = modkernel32.NewProc("GetExitCodeProcess")
+	modkernel32            = syscall.NewLazyDLL("kernel32.dll")
+	procOpenProcess        = modkernel32.NewProc("OpenProcess")
+	procCloseHandle        = modkernel32.NewProc("CloseHandle")
+	procGetExitCodeProcess = modkernel32.NewProc("GetExitCodeProcess")
 )
 
 const (

@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import collect, dashboard
+from app.routers import collect, dashboard, extension
 from app.services.scheduler import start_scheduler, stop_scheduler
 
 
@@ -26,6 +26,7 @@ app.add_middleware(
 
 app.include_router(dashboard.router)
 app.include_router(collect.router)
+app.include_router(extension.router)
 
 
 @app.get("/health")

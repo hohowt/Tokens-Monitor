@@ -223,7 +223,7 @@ type ProxyServer struct {
 	reporter      *Reporter
 	certMgr       *CertManager
 	transport     *http.Transport
-	upstreamProxy *url.URL // parsed upstream proxy; nil = direct
+	upstreamProxy *url.URL  // parsed upstream proxy; nil = direct
 	listenPort    int       // actual bound port (set after listen)
 	startedAt     time.Time // when process started
 }

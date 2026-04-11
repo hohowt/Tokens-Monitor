@@ -1,8 +1,8 @@
 package main
 
 import (
-	"encoding/csv"
 	"context"
+	"encoding/csv"
 	"errors"
 	"fmt"
 	"io"
@@ -146,8 +146,8 @@ type monitorRuntime struct {
 	listener      net.Listener
 	proxyAddr     string
 	listenPort    int
-	gatewayServer *http.Server   // nil if gateway_port not configured
-	gatewayLn     net.Listener   // nil if gateway_port not configured
+	gatewayServer *http.Server // nil if gateway_port not configured
+	gatewayLn     net.Listener // nil if gateway_port not configured
 	gatewayPort   int
 }
 
