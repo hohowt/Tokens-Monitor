@@ -1,0 +1,647 @@
+event: message_start
+data: {"message":{"content":[],"id":"msg_vrtx_014ahxF7h1eTZ9w2CbR1CRpW","model":"claude-opus-4-6","role":"assistant","stop_details":null,"stop_reason":null,"stop_sequence":null,"type":"message","usage":{"cache_creation":{"ephemeral_1h_input_tokens":0,"ephemeral_5m_input_tokens":714},"cache_creation_input_tokens":714,"cache_read_input_tokens":107041,"input_tokens":1,"output_tokens":25}},"type":"message_start"}
+
+event: content_block_start
+data: {"content_block":{"id":"toolu_vrtx_01HVe5rLYrt2KEcWwV34A6TK","input":{},"name":"Edit","type":"tool_use"},"index":0,"type":"content_block_start"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"{\"file_pat","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"h\":","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":" \"d:\\\\Re","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"pos","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\\\\","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"token-","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"监控\\\\backend\\","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\\app\\\\rou","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ters","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\\\\collect","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":".py\"","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":", \"new_str","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ing\": \"\\n\\nd","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ef _raise_i","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"dentity","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"_co","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"nflict(e","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"xc: Identit","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"yCon","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"flict","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"Er","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ror) -\u003e N","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"one","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":":\"","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":", \"old_","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"string","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\": \"\\nde","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"f _sourc","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"e_app_displ","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ay_","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"na","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"me(so","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"urce_app:","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":" str | None)","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":" -","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\u003e str:\\","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"n    norma","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"lized = (sou","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"rce_ap","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"p or \\\"\\\")","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":".s","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"trip()\\","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"n    if not","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":" normali","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"zed:\\n","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"        retu","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"rn \\\"未标记应用","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\\\"\\n    map","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ping ","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"= {\\n       ","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":" # ","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"IDE / 编辑器","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\\n      ","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"  \\\"v","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"scode\\\"","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":": \\\"VS ","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"Code\\\"","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":",\\","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"n      ","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"  ","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\\\"","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"vscode-insid","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ers\\\"","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":": \\\"VS Code","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":" In","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"siders\\","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\",\\n ","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"       \\\"cur","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"sor\\\":","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":" \\\"Curs","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"or\\\",\\","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"n        # ","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"Toksc","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ale 支持","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"的 A","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"I 客户端\\n","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"        \\","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\"claude\\\"","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":": \\\"Claud","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"e C","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"od","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"e\\\",\\n","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"    ","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"    \\\"o","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"pencode","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\\\":","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":" \\\"OpenCod","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"e\\\",\\n  ","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"  ","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"    \\\"op","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"enclaw\\\":","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":" \\\"Ope","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"nCl","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"aw","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\\\",\\","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"n        \\\"","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"co","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"dex\\\": \\\"","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"Codex CLI","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\\\",\\n    ","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"   ","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":" \\\"gem","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ini\\\": ","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\\\"Ge","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"mini CLI\\\",\\","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"n     ","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"   \\","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\"amp\\\":","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":" \\\"Amp\\\",","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\\n     ","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"   \\\"droid","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\\\": \\\"Droi","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"d\\\",\\n      ","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"  \\\"he","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"rmes\\\": \\\"H","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ermes Ag","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"en","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"t\\","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\",\\n  ","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"      \\\"pi","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\\\": ","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\\\"Pi\\","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\",\\n ","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"      ","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":" \\\"kimi\\\": \\","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\"Kimi CL","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"I\\\",\\n   ","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"    ","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":" \\","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\"qwen","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\\\": \\\"Qw","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"en CLI","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\\\",\\n   ","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"     \\\"","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"roocode\\\":","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":" \\\"Roo ","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"Code\\\",\\n ","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"    ","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"   \\\"kiloco","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"de\\\": \\\"K","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ilo Co","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"de\\\",\\n ","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"       \\","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\"kilo\\\": ","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\\\"Ki","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"lo","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":" CLI\\\"","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":",\\n       ","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":" \\\"","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"mux\\\": \\\"Mux","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\\\",\\n      ","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"  \\\"cr","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ush\\\": \\\"C","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"rush\\","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\",\\","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"n       ","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":" \\","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\"synt","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"he","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"tic\\\": \\\"","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"Synthe","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"tic\\\",\\n   ","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"     # ","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"其他","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\\n        \\\"","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"powershell","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\\\": \\\"Pow","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"erShell\\\",\\n","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"        \\\"","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"cmd","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\\\":","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":" \\\"CMD\\\",","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\\n    ","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"    \\\"gat","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"eway-sy","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"nc\\\":","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":" \\\"网关同步\\\"","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":",\\n      ","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"  ","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\\\"unknown-","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"app\\\": \\","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\"未标记应用","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\\\"","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":",\\","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"n  ","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"  }\\n    ret","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"urn","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":" mappi","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ng.","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"get(no","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"rmalized, ","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"normaliz","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ed)\\n\\n\\nde","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"f _raise","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"_identity_c","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"on","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"fli","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ct(exc: I","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"denti","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ty","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"Confli","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ctErro","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"r) -\u003e N","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"one:\"","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":", \"repl","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ace_","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"all\": f","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"als","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"e}","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_stop
+data: {"index":0,"type":"content_block_stop"}
+
+event: message_delta
+data: {"context_management":{"applied_edits":[]},"copilot_usage":{"token_details":null,"total_nano_aiu":0},"delta":{"stop_details":null,"stop_reason":"tool_use","stop_sequence":null},"type":"message_delta","usage":{"cache_creation_input_tokens":714,"cache_read_input_tokens":107041,"input_tokens":1,"output_tokens":539}}
+
+event: message_stop
+data: {"type":"message_stop"}
+
+data: [DONE]
+

@@ -1,0 +1,200 @@
+event: message_start
+data: {"message":{"content":[],"id":"msg_vrtx_01S2TKkAUUdddJj5a3Fahoe6","model":"claude-opus-4-6","role":"assistant","stop_details":null,"stop_reason":null,"stop_sequence":null,"type":"message","usage":{"cache_creation":{"ephemeral_1h_input_tokens":0,"ephemeral_5m_input_tokens":183},"cache_creation_input_tokens":183,"cache_read_input_tokens":117634,"input_tokens":1,"output_tokens":1}},"type":"message_start"}
+
+event: content_block_start
+data: {"content_block":{"text":"","type":"text"},"index":0,"type":"content_block_start"}
+
+event: content_block_delta
+data: {"delta":{"text":"Not","type":"text_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":" used anymore. Remove","type":"text_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"text":" it:","type":"text_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_stop
+data: {"index":0,"type":"content_block_stop"}
+
+event: content_block_start
+data: {"content_block":{"id":"toolu_vrtx_01X8oR9DVYLTZJ2nYMrj3QsG","input":{},"name":"Edit","type":"tool_use"},"index":1,"type":"content_block_start"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"{\"file_pa","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"th\": \"d:\\\\","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"Repos\\\\toke","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"n-监控\\\\ba","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ckend\\\\app\\\\","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"routers\\\\da","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"shboard.py","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\"","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":", \"new","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"_string\":","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":" \"fro","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"m datetime","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":" import","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":" dat","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"e, d","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ateti","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"me, time as ","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"dt_time, ti","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"mede","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"lt","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"a\\","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"n\\nfr","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"om fasta","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"pi","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":" imp","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ort ","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"APIRouter, D","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"epen","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ds,","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":" Query\"","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":", \"o","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ld_s","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"tring\": \"fr","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"om datetime","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":" impo","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"rt ","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"date, da","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"teti","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"me, time","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":" as dt_time,","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":" tim","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"edelta\\nfrom","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":" zonei","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"nfo import Z","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"oneIn","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"fo\\","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"n\\nfrom fast","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"api ","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"import API","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"Router, Dep","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ends, Query\"","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":", \"r","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"eplace_al","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"l\": ","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"false}","type":"input_json_delta"},"index":1,"type":"content_block_delta"}
+
+event: content_block_stop
+data: {"index":1,"type":"content_block_stop"}
+
+event: message_delta
+data: {"context_management":{"applied_edits":[]},"copilot_usage":{"token_details":null,"total_nano_aiu":0},"delta":{"stop_details":null,"stop_reason":"tool_use","stop_sequence":null},"type":"message_delta","usage":{"cache_creation_input_tokens":183,"cache_read_input_tokens":117634,"input_tokens":1,"output_tokens":198}}
+
+event: message_stop
+data: {"type":"message_stop"}
+
+data: [DONE]
+

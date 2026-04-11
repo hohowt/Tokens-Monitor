@@ -67,6 +67,7 @@ export class TokenTracker {
     public todayRequests = 0;
     public totalReported = 0;
     public totalFailed = 0;
+    public selectedDays = 1;
 
     // Breakdown stats (observable by Dashboard)
     private sourceBreakdown: Map<string, number> = new Map();
@@ -304,18 +305,23 @@ export class TokenTracker {
         await this.flushOfflineQueue();
     }
 
+    setSelectedDays(days: number): void {
+        this.selectedDays = days;
+    }
+
     async syncStats(): Promise<void> {
         try {
             if (!this.config.serverUrl || !this.config.userId || !this.config.userName) return;
-            const url = `${this.config.serverUrl}/api/clients/my-stats?user_id=${encodeURIComponent(this.config.userId)}&user_name=${encodeURIComponent(this.config.userName)}&department=${encodeURIComponent(this.config.department || '')}`;
+            const url = `${this.config.serverUrl}/api/clients/my-stats?user_id=${encodeURIComponent(this.config.userId)}&user_name=${encodeURIComponent(this.config.userName)}&department=${encodeURIComponent(this.config.department || '')}&days=${this.selectedDays}`;
             const res = await this.getJSON<{ today_tokens: number, today_requests: number }>(url);
             if (res && typeof res.today_tokens === 'number') {
-                const pendingReqs = this.offlineQueue.length;
-                const pendingTokens = this.offlineQueue.reduce((sum, r) => sum + r.totalTokens, 0);
-                
-                this.todayTokens = Math.max(this.todayTokens, res.today_tokens + pendingTokens);
-                this.todayRequests = Math.max(this.todayRequests, res.today_requests + pendingReqs);
-                this.totalReported = res.today_tokens; // 已上报（服务端真正落地的 Token 数量）
+                // 仅查看"今日"时加上本地待发送队列；多日范围不加（pending 只影响今天）
+                const pendingReqs = this.selectedDays === 1 ? this.offlineQueue.length : 0;
+                const pendingTokens = this.selectedDays === 1 ? this.offlineQueue.reduce((sum, r) => sum + r.totalTokens, 0) : 0;
+
+                this.todayTokens = res.today_tokens + pendingTokens;
+                this.todayRequests = res.today_requests + pendingReqs;
+                this.totalReported = res.today_tokens;
                 this.persistTodayStats();
 
                 if (this.eventBus) {

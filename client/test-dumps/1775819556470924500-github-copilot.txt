@@ -1,0 +1,632 @@
+event: message_start
+data: {"message":{"content":[],"id":"msg_vrtx_01E7ocbtuvHufqnMgmZ25RZm","model":"claude-opus-4-6","role":"assistant","stop_details":null,"stop_reason":null,"stop_sequence":null,"type":"message","usage":{"cache_creation":{"ephemeral_1h_input_tokens":0,"ephemeral_5m_input_tokens":1069},"cache_creation_input_tokens":1069,"cache_read_input_tokens":97317,"input_tokens":1,"output_tokens":18}},"type":"message_start"}
+
+event: content_block_start
+data: {"content_block":{"id":"toolu_vrtx_01AiWEcSvkBYjTTr9gHat7Fm","input":{},"name":"Write","type":"tool_use"},"index":0,"type":"content_block_start"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"{\"content","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\": \"","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"packag","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"e main\\n\\n","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"im","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"por","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"t \\\"s","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"trings\\\"\\","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"n\\n// ","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"bypassDomain","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"s 是系统代理 / NO","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"_PROXY 共","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"用的直连域名列表。\\","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"n/","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"/ ","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"保留","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"内网直连的同时，让 ","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"VS Cod","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"e 扩展市场、CD","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"N、更新等走直连，\\","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"n// 避免未启动 M","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ITM 或 MI","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"TM 仅","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"处理 AI","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":" 域名时编辑器","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"无法联网","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"。\\nvar byp","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ass","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"Dom","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ains =","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":" []string","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"{\\n\\t\\","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\"localho","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"st\\\",\\n","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\\t\\\"127.0.","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"0.1\\\",\\n\\t","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\\\"10.*\\\",\\n\\","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"t\\\"192.168","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":".*\\\",\\n\\t\\","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\"172.16.*","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\\\",\\n\\t\\\"*","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":".local\\\",\\n","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\\t// ","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"VS Code /","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":" Marketplac","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"e / 更新（见官","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"方网络文档常","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"见域名）\\n\\t\\\"","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"*.vscod","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"e-cdn.n","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"et\\\",\\n","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\\t\\\"*.","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"gallery.v","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"sa","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ssets.io\\\"","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":",\\n\\t\\\"mark","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"etplac","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"e.visualst","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"udio.com\\\",\\","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"n\\t\\\"*","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":".vsassets.i","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"o\\\",","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\\n\\t\\\"vs","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"code","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"expe","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"riments.az","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"uree","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"dge.net\\\",","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\\n\\t\\\"az7","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"64295.vo.ms","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ecnd.","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"net\\\",","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\\n\\t\\\"*","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":".v","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"o.","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"mse","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"cnd.","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"net\\\",\\","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"n\\t\\\"*.","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"vscode-u","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"npkg","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":".net\\\"","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":",\\n\\t","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\\\"vscode","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":".blob","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":".core.window","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"s.net","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\\\",\\n\\","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"t\\\"de","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"fault.exp-ta","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"s.com\\\",\\","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"n\\t// Micro","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"soft 账户 / ","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"部分 Azure 边缘节","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"点（登录与实验配置）\\n","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\\t\\\"login","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":".micro","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"soft","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"online.c","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"om\\\",\\n\\t\\\"","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"*.microsoft","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"on","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"line.","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"com\\\",\\n","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\\t// Gi","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"tHub 网","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"站本身","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"走直连，但 Co","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"pilo","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"t AP","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"I 域名（*.gi","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"thubcopil","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ot.com ","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"/ co","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"pilot-p","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ro","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"xy","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":".github","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"userc","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"onten","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"t.com）不绕过，经","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":" MITM","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":" 监控\\n\\","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"t\\\"","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"github.com\\\"","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":",\\","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"n\\t\\\"*.gith","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ub.com","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\\\",\\n}","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\\n\\n//","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":" buildProx","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"yBypass","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":" 返回 Windows「","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"Inter","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"net ","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"代理」","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"的例外列表 (P","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"roxyOve","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"rrid","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"e，","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"分号","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"分隔)。\\nfu","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"nc buildP","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"rox","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"yBypa","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ss() string","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":" {\\n\\tp","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"arts :","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"= make([","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"]string, 0","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":", len","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"(bypa","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ssDo","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"mai","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ns)+1)\\n\\t","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"parts = appe","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"nd(parts,","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":" b","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ypassDomai","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ns...","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":")\\n\\tpa","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"rts = ","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"app","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"en","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"d(parts,","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":" \\\"\u003clo","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"cal\u003e\\\")\\n","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\\treturn s","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"tring","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"s.Join(par","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ts","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":", \\\"","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":";\\\")\\n","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"}\\","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"n\\n// b","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"uildNoPr","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"oxy","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"Env 返回","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":" NO_PR","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"OXY（逗号分隔），须","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"与 buildProx","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"yB","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ypass 的「直连」","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"域名一致。\\nfunc","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":" buildNoP","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"roxyEnv()","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":" stri","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ng {","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\\n\\t","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"return s","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"tri","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ngs.Join(byp","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"assDomai","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ns,","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":" \\\",\\\")\\","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"n}\\n\"","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":", \"fi","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"le_","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"pa","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"th\": \"d:\\","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\\Repos\\\\tok","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"en-监控\\\\clie","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"nt\\\\bypas","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"s.go\"}","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_stop
+data: {"index":0,"type":"content_block_stop"}
+
+event: message_delta
+data: {"context_management":{"applied_edits":[]},"copilot_usage":{"token_details":null,"total_nano_aiu":0},"delta":{"stop_details":null,"stop_reason":"tool_use","stop_sequence":null},"type":"message_delta","usage":{"cache_creation_input_tokens":1069,"cache_read_input_tokens":97317,"input_tokens":1,"output_tokens":702}}
+
+event: message_stop
+data: {"type":"message_stop"}
+
+data: [DONE]
+

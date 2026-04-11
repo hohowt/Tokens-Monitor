@@ -1,4 +1,6 @@
 import * as vscode from 'vscode';
+import * as fs from 'fs';
+import * as path from 'path';
 
 export interface MonitorConfig {
     serverUrl: string;
@@ -12,6 +14,28 @@ export interface MonitorConfig {
     upstreamProxy: string;
 }
 
+interface IdentityInfo {
+    user_id?: string;
+    user_name?: string;
+    department?: string;
+}
+
+let _identityCache: IdentityInfo | null | undefined; // undefined = not yet loaded
+
+function loadIdentity(): IdentityInfo | null {
+    if (_identityCache !== undefined) { return _identityCache; }
+    try {
+        const appData = process.env.APPDATA;
+        if (!appData) { _identityCache = null; return null; }
+        const p = path.join(appData, 'ai-monitor', 'identity.json');
+        const raw = fs.readFileSync(p, 'utf8');
+        _identityCache = JSON.parse(raw) as IdentityInfo;
+    } catch {
+        _identityCache = null;
+    }
+    return _identityCache;
+}
+
 function getPort(value: number | undefined, fallback: number): number {
     if (typeof value === 'number' && Number.isInteger(value) && value > 0 && value <= 65535) {
         return value;
@@ -21,11 +45,12 @@ function getPort(value: number | undefined, fallback: number): number {
 
 export function getConfig(): MonitorConfig {
     const cfg = vscode.workspace.getConfiguration('aiTokenMonitor');
+    const identity = loadIdentity();
     return {
-        serverUrl: cfg.get<string>('serverUrl', 'http://192.168.0.135:8000').replace(/\/+$/, ''),
-        userId: cfg.get<string>('userId', ''),
-        userName: cfg.get<string>('userName', ''),
-        department: cfg.get<string>('department', ''),
+        serverUrl: cfg.get<string>('serverUrl', 'https://otw.tech:59889').replace(/\/+$/, ''),
+        userId: cfg.get<string>('userId', '') || identity?.user_id || '',
+        userName: cfg.get<string>('userName', '') || identity?.user_name || '',
+        department: cfg.get<string>('department', '') || identity?.department || '',
         copilotOrg: cfg.get<string>('copilotOrg', ''),
         transparentMode: cfg.get<boolean>('transparentMode', true),
         proxyPort: getPort(cfg.get<number>('proxyPort', 18090), 18090),
@@ -47,6 +72,9 @@ export function getNormalizedAppName(): string {
         'Visual Studio Code - Insiders': 'vscode-insiders',
         'Cursor': 'cursor',
         'Kiro': 'kiro',
+        'Windsurf': 'windsurf',
+        'VSCodium': 'vscodium',
+        'Trae': 'trae',
     };
     return map[name] || name.toLowerCase().replace(/\s+/g, '-');
 }

@@ -3,6 +3,7 @@ node_modules
 .vscode-test*/
 out/test
 src/**
+out/dashboard.dev.*
 .github/
 scripts/
 build.ps1

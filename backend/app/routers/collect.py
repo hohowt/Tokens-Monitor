@@ -5,16 +5,17 @@ Receives batched usage records from the Go client applications.
 
 import hashlib
 from datetime import date, datetime, time as dt_time, timedelta, timezone
-from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel
 from sqlalchemy import case, delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.canonical import dashboard_tz, source_app_display_name
 from app.config import settings
 from app.database import get_db
 from app.models import Client, Department, ModelPricing, TokenUsageLog, User
+from app.pricing import calc_cost_usd
 from app.schemas import TokscaleSubmitRequest
 
 router = APIRouter(prefix="/api", tags=["collect"])
@@ -108,7 +109,7 @@ async def _get_pricing(db: AsyncSession) -> dict[str, tuple[float, float]]:
     if _pricing_cache_ts and (now - _pricing_cache_ts).total_seconds() < 300:
         return _pricing_cache
 
-    result = await db.execute(select(ModelPricing))
+    result = await db.execute(select(ModelPricing).where(ModelPricing.effective_to.is_(None)))
     _pricing_cache = {
         p.model_name: (float(p.input_price_per_1k), float(p.output_price_per_1k))
         for p in result.scalars().all()
@@ -116,20 +117,6 @@ async def _get_pricing(db: AsyncSession) -> dict[str, tuple[float, float]]:
     _pricing_cache_ts = now
     return _pricing_cache
 
-
-def _calc_cost(pricing: dict[str, tuple[float, float]], model: str, input_tokens: int, output_tokens: int) -> float:
-    price = pricing.get(model)
-    if not price:
-        # Fuzzy match: "gpt-4o-2024-08-06" → "gpt-4o"
-        for name, p in pricing.items():
-            if model.startswith(name) or name.startswith(model):
-                price = p
-                break
-    if not price:
-        return 0.0
-    cost = (input_tokens / 1000 * price[0]) + \
-           (output_tokens / 1000 * price[1])
-    return round(cost, 6)
 
 
 # ── User cache ───────────────────────────────────────────────
@@ -160,41 +147,6 @@ def _same_person_name(left: str | None, right: str | None) -> bool:
     normalized_right = _normalize_person_name(right)
     return bool(normalized_left and normalized_right and normalized_left == normalized_right)
 
-
-def _source_app_display_name(source_app: str | None) -> str:
-    normalized = (source_app or "").strip()
-    if not normalized:
-        return "未标记应用"
-    mapping = {
-        # IDE / 编辑器
-        "vscode": "VS Code",
-        "vscode-insiders": "VS Code Insiders",
-        "cursor": "Cursor",
-        # Tokscale 支持的 AI 客户端
-        "claude": "Claude Code",
-        "opencode": "OpenCode",
-        "openclaw": "OpenClaw",
-        "codex": "Codex CLI",
-        "gemini": "Gemini CLI",
-        "amp": "Amp",
-        "droid": "Droid",
-        "hermes": "Hermes Agent",
-        "pi": "Pi",
-        "kimi": "Kimi CLI",
-        "qwen": "Qwen CLI",
-        "roocode": "Roo Code",
-        "kilocode": "Kilo Code",
-        "kilo": "Kilo CLI",
-        "mux": "Mux",
-        "crush": "Crush",
-        "synthetic": "Synthetic",
-        # 其他
-        "powershell": "PowerShell",
-        "cmd": "CMD",
-        "gateway-sync": "网关同步",
-        "unknown-app": "未标记应用",
-    }
-    return mapping.get(normalized, normalized)
 
 
 def _raise_identity_conflict(exc: IdentityConflictError) -> None:
@@ -241,24 +193,18 @@ def _tokscale_output_tokens(tokens) -> int:
     )
 
 
-def _dashboard_tz() -> ZoneInfo:
-    try:
-        return ZoneInfo(settings.DASHBOARD_TIMEZONE)
-    except Exception:
-        return ZoneInfo("Asia/Shanghai")
-
 
 def _tokscale_request_at(day: str, timestamp_ms: int | None) -> datetime:
     if timestamp_ms:
         return datetime.fromtimestamp(timestamp_ms / 1000, tz=timezone.utc)
 
     local_date = date.fromisoformat(day)
-    local_midday = datetime.combine(local_date, dt_time(hour=12), tzinfo=_dashboard_tz())
+    local_midday = datetime.combine(local_date, dt_time(hour=12), tzinfo=dashboard_tz())
     return local_midday.astimezone(timezone.utc)
 
 
 def _tokscale_range(day_start: str, day_end: str) -> tuple[datetime, datetime]:
-    tz = _dashboard_tz()
+    tz = dashboard_tz()
     start_date = date.fromisoformat(day_start)
     end_date = date.fromisoformat(day_end)
     start_ts = datetime.combine(start_date, dt_time.min, tzinfo=tz).astimezone(timezone.utc)
@@ -306,7 +252,7 @@ async def _get_known_apps_for_user(db: AsyncSession, internal_user_id: int) -> l
     )
     known_apps: list[str] = []
     for (source_app,) in result.all():
-        display_name = _source_app_display_name(source_app)
+        display_name = source_app_display_name(source_app)
         if display_name not in known_apps:
             known_apps.append(display_name)
     return known_apps[:5]
@@ -428,7 +374,6 @@ async def identity_check(
 ):
     normalized_user_id = _normalize_identity_value(user_id)
     normalized_user_name = _normalize_identity_value(user_name)
-    _ = _normalize_department_value(department)
 
     if not _has_complete_identity(normalized_user_id, normalized_user_name):
         return IdentityCheckResponse(
@@ -525,7 +470,7 @@ async def collect_usage(records: list[UsageRecordIn], db: AsyncSession = Depends
             cost_usd = 0.0
             cost_cny = 0.0
         else:
-            cost_usd = _calc_cost(pricing, rec.model, rec.prompt_tokens, rec.completion_tokens)
+            cost_usd = calc_cost_usd(pricing, rec.model, rec.prompt_tokens, rec.completion_tokens)
             cost_cny = round(cost_usd * settings.USD_TO_CNY, 4)
 
         try:
@@ -717,6 +662,7 @@ async def get_my_stats(
     user_id: str,
     user_name: str,
     department: str | None = None,
+    days: int = Query(1, ge=1, le=365),
     db: AsyncSession = Depends(get_db)
 ):
     normalized_user_id = _normalize_identity_value(user_id)
@@ -731,20 +677,19 @@ async def get_my_stats(
     except IdentityConflictError as exc:
         _raise_identity_conflict(exc)
     await db.commit()
-    start_ts, end_ts = _ts_range(1)
+    start_ts, end_ts = _ts_range(days)
     
     stmt = select(
-        func.sum(TokenUsageLog.total_tokens),
-        func.coalesce(func.sum(TokenUsageLog.request_count), 0),
+        func.coalesce(func.sum(TokenUsageLog.total_tokens), 0),
+        func.coalesce(func.sum(func.coalesce(TokenUsageLog.request_count, 1)), 0),
     ).where(
         TokenUsageLog.user_id == internal_user_id,
         TokenUsageLog.request_at.between(start_ts, end_ts)
     )
     result = await db.execute(stmt)
     row = result.first()
-    
-    today_tokens = row[0] or 0 if row else 0
-    today_requests = row[1] or 0 if row else 0
+    today_tokens = int(row[0]) if row else 0
+    today_requests = int(row[1]) if row else 0
 
     return MyStatsResponse(today_tokens=int(today_tokens), today_requests=int(today_requests))
 

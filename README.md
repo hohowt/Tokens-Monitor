@@ -23,6 +23,21 @@ cd backend && pip install -r requirements.txt && uvicorn app.main:app --reload
 cd frontend && pnpm install && pnpm dev
 ```
 
+## 上线要点
+
+```text
+Docker Compose:
+- 前端容器监听 80，宿主机映射到 3080
+- Nginx 已代理 /api 到 backend:8000，浏览器直接访问前端地址即可
+
+Kubernetes:
+- Ingress 不要对 token-monitor 做 rewrite-target，否则 /api/dashboard 和前端静态资源路径都会被改坏
+- /api 前缀直接转发到 token-monitor-backend，/ 转发到 token-monitor-frontend
+
+远程脚本部署:
+- 使用 scripts/deploy.py 时，frontend/package-lock.json 和 frontend/src/DashboardChart.tsx 必须一起上传，否则远程 frontend 构建会失败或依赖版本漂移
+```
+
 ## 目录结构
 
 ```

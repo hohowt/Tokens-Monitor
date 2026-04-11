@@ -77,6 +77,8 @@ func nonWindowsIDESettingsPaths() []idePath {
 		{name: "Cursor", path: filepath.Join(base, "Cursor", "User", "settings.json")},
 		{name: "Kiro", path: filepath.Join(base, "Kiro", "User", "settings.json")},
 		{name: "Windsurf", path: filepath.Join(base, "Windsurf", "User", "settings.json")},
+		{name: "VS Codium", path: filepath.Join(base, "VSCodium", "User", "settings.json")},
+		{name: "Trae", path: filepath.Join(base, "Trae", "User", "settings.json")},
 	}
 }
 

@@ -1,0 +1,71 @@
+event: message_start
+data: {"message":{"content":[],"id":"msg_vrtx_01HZAkGUMWE653SB5RhnQV1t","model":"claude-opus-4-6","role":"assistant","stop_details":null,"stop_reason":null,"stop_sequence":null,"type":"message","usage":{"cache_creation":{"ephemeral_1h_input_tokens":0,"ephemeral_5m_input_tokens":432},"cache_creation_input_tokens":432,"cache_read_input_tokens":121890,"input_tokens":1,"output_tokens":25}},"type":"message_start"}
+
+event: content_block_start
+data: {"content_block":{"id":"toolu_vrtx_018NLj6D3jbuHabSH7vLPacd","input":{},"name":"Read","type":"tool_use"},"index":0,"type":"content_block_start"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"{\"file_path","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\": \"d","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":":\\\\Repo","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"s\\\\token-监","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"控\\\\backend","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\\\\app\\\\rout","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"ers\\\\co","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"llect","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":".p","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"y\"","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":", \"l","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"imit\"","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":": 10","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":", \"off","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"set","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":"\":","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_delta
+data: {"delta":{"partial_json":" 109}","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+event: content_block_stop
+data: {"index":0,"type":"content_block_stop"}
+
+event: message_delta
+data: {"context_management":{"applied_edits":[]},"copilot_usage":{"token_details":null,"total_nano_aiu":0},"delta":{"stop_details":null,"stop_reason":"tool_use","stop_sequence":null},"type":"message_delta","usage":{"cache_creation_input_tokens":432,"cache_read_input_tokens":121890,"input_tokens":1,"output_tokens":106}}
+
+event: message_stop
+data: {"type":"message_stop"}
+
+data: [DONE]
+

@@ -175,6 +175,7 @@ class Deployer:
             "backend/app/models.py",
             "backend/app/schemas.py",
             "backend/app/pricing.py",
+            "backend/app/canonical.py",
             "backend/app/routers/dashboard.py",
             "backend/app/routers/collect.py",
             "backend/app/services/sync_newapi.py",
@@ -193,6 +194,7 @@ class Deployer:
         # Frontend files
         frontend_files = [
             "frontend/Dockerfile",
+            "frontend/package-lock.json",
             "frontend/package.json",
             "frontend/vite.config.ts",
             "frontend/tsconfig.json",
@@ -200,9 +202,13 @@ class Deployer:
             "frontend/nginx.conf",
             "frontend/src/main.tsx",
             "frontend/src/App.tsx",
+            "frontend/src/DashboardChart.tsx",
             "frontend/src/api.ts",
             "frontend/src/utils.ts",
             "frontend/src/index.css",
+            "frontend/src/AnimatedNumber.tsx",
+            "frontend/src/AutoScroll.tsx",
+            "frontend/src/vite-env.d.ts",
         ]
         
         for f in frontend_files:

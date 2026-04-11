@@ -91,20 +91,11 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: token-monitor
-  annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
   rules:
     - host: token-monitor.your-domain.com
       http:
         paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: token-monitor-frontend
-                port:
-                  number: 80
           - path: /api
             pathType: Prefix
             backend:
@@ -112,3 +103,10 @@ spec:
                 name: token-monitor-backend
                 port:
                   number: 8000
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: token-monitor-frontend
+                port:
+                  number: 80

@@ -34,7 +34,7 @@ func TestShouldOpaqueEstimate(t *testing.T) {
 
 func TestOpaqueTokenSplit(t *testing.T) {
 	body := bytesRepeat(100)
-	pt, ct, tt := opaqueTokenSplit(body)
+	pt, ct, tt := opaqueTokenSplit(body, "/v1/chat/completions")
 	if tt <= 0 || pt+ct != tt {
 		t.Fatalf("pt=%d ct=%d tt=%d", pt, ct, tt)
 	}

@@ -71,7 +71,7 @@ async function runToolWithTracking(
 
 export function registerTools(context: vscode.ExtensionContext, tracker: TokenTracker, eventBus?: EventBus) {
     try {
-        const codeReviewTool = vscode.lm.registerTool('token-monitor.codeReview', {
+        const codeReviewTool = vscode.lm.registerTool('token-monitor-codeReview', {
             async invoke(
                 options: vscode.LanguageModelToolInvocationOptions<{ code: string }>,
                 token: vscode.CancellationToken
@@ -88,7 +88,7 @@ export function registerTools(context: vscode.ExtensionContext, tracker: TokenTr
             },
         });
 
-        const explainCodeTool = vscode.lm.registerTool('token-monitor.explainCode', {
+        const explainCodeTool = vscode.lm.registerTool('token-monitor-explainCode', {
             async invoke(
                 options: vscode.LanguageModelToolInvocationOptions<{ code: string }>,
                 token: vscode.CancellationToken
@@ -105,7 +105,7 @@ export function registerTools(context: vscode.ExtensionContext, tracker: TokenTr
             },
         });
 
-        const generateTestsTool = vscode.lm.registerTool('token-monitor.generateTests', {
+        const generateTestsTool = vscode.lm.registerTool('token-monitor-generateTests', {
             async invoke(
                 options: vscode.LanguageModelToolInvocationOptions<{ code: string; language?: string }>,
                 token: vscode.CancellationToken
@@ -123,7 +123,7 @@ export function registerTools(context: vscode.ExtensionContext, tracker: TokenTr
             },
         });
 
-        const generateDocsTool = vscode.lm.registerTool('token-monitor.generateDocs', {
+        const generateDocsTool = vscode.lm.registerTool('token-monitor-generateDocs', {
             async invoke(
                 options: vscode.LanguageModelToolInvocationOptions<{ code: string; style?: string }>,
                 token: vscode.CancellationToken
@@ -141,7 +141,7 @@ export function registerTools(context: vscode.ExtensionContext, tracker: TokenTr
             },
         });
 
-        const refactorSuggestionsTool = vscode.lm.registerTool('token-monitor.refactorSuggestions', {
+        const refactorSuggestionsTool = vscode.lm.registerTool('token-monitor-refactorSuggestions', {
             async invoke(
                 options: vscode.LanguageModelToolInvocationOptions<{ code: string; goal?: string }>,
                 token: vscode.CancellationToken

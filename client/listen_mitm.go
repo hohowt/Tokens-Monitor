@@ -27,10 +27,3 @@ func tryListenMitmPort(preferred int) (net.Listener, int, error) {
 	return nil, 0, fmt.Errorf("无法在 %d–%d 范围内绑定可用端口（已尝试 %d 个）",
 		preferred, min(preferred+mitmPortMaxFallback-1, 65535), mitmPortMaxFallback)
 }
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}

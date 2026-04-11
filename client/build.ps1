@@ -9,6 +9,21 @@ $ErrorActionPreference = 'Stop'
 $ROOT = $PSScriptRoot
 $DIST = Join-Path $ROOT 'dist'
 
+# ── Resolve version ──
+$VERSION_FILE = Join-Path $ROOT 'VERSION'
+if (Test-Path -LiteralPath $VERSION_FILE) {
+    $VERSION = (Get-Content $VERSION_FILE -Raw).Trim()
+} else {
+    try {
+        $VERSION = (git -C $ROOT describe --tags --always 2>$null)
+        if (-not $VERSION) { $VERSION = 'dev' }
+    } catch {
+        $VERSION = 'dev'
+    }
+}
+$LDFLAGS = "-s -w -X main.Version=$VERSION"
+Write-Host "  Version: $VERSION" -ForegroundColor Magenta
+
 $targets = [ordered]@{
     'win' = @{
         Goos = 'windows'
@@ -50,7 +65,7 @@ function Build-Target($name) {
 
         Push-Location $ROOT
         $pushedLocation = $true
-        go build -ldflags='-s -w' -o $outputPath .
+        go build -ldflags="$LDFLAGS" -o $outputPath .
         if ($LASTEXITCODE -ne 0) {
             throw "go build failed for $($spec.Goos)/$($spec.Goarch)"
         }

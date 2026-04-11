@@ -84,9 +84,16 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
                 await vscode.commands.executeCommand('tokenMonitor.stopProxy');
             } else if (msg.type === 'reloadWindow') {
                 await vscode.commands.executeCommand('workbench.action.reloadWindow');
+            } else if (msg.type === 'changeDays') {
+                const days = Number(msg.days) || 1;
+                this.selectedDays = days;
+                this.tracker.setSelectedDays(days);
+                await this.refreshDashboard();
             }
         });
     }
+
+    private selectedDays = 1;
 
     private getStats() {
         const breakdown = this.tracker.getBreakdown();
@@ -97,7 +104,38 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
             totalFailed: this.tracker.totalFailed,
             breakdown,
             proxyRunning: false, // will be updated async
+            selectedDays: this.selectedDays,
         };
+    }
+
+    private async fetchOverview(): Promise<{
+        total_tokens: number;
+        total_cost_cny: number;
+        total_requests: number;
+        active_users: number;
+        tokens_change_pct: number | null;
+        cost_change_pct: number | null;
+    } | null> {
+        if (!this.config.serverUrl) return null;
+        try {
+            const url = `${this.config.serverUrl}/api/dashboard/overview?days=${this.selectedDays}`;
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 8000);
+            const res = await fetch(url, { signal: controller.signal });
+            clearTimeout(timer);
+            if (!res.ok) return null;
+            return await res.json() as {
+                total_tokens: number;
+                total_cost_cny: number;
+                total_requests: number;
+                active_users: number;
+                tokens_change_pct: number | null;
+                cost_change_pct: number | null;
+            };
+        } catch (e) {
+            console.error('[Dashboard] fetchOverview failed:', e);
+            return null;
+        }
     }
 
     private getConfigData() {
@@ -125,10 +163,20 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
         await this.refreshDashboard(true);
     }
 
-    private postStatsUpdate(): void {
+    private postStatsUpdate(overview?: {
+        total_tokens: number;
+        total_cost_cny: number;
+        total_requests: number;
+        active_users: number;
+        tokens_change_pct: number | null;
+        cost_change_pct: number | null;
+    } | null): void {
         this.view?.webview.postMessage({
             type: 'update',
-            data: this.getStats(),
+            data: {
+                ...this.getStats(),
+                overview: overview || null,
+            },
         });
     }
 
@@ -231,7 +279,9 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
             }
             await this.tracker.syncStats();
         }
-        this.postStatsUpdate();
+        const overview = await this.fetchOverview();
+        console.log('[Dashboard] overview result:', overview ? `tokens=${overview.total_tokens} requests=${overview.total_requests}` : 'null');
+        this.postStatsUpdate(overview);
         this.postIdentityStatus(identityStatus);
     }
 
@@ -282,6 +332,8 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
         --bg-soft: #171b23;
         --panel: rgba(22, 26, 34, 0.82);
         --panel-strong: rgba(26, 30, 39, 0.96);
+        --panel-elevated: rgba(20, 24, 33, 0.92);
+        --panel-muted: rgba(255, 255, 255, 0.03);
         --border: rgba(255, 255, 255, 0.08);
         --border-strong: rgba(255, 255, 255, 0.14);
         --text-main: #edf1f7;
@@ -290,6 +342,9 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
         --accent-strong: #ff875f;
         --accent-glow: rgba(255, 91, 80, 0.22);
         --accent-soft: rgba(255, 91, 80, 0.08);
+        --blue-glow: rgba(107, 163, 255, 0.22);
+        --green-glow: rgba(56, 217, 139, 0.2);
+        --amber-glow: rgba(255, 184, 77, 0.22);
         --success: #38d98b;
         --error: #ff5377;
         --font-ui: var(--vscode-font-family);
@@ -303,8 +358,9 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
         font-family: var(--font-ui);
         color: var(--text-main);
         background:
-            radial-gradient(circle at top left, rgba(255, 91, 80, 0.16), transparent 30%),
-            radial-gradient(circle at top right, rgba(74, 134, 255, 0.12), transparent 26%),
+            radial-gradient(circle at top left, rgba(255, 91, 80, 0.18), transparent 28%),
+            radial-gradient(circle at 82% 2%, rgba(74, 134, 255, 0.13), transparent 24%),
+            radial-gradient(circle at 50% 100%, rgba(255, 184, 77, 0.08), transparent 30%),
             linear-gradient(180deg, var(--bg-soft) 0%, var(--bg) 100%);
         padding: 0;
         margin: 0;
@@ -329,27 +385,26 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
 
     .glass-panel {
         background:
-            linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.012)),
-            var(--panel);
-        border: 1px solid var(--border);
-        border-radius: 20px;
-        backdrop-filter: blur(14px);
-        -webkit-backdrop-filter: blur(14px);
-        box-shadow: 0 14px 30px rgba(0, 0, 0, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+            linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.015)),
+            linear-gradient(180deg, rgba(26, 31, 43, 0.96), rgba(18, 23, 31, 0.96));
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 18px;
+        box-shadow: 0 18px 38px rgba(0, 0, 0, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+        backdrop-filter: blur(18px);
     }
 
     .header {
         position: relative;
         overflow: hidden;
-        margin: 12px 12px 10px;
-        padding: 18px;
+        margin: 14px 12px 10px;
+        padding: 20px;
         display: grid;
         grid-template-columns: minmax(0, 1fr) minmax(240px, 280px);
-        gap: 14px;
+        gap: 16px;
         align-items: start;
         background:
-            linear-gradient(135deg, rgba(255, 91, 80, 0.1), rgba(255, 255, 255, 0.025) 48%, rgba(74, 134, 255, 0.08) 100%),
-            linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent);
+            linear-gradient(135deg, rgba(255, 91, 80, 0.12), rgba(255, 255, 255, 0.03) 44%, rgba(74, 134, 255, 0.1) 100%),
+            linear-gradient(180deg, rgba(255, 255, 255, 0.025), transparent);
     }
     .header-left {
         position: relative;
@@ -377,22 +432,25 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
         z-index: 1;
         min-width: 0;
         align-self: start;
-        padding: 14px 16px 12px;
-        border-radius: 18px;
-        background: rgba(10, 14, 20, 0.34);
+        padding: 15px 16px 13px;
+        border-radius: 20px;
+        background:
+            linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.015)),
+            rgba(10, 14, 20, 0.42);
         border: 1px solid rgba(255, 255, 255, 0.1);
         display: flex;
         flex-direction: column;
         justify-content: flex-start;
         gap: 10px;
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+        box-shadow: 0 16px 26px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.04);
         cursor: pointer;
         transition: border-color 0.2s ease, transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
     }
     .header-identity:hover {
         transform: translateY(-1px);
-        border-color: rgba(255, 255, 255, 0.2);
-        background: rgba(15, 20, 28, 0.46);
+        border-color: rgba(255, 255, 255, 0.18);
+        background: rgba(15, 20, 28, 0.52);
+        box-shadow: 0 20px 28px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.05);
     }
     .header-identity.empty {
         border-style: dashed;
@@ -480,8 +538,8 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
         position: absolute;
         top: 0;
         left: 18px;
-        width: 72px;
-        height: 3px;
+        width: 86px;
+        height: 4px;
         border-radius: 999px;
         background: linear-gradient(90deg, var(--accent), rgba(255, 255, 255, 0));
     }
@@ -507,9 +565,9 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
         color: rgba(255, 255, 255, 0.54);
     }
     .header-title {
-        font-size: 22px;
-        font-weight: 700;
-        letter-spacing: 0.02em;
+        font-size: 24px;
+        font-weight: 800;
+        letter-spacing: 0.01em;
         color: #fff;
         margin-top: 12px;
     }
@@ -518,7 +576,7 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
         max-width: 380px;
         font-size: 12px;
         line-height: 1.5;
-        color: var(--text-sub);
+        color: rgba(220, 227, 239, 0.74);
     }
     .header-author {
         margin-top: 10px;
@@ -559,7 +617,7 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
     .content {
         position: relative;
         z-index: 1;
-        padding: 0 12px 16px;
+        padding: 0 12px 18px;
         display: flex;
         flex-direction: column;
         gap: 12px;
@@ -580,20 +638,27 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
     }
     .toolbar {
         display: flex;
-        align-items: center;
+        align-items: stretch;
         justify-content: space-between;
         gap: 14px;
-        padding: 12px 14px;
+        padding: 14px;
     }
     .toolbar-main {
         flex: 1;
         min-width: 0;
         display: grid;
-        grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
-        gap: 14px;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0;
     }
     .toolbar-item {
         min-width: 0;
+        padding: 12px 14px;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        background:
+            linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.012)),
+            rgba(255, 255, 255, 0.015);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
     }
     .toolbar-label {
         font-size: 10px;
@@ -605,6 +670,7 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
     .toolbar-value {
         margin-top: 6px;
         font-size: 12px;
+        font-weight: 600;
         line-height: 1.45;
         color: var(--text-main);
         white-space: nowrap;
@@ -618,6 +684,7 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
         gap: 12px;
         min-width: 0;
         font-size: 12px;
+        min-height: 88px;
     }
     .proxy-summary {
         display: flex;
@@ -649,25 +716,29 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
         box-shadow: 0 0 8px rgba(255, 184, 77, 0.7);
     }
     .btn-proxy {
-        padding: 8px 12px;
+        min-width: 72px;
+        padding: 9px 14px;
         font-size: 11px;
-        font-weight: 600;
+        font-weight: 700;
         color: var(--text-main);
-        background: rgba(255, 255, 255, 0.03);
+        background: rgba(255, 255, 255, 0.04);
         border: 1px solid var(--border-strong);
         cursor: pointer;
-        border-radius: 10px;
-        transition: all 0.2s ease;
+        border-radius: 12px;
+        transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
         flex-shrink: 0;
     }
     .btn-proxy:hover {
-        background: rgba(255, 255, 255, 0.06);
+        transform: translateY(-1px);
+        background: rgba(255, 255, 255, 0.07);
         border-color: rgba(255, 255, 255, 0.22);
+        box-shadow: 0 10px 16px rgba(0, 0, 0, 0.16);
     }
     .btn-proxy.is-active {
-        color: var(--success);
-        border-color: rgba(56, 217, 139, 0.28);
-        background: rgba(56, 217, 139, 0.08);
+        color: rgba(223, 255, 238, 0.96);
+        border-color: rgba(56, 217, 139, 0.24);
+        background: linear-gradient(135deg, rgba(56, 217, 139, 0.16), rgba(56, 217, 139, 0.08));
+        box-shadow: 0 10px 18px rgba(56, 217, 139, 0.12);
     }
     .btn-proxy:disabled {
         opacity: 0.5;
@@ -701,9 +772,15 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
     .toolbar-actions {
         display: flex;
         flex-direction: column;
-        align-items: flex-end;
+        align-items: stretch;
+        justify-content: center;
         gap: 8px;
         flex-shrink: 0;
+        padding: 10px 12px;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        background: rgba(255, 255, 255, 0.015);
+        min-width: 148px;
     }
     .refresh-meta {
         display: inline-flex;
@@ -713,6 +790,7 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
         font-size: 11px;
         color: var(--text-sub);
         white-space: nowrap;
+        justify-content: flex-start;
     }
     .refresh-meta::before {
         content: '';
@@ -734,15 +812,17 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
     }
     .btn-secondary {
         color: var(--text-main);
-        background: rgba(255, 255, 255, 0.04);
+        background: rgba(255, 255, 255, 0.05);
         border-color: var(--border-strong);
     }
     .btn-secondary:hover {
         border-color: rgba(255, 255, 255, 0.24);
         background: rgba(255, 255, 255, 0.08);
+        box-shadow: 0 10px 16px rgba(0, 0, 0, 0.16);
     }
     .refresh-btn {
-        min-width: 104px;
+        width: 100%;
+        min-width: 120px;
     }
     .refresh-btn.is-loading {
         position: relative;
@@ -764,88 +844,132 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
         animation: spin 0.75s linear infinite;
     }
 
-    .grid {
+    .date-range-bar {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
+        margin: 14px 0 12px;
+        padding: 8px;
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background:
+            linear-gradient(135deg, rgba(255, 91, 80, 0.08), rgba(107, 163, 255, 0.06)),
+            rgba(255, 255, 255, 0.03);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+    .date-btn {
+        min-width: 0;
+        padding: 10px 8px !important;
+        border: 1px solid transparent !important;
+        border-radius: 12px !important;
+        background: rgba(255, 255, 255, 0.01) !important;
+        color: rgba(214, 221, 234, 0.72) !important;
+        font-size: 12px !important;
+        font-weight: 700 !important;
+        cursor: pointer !important;
+        transition: transform 0.18s ease, background 0.22s ease, color 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease !important;
+        text-align: center !important;
+        letter-spacing: 0.04em !important;
+        box-shadow: none !important;
+        outline: none !important;
+        line-height: 1.4 !important;
+        min-height: 40px !important;
+    }
+    .date-btn:hover {
+        background: rgba(255, 255, 255, 0.06) !important;
+        border-color: rgba(255, 255, 255, 0.08) !important;
+        color: #edf1f7 !important;
+        transform: translateY(-1px);
+    }
+    .date-btn.active {
+        background: linear-gradient(135deg, rgba(255, 91, 80, 0.28), rgba(255, 135, 95, 0.18)) !important;
+        border-color: rgba(255, 135, 95, 0.26) !important;
+        color: #fff3ee !important;
+        font-weight: 700 !important;
+        box-shadow: 0 10px 24px rgba(255, 91, 80, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+    }
+
+    .stats-panel {
+        padding: 0;
+    }
+    .stats-grid {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 12px;
+        width: 100%;
+        padding: 14px;
+        align-items: stretch;
     }
-    .card {
+    .stat-item {
         position: relative;
+        min-width: 0;
+        min-height: 102px;
+        padding: 15px 16px 16px;
+        box-sizing: border-box;
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background:
+            linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.02)),
+            rgba(8, 12, 18, 0.28);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
         overflow: hidden;
-        padding: 18px 16px 16px;
-        min-height: 118px;
+        transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
     }
-    .card::before {
+    .stat-item:hover {
+        transform: translateY(-1px);
+        border-color: rgba(255, 255, 255, 0.12);
+        box-shadow: 0 16px 24px rgba(0, 0, 0, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    }
+    .stat-item::before {
         content: '';
         position: absolute;
-        inset: 0;
-        background: linear-gradient(145deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0));
-        pointer-events: none;
-    }
-    .card::after {
-        content: '';
-        position: absolute;
-        top: 16px;
+        top: 0;
         left: 16px;
-        width: 58px;
+        width: 34px;
         height: 3px;
         border-radius: 999px;
-        background: linear-gradient(90deg, var(--accent), rgba(255, 255, 255, 0));
-        opacity: 0.85;
+        background: linear-gradient(90deg, rgba(255, 91, 80, 0.95), rgba(255, 184, 77, 0.72));
+        box-shadow: 0 0 14px rgba(255, 91, 80, 0.28);
     }
-    .card:nth-child(2)::after {
-        background: linear-gradient(90deg, var(--success), rgba(255, 255, 255, 0));
+    .stat-item.stat-item-green::before {
+        background: linear-gradient(90deg, rgba(56, 217, 139, 0.95), rgba(130, 255, 202, 0.72));
+        box-shadow: 0 0 14px var(--green-glow);
     }
-    .card.is-refreshing {
-        border-color: rgba(255, 255, 255, 0.14);
-        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.04), 0 16px 30px rgba(0, 0, 0, 0.2);
+    .stat-item.stat-item-amber::before {
+        background: linear-gradient(90deg, rgba(255, 184, 77, 0.95), rgba(255, 222, 130, 0.72));
+        box-shadow: 0 0 14px var(--amber-glow);
     }
-    .card.is-refreshing::before {
-        background:
-            linear-gradient(145deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0)),
-            linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
-        background-size: auto, 220px 100%;
-        background-repeat: no-repeat;
-        animation: shimmer 1.15s linear infinite;
+    .stat-item.stat-item-blue::before {
+        background: linear-gradient(90deg, rgba(107, 163, 255, 0.95), rgba(155, 198, 255, 0.72));
+        box-shadow: 0 0 14px var(--blue-glow);
     }
-    .card.is-refreshing .card-value,
-    .card.is-refreshing .card-note {
-        opacity: 0.72;
-        transition: opacity 0.2s ease;
-    }
-    .card-title {
-        position: relative;
-        z-index: 1;
+    .stat-label {
+        padding-top: 8px;
         font-size: 11px;
-        font-weight: 600;
-        color: rgba(255, 255, 255, 0.5);
-        margin-bottom: 20px;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-    }
-    .card-value {
-        position: relative;
-        z-index: 1;
-        font-family: var(--font-mono);
-        font-size: 32px;
-        line-height: 1;
         font-weight: 700;
-        letter-spacing: -0.5px;
+        letter-spacing: 0.08em;
+        color: rgba(220, 228, 240, 0.62);
+        margin-bottom: 12px;
+        line-height: 1.45;
     }
-    .card-value.tokens {
+    .stat-num {
+        font-family: var(--font-mono);
+        font-size: clamp(25px, 5vw, 31px);
+        font-weight: 800;
+        line-height: 1.05;
+        letter-spacing: -0.04em;
         color: #fff;
-        text-shadow: 0 0 18px rgba(255, 91, 80, 0.18);
+        transition: opacity 0.2s ease;
+        word-break: break-word;
     }
-    .card-value.requests {
-        color: #fff;
-        text-shadow: 0 0 18px rgba(56, 217, 139, 0.16);
-    }
-    .card-note {
-        position: relative;
-        z-index: 1;
-        margin-top: 14px;
+    .stat-num.is-loading { opacity: 0.45; }
+    .stat-num.red { color: #ff875f !important; }
+    .stat-num.green { color: #38d98b !important; }
+    .stat-num.amber { color: #ffb84d !important; }
+    .stat-num.blue { color: #6ba3ff !important; }
+    .stat-sub {
+        margin-top: 4px;
         font-size: 11px;
-        line-height: 1.5;
         color: var(--text-sub);
     }
 
@@ -880,16 +1004,31 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
     }
     .section-block {
         overflow: hidden;
+        position: relative;
+        transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .section-block:hover {
+        transform: translateY(-1px);
+        border-color: rgba(255, 255, 255, 0.12);
+        box-shadow: 0 18px 30px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    }
+    .section-block.expanded {
+        border-color: rgba(255, 91, 80, 0.18);
+        box-shadow: 0 18px 30px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(255, 91, 80, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.04);
     }
     .section-title {
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: 12px;
-        padding: 14px 16px;
+        padding: 15px 16px;
         color: var(--text-main);
         cursor: pointer;
         user-select: none;
+        transition: background 0.2s ease;
+    }
+    .section-title:hover {
+        background: rgba(255, 255, 255, 0.02);
     }
     .section-copy {
         min-width: 0;
@@ -929,6 +1068,7 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
         display: none;
         padding: 16px;
         border-top: 1px solid rgba(255, 255, 255, 0.06);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0.01));
     }
     .config-section.show {
         display: grid;
@@ -979,27 +1119,33 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
         font-weight: 600;
         color: var(--text-main);
         opacity: 0.85;
+        letter-spacing: 0.03em;
     }
     .field input {
         width: 100%;
-        padding: 10px 12px;
-        border-radius: 12px;
+        min-height: 42px;
+        padding: 11px 13px;
+        border-radius: 14px;
         border: 1px solid rgba(255, 255, 255, 0.08);
-        background: rgba(7, 10, 15, 0.32);
+        background: rgba(7, 10, 15, 0.4);
         color: var(--text-main);
         font-size: 13px;
         font-family: var(--font-ui);
         outline: none;
-        transition: all 0.2s ease;
+        transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
     }
     .field input:hover {
         border-color: rgba(255, 255, 255, 0.18);
-        background: rgba(10, 14, 20, 0.42);
+        background: rgba(10, 14, 20, 0.5);
     }
     .field input:focus {
         border-color: var(--accent);
-        box-shadow: 0 0 0 2px rgba(255, 91, 80, 0.15);
-        background: rgba(10, 14, 20, 0.5);
+        box-shadow: 0 0 0 3px rgba(255, 91, 80, 0.14), 0 10px 18px rgba(0, 0, 0, 0.16);
+        background: rgba(10, 14, 20, 0.54);
+        transform: translateY(-1px);
+    }
+    .field input::placeholder {
+        color: rgba(152, 160, 178, 0.56);
     }
     .field input.input-warning {
         border-color: rgba(255, 184, 77, 0.45);
@@ -1016,10 +1162,10 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
         grid-template-columns: auto 1fr;
         gap: 10px;
         align-items: start;
-        padding: 11px 12px;
-        border-radius: 14px;
+        padding: 12px 13px;
+        border-radius: 16px;
         border: 1px solid rgba(255, 255, 255, 0.08);
-        background: rgba(255, 255, 255, 0.03);
+        background: rgba(255, 255, 255, 0.035);
         color: var(--text-sub);
         font-size: 11px;
         line-height: 1.6;
@@ -1110,10 +1256,10 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
 
     .info-note {
         margin-top: 0;
-        padding: 10px 12px;
-        border-radius: 12px;
-        border: 1px dashed rgba(255, 255, 255, 0.08);
-        background: rgba(255, 255, 255, 0.03);
+        padding: 12px 13px;
+        border-radius: 16px;
+        border: 1px dashed rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.035);
         color: var(--text-sub);
         font-size: 11px;
         line-height: 1.6;
@@ -1136,6 +1282,7 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
         color: #fff;
         font-size: 11px;
         box-shadow: 0 16px 32px rgba(0, 0, 0, 0.24);
+        backdrop-filter: blur(16px);
         opacity: 0;
         visibility: hidden;
         transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
@@ -1195,7 +1342,10 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
         .toolbar-actions .btn {
             flex: 1;
         }
-        .grid {
+        .date-range-bar {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .stats-grid {
             grid-template-columns: 1fr;
         }
         #basicSection.show,
@@ -1243,10 +1393,6 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
         <div class="toolbar glass-panel">
             <div class="toolbar-main">
                 <div class="toolbar-item">
-                    <div class="toolbar-label">上报地址</div>
-                    <div class="toolbar-value" id="serverAddress" title="${this.esc(cfgData.serverUrl || '未配置上报地址')}">${this.esc(cfgData.serverUrl || '未配置上报地址')}</div>
-                </div>
-                <div class="toolbar-item">
                     <div class="toolbar-label">监控代理</div>
                     <div class="proxy-control">
                         <div>
@@ -1267,16 +1413,31 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
             </div>
         </div>
 
-        <div class=”grid”>
-            <div class="card glass-panel">
-                <div class="card-title">今日 Tokens</div>
-                <div class="card-value tokens" id="todayTokens">${stats.todayTokens.toLocaleString()}</div>
-                <div class="card-note">显示当前身份的当日统计，点击刷新会重新同步服务端数据。</div>
-            </div>
-            <div class="card glass-panel">
-                <div class="card-title">今日请求</div>
-                <div class="card-value requests" id="todayRequests">${stats.todayRequests}</div>
-                <div class="card-note">仅统计当前工号当天请求数，不再混入其他员工的汇总。</div>
+        <div class="date-range-bar">
+            <button class="date-btn active" data-days="1">今日</button>
+            <button class="date-btn" data-days="7">近7天</button>
+            <button class="date-btn" data-days="15">近15天</button>
+            <button class="date-btn" data-days="30">近30天</button>
+        </div>
+
+        <div class="stats-panel glass-panel">
+            <div class="stats-grid">
+                <div class="stat-item stat-item-red">
+                    <div class="stat-label" id="tokensTitle">今日 Tokens</div>
+                    <div class="stat-num red" id="todayTokens">${stats.todayTokens.toLocaleString()}</div>
+                </div>
+                <div class="stat-item stat-item-green">
+                    <div class="stat-label" id="requestsTitle">今日请求</div>
+                    <div class="stat-num green" id="todayRequests">${stats.todayRequests}</div>
+                </div>
+                <div class="stat-item stat-item-amber">
+                    <div class="stat-label" id="costTitle">今日成本</div>
+                    <div class="stat-num amber" id="todayCost">¥0.00</div>
+                </div>
+                <div class="stat-item stat-item-blue">
+                    <div class="stat-label" id="usersTitle">活跃用户</div>
+                    <div class="stat-num blue" id="activeUsers">0</div>
+                </div>
             </div>
         </div>
 
@@ -1292,7 +1453,7 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
                 <div class="config-section" id="basicSection">
                     <div class="field field-span-2">
                         <label>上报地址</label>
-                        <input id="cfgServer" type="text" data-key="serverUrl" value="${this.esc(cfgData.serverUrl)}" placeholder="例如：http://192.168.0.135:8000" />
+                        <input id="cfgServer" type="text" data-key="serverUrl" value="${this.esc(cfgData.serverUrl)}" placeholder="例如：https://otw.tech:59889" />
                     </div>
                     <div class="field">
                         <label>工号</label>
@@ -1367,8 +1528,8 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
     }
 
     function setCardRefreshState(refreshing) {
-        document.querySelectorAll('.grid .card').forEach(card => {
-            card.classList.toggle('is-refreshing', Boolean(refreshing));
+        document.querySelectorAll('.stat-num').forEach(el => {
+            el.classList.toggle('is-loading', Boolean(refreshing));
         });
     }
 
@@ -1436,12 +1597,15 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
         const sec = document.getElementById(id + 'Section');
         const arr = document.getElementById(id + 'Arrow');
         if (!sec || !arr) return;
+        const block = sec.closest('.section-block');
         if (sec.classList.contains('show')) {
             sec.classList.remove('show');
             arr.classList.remove('open');
+            if (block) block.classList.remove('expanded');
         } else {
             sec.classList.add('show');
             arr.classList.add('open');
+            if (block) block.classList.add('expanded');
         }
     }
 
@@ -1491,6 +1655,27 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
             reloadBtn.dataset.boundClick = '1';
             reloadBtn.addEventListener('click', reloadWindow);
         }
+
+        document.querySelectorAll('.date-btn').forEach(btn => {
+            if (btn.dataset.boundClick === '1') return;
+            btn.dataset.boundClick = '1';
+            btn.addEventListener('click', () => {
+                const days = parseInt(btn.getAttribute('data-days') || '1', 10);
+                document.querySelectorAll('.date-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const label = days === 1 ? '今日' : ('近' + days + '天');
+                const tokensTitle = document.getElementById('tokensTitle');
+                const requestsTitle = document.getElementById('requestsTitle');
+                const costTitle = document.getElementById('costTitle');
+                const usersTitle = document.getElementById('usersTitle');
+                if (tokensTitle) tokensTitle.textContent = label + ' Tokens';
+                if (requestsTitle) requestsTitle.textContent = label + '请求';
+                if (costTitle) costTitle.textContent = label + '成本';
+                if (usersTitle) usersTitle.textContent = label + '活跃用户';
+                beginRefreshFeedback(false);
+                vscode.postMessage({ type: 'changeDays', days });
+            });
+        });
     }
 
     let saveTimer;
@@ -1682,10 +1867,36 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
             if (msg.type === 'update') {
                 const todayTokensEl = document.getElementById('todayTokens');
                 const todayRequestsEl = document.getElementById('todayRequests');
+                const todayCostEl = document.getElementById('todayCost');
+                const activeUsersEl = document.getElementById('activeUsers');
                 const dot = document.getElementById('statusDot');
                 const identity = document.getElementById('headerIdentity');
-                if (todayTokensEl) todayTokensEl.textContent = Number(msg.data.todayTokens || 0).toLocaleString();
-                if (todayRequestsEl) todayRequestsEl.textContent = String(msg.data.todayRequests || 0);
+
+                const overview = msg.data.overview;
+                const selectedDays = msg.data.selectedDays || 1;
+                const label = selectedDays === 1 ? '今日' : ('近' + selectedDays + '天');
+
+                if (overview) {
+                    if (todayTokensEl) todayTokensEl.textContent = Number(overview.total_tokens || 0).toLocaleString();
+                    if (todayRequestsEl) todayRequestsEl.textContent = Number(overview.total_requests || 0).toLocaleString();
+                    if (todayCostEl) todayCostEl.textContent = '¥' + Number(overview.total_cost_cny || 0).toFixed(2);
+                    if (activeUsersEl) activeUsersEl.textContent = String(overview.active_users || 0);
+                } else {
+                    if (todayTokensEl) todayTokensEl.textContent = Number(msg.data.todayTokens || 0).toLocaleString();
+                    if (todayRequestsEl) todayRequestsEl.textContent = String(msg.data.todayRequests || 0);
+                    if (todayCostEl) todayCostEl.textContent = '¥0.00';
+                    if (activeUsersEl) activeUsersEl.textContent = '0';
+                }
+
+                const tokensTitle = document.getElementById('tokensTitle');
+                const requestsTitle = document.getElementById('requestsTitle');
+                const costTitle = document.getElementById('costTitle');
+                const usersTitle = document.getElementById('usersTitle');
+                if (tokensTitle) tokensTitle.textContent = label + ' Tokens';
+                if (requestsTitle) requestsTitle.textContent = label + '请求';
+                if (costTitle) costTitle.textContent = label + '成本';
+                if (usersTitle) usersTitle.textContent = label + '活跃用户';
+
                 finishRefreshFeedback();
                 const hasError = Number(msg.data.totalFailed || 0) > 0;
                 if (dot) {

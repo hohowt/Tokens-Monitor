@@ -17,6 +17,10 @@ export interface LocalProxyStatusSnapshot {
     status?: string;
     version?: string;
     mode?: string;
+    pid?: number;
+    port?: number;
+    uptime_seconds?: number;
+    upstream_proxy?: string;
     user?: string;
     department?: string;
     source_app?: string;
@@ -37,6 +41,8 @@ export class ProxyManager {
     private readonly recentOutputLines: string[] = [];
     private partialOutputLine = '';
     private healthCheckTimer?: ReturnType<typeof setInterval>;
+    /** When set, overrides config.proxyPort — used when we discover an existing instance on a different port */
+    private activePort?: number;
 
     constructor(
         private config: MonitorConfig,
@@ -88,7 +94,7 @@ export class ProxyManager {
         return new Promise(resolve => {
             const req = http.request({
                 hostname: '127.0.0.1',
-                port: this.config.proxyPort,
+                port: this.getEffectivePort(),
                 path: '/status',
                 method: 'GET',
                 timeout: 1500,
@@ -125,13 +131,11 @@ export class ProxyManager {
             return { status: 'off', routingChanged: false };
         }
 
-        // Clean up stale MITM routing left over from a previous session
-        const httpConfig = vscode.workspace.getConfiguration('http');
-        const currentProxy = this.normalizeProxyValue(httpConfig.get<string>('proxy', ''));
-        if (this.isMitmProxyValue(currentProxy) && !this.isRunning && !(await this.isProxyAvailable())) {
-            this.appendOutputLine('[proxy] Stale MITM proxy detected on startup — clearing before re-init');
-            await this.restoreHttpProxyIfMitmUnavailable();
-        }
+        // NOTE: We intentionally do NOT clear stale MITM routing here.
+        // If the proxy is about to (re)start, clearing http.proxy then re-setting it
+        // causes ensureVsCodeProxyRouting() to return routingChanged=true, triggering
+        // an infinite reload loop. All failure paths below already call
+        // restoreHttpProxyIfMitmUnavailable() individually.
 
         if (this.detectExternalProxy()) {
             const routingChanged = await this.ensureVsCodeProxyRouting();
@@ -143,6 +147,16 @@ export class ProxyManager {
             const routingChanged = await this.ensureVsCodeProxyRouting();
             this.startHealthCheck();
             return { status: this.isRunning ? 'internal' : 'external', routingChanged };
+        }
+
+        // Discover an existing ai-monitor instance (another IDE may have started it)
+        const existing = await this.discoverRunningInstance();
+        if (existing) {
+            this.appendOutputLine(`[proxy] Discovered existing ai-monitor on port ${existing.port} — reusing`);
+            this.activePort = existing.port;
+            const routingChanged = await this.ensureVsCodeProxyRouting();
+            this.startHealthCheck();
+            return { status: 'external', routingChanged };
         }
 
         const binaryPath = this.findBinaryPath();
@@ -195,6 +209,7 @@ export class ProxyManager {
         proc.on('exit', (code) => {
             this.appendOutputLine(`[proxy] Process exited with code ${code}`);
             this.process = null;
+            this.activePort = undefined;
             this.stopHealthCheck();
             void this.restoreHttpProxyIfMitmUnavailable();
         });
@@ -206,7 +221,14 @@ export class ProxyManager {
             return { status: 'off', routingChanged: false };
         }
 
-        this.appendOutputLine(`[proxy] Running on MITM:${this.config.proxyPort} Gateway:${this.config.gatewayPort}`);
+        // After process starts, read back the actual port from /status
+        const statusAfterStart = await this.getLocalStatus();
+        if (statusAfterStart?.port && statusAfterStart.port !== this.config.proxyPort) {
+            this.appendOutputLine(`[proxy] Actual port ${statusAfterStart.port} differs from configured ${this.config.proxyPort}`);
+            this.activePort = statusAfterStart.port;
+        }
+
+        this.appendOutputLine(`[proxy] Running on MITM:${this.getEffectivePort()} Gateway:${this.config.gatewayPort}`);
         const routingChanged = await this.ensureVsCodeProxyRouting();
         this.startHealthCheck();
         return { status: 'internal', routingChanged };
@@ -223,6 +245,7 @@ export class ProxyManager {
     public async stop(): Promise<void> {
         this.stopHealthCheck();
         if (!this.process) {
+            this.activePort = undefined;
             return;
         }
 
@@ -250,6 +273,7 @@ export class ProxyManager {
         });
 
         this.process = null;
+        this.activePort = undefined;
         this.appendOutputLine('[proxy] Stopped');
         await this.restoreHttpProxyIfMitmUnavailable();
     }
@@ -258,8 +282,12 @@ export class ProxyManager {
         return `http://127.0.0.1:${this.config.gatewayPort}`;
     }
 
+    public getEffectivePort(): number {
+        return this.activePort ?? this.config.proxyPort;
+    }
+
     public getMitmProxyUrl(): string {
-        return `http://127.0.0.1:${this.config.proxyPort}`;
+        return `http://127.0.0.1:${this.getEffectivePort()}`;
     }
 
     public detectExternalProxy(): boolean {
@@ -270,7 +298,7 @@ export class ProxyManager {
         return new Promise(resolve => {
             const req = http.request({
                 hostname: '127.0.0.1',
-                port: this.config.proxyPort,
+                port: this.getEffectivePort(),
                 path: '/status',
                 method: 'GET',
             }, res => resolve(res.statusCode === 200));
@@ -328,6 +356,87 @@ export class ProxyManager {
         return null;
     }
 
+    /**
+     * Discover an already-running ai-monitor instance started by another IDE or CLI.
+     * Checks: configured port → PID file → port range scan (18090..18099).
+     */
+    public async discoverRunningInstance(): Promise<{ port: number; status: LocalProxyStatusSnapshot } | null> {
+        // 1. Check configured port first (fast path)
+        const configStatus = await this.getLocalStatus();
+        if (configStatus?.status === 'running') {
+            return { port: this.config.proxyPort, status: configStatus };
+        }
+
+        // 2. Check PID file (%APPDATA%/ai-monitor/instance.json)
+        const pidInfo = await this.readInstanceInfo();
+        if (pidInfo?.port && pidInfo.port !== this.config.proxyPort) {
+            const pidStatus = await this.probePort(pidInfo.port);
+            if (pidStatus?.status === 'running') {
+                return { port: pidInfo.port, status: pidStatus };
+            }
+        }
+
+        // 3. Scan nearby port range
+        const basePort = this.config.proxyPort;
+        for (let offset = 1; offset <= 10; offset++) {
+            const port = basePort + offset;
+            const probeStatus = await this.probePort(port);
+            if (probeStatus?.status === 'running') {
+                return { port, status: probeStatus };
+            }
+        }
+
+        return null;
+    }
+
+    private async readInstanceInfo(): Promise<{ pid: number; port: number; version?: string } | null> {
+        const appData = process.env.APPDATA;
+        if (!appData) {
+            return null;
+        }
+        const infoPath = path.join(appData, 'ai-monitor', 'instance.json');
+        try {
+            const content = await fs.promises.readFile(infoPath, 'utf8');
+            return JSON.parse(content);
+        } catch {
+            return null;
+        }
+    }
+
+    private probePort(port: number): Promise<LocalProxyStatusSnapshot | null> {
+        return new Promise(resolve => {
+            const req = http.request({
+                hostname: '127.0.0.1',
+                port,
+                path: '/status',
+                method: 'GET',
+                timeout: 1500,
+            }, res => {
+                let body = '';
+                res.on('data', chunk => {
+                    body += chunk.toString();
+                });
+                res.on('end', () => {
+                    if (!res.statusCode || res.statusCode < 200 || res.statusCode >= 300) {
+                        resolve(null);
+                        return;
+                    }
+                    try {
+                        resolve(JSON.parse(body) as LocalProxyStatusSnapshot);
+                    } catch {
+                        resolve(null);
+                    }
+                });
+            });
+            req.on('error', () => resolve(null));
+            req.on('timeout', () => {
+                req.destroy();
+                resolve(null);
+            });
+            req.end();
+        });
+    }
+
     private startHealthCheck(): void {
         this.stopHealthCheck();
         this.healthCheckTimer = setInterval(async () => {
@@ -362,8 +471,13 @@ export class ProxyManager {
         try {
             const parsed = new URL(normalized);
             const port = parsed.port ? Number(parsed.port) : (parsed.protocol === 'https:' ? 443 : 80);
-            return (parsed.hostname === '127.0.0.1' || parsed.hostname === 'localhost')
-                && port === this.config.proxyPort;
+            const isLocal = parsed.hostname === '127.0.0.1' || parsed.hostname === 'localhost';
+            // Match the configured port, the active port, or the known fallback range (18090..18099)
+            const basePort = this.config.proxyPort;
+            return isLocal && (
+                port === this.getEffectivePort()
+                || (port >= basePort && port < basePort + 10)
+            );
         } catch {
             return false;
         }

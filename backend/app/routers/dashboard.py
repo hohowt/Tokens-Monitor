@@ -1,13 +1,13 @@
 from datetime import date, datetime, time as dt_time, timedelta
-from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import case, func, select, text, cast, Date as SADate
+from sqlalchemy import case, func, select, cast, Date as SADate
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.canonical import dashboard_tz, source_app_display_name, source_app_key_sql_case
 from app.config import settings
 from app.database import get_db
-from app.models import Alert, Client, Department, TokenUsageLog, User
+from app.models import Alert, Client, Department, ModelPricing, TokenUsageLog, User
 from app.schemas import (
     AlertItem,
     AlertListResponse,
@@ -42,40 +42,6 @@ def _source_display_name(source: str | None) -> str:
     return mapping.get(source or "", source or "unknown")
 
 
-def _source_app_display_name(source_app: str | None) -> str:
-    if not source_app:
-        return "未标记应用"
-    mapping = {
-        # IDE / 编辑器
-        "vscode": "VS Code",
-        "vscode-insiders": "VS Code Insiders",
-        "cursor": "Cursor",
-        # Tokscale 支持的 AI 客户端
-        "claude": "Claude Code",
-        "opencode": "OpenCode",
-        "openclaw": "OpenClaw",
-        "codex": "Codex CLI",
-        "gemini": "Gemini CLI",
-        "amp": "Amp",
-        "droid": "Droid",
-        "hermes": "Hermes Agent",
-        "pi": "Pi",
-        "kimi": "Kimi CLI",
-        "qwen": "Qwen CLI",
-        "roocode": "Roo Code",
-        "kilocode": "Kilo Code",
-        "kilo": "Kilo CLI",
-        "mux": "Mux",
-        "crush": "Crush",
-        "synthetic": "Synthetic",
-        # 其他
-        "powershell": "PowerShell",
-        "cmd": "CMD",
-        "gateway-sync": "网关同步",
-        "unknown-app": "未标记应用",
-    }
-    return mapping.get(source_app, source_app)
-
 
 def _endpoint_display_name(endpoint: str | None) -> str:
     normalized = (endpoint or "").strip()
@@ -85,13 +51,7 @@ def _endpoint_display_name(endpoint: str | None) -> str:
 
 
 def _source_app_key_expr():
-    return case(
-        (
-            (TokenUsageLog.source_app.is_(None)) | (TokenUsageLog.source_app == ""),
-            case((TokenUsageLog.source == "gateway", "gateway-sync"), else_="unknown-app"),
-        ),
-        else_=TokenUsageLog.source_app,
-    )
+    return source_app_key_sql_case(TokenUsageLog.source_app, TokenUsageLog.source)
 
 
 def _apply_source_app_filter(stmt, source_app: str | None):
@@ -101,16 +61,9 @@ def _apply_source_app_filter(stmt, source_app: str | None):
     return stmt.where(_source_app_key_expr() == normalized)
 
 
-def _dashboard_tz() -> ZoneInfo:
-    try:
-        return ZoneInfo(settings.DASHBOARD_TIMEZONE)
-    except Exception:
-        return ZoneInfo("Asia/Shanghai")
-
-
 def _ts_range(days: int, start_date: date | None = None, end_date: date | None = None):
     """返回大屏统计用的 [start_ts, end_ts]，按 DASHBOARD_TIMEZONE 的日历日边界（默认同国内本地日）。"""
-    tz = _dashboard_tz()
+    tz = dashboard_tz()
     end_d = end_date or datetime.now(tz).date()
     start_d = start_date or (end_d - timedelta(days=days - 1))
     start_ts = datetime.combine(start_d, dt_time.min, tzinfo=tz)
@@ -418,7 +371,7 @@ async def get_by_source_app(
     items = [
         BreakdownItem(
             key=r[0],
-            name=_source_app_display_name(r[0]),
+            name=source_app_display_name(r[0]),
             total_tokens=int(r[1]),
             cost_cny=round(float(r[2]), 2),
             percentage=round(int(r[1]) / grand_total * 100, 1),
@@ -484,18 +437,26 @@ async def get_alerts(
         .offset(offset).limit(limit)
     )
     alerts = result.scalars().all()
+
+    # Batch-load user/department names to avoid N+1 queries
+    user_ids = {a.target_id for a in alerts if a.target_type == "user"}
+    dept_ids = {a.target_id for a in alerts if a.target_type == "department"}
+    user_map: dict[int, str] = {}
+    dept_map: dict[int, str] = {}
+    if user_ids:
+        rows = await db.execute(select(User.id, User.name).where(User.id.in_(user_ids)))
+        user_map = {r[0]: r[1] for r in rows}
+    if dept_ids:
+        rows = await db.execute(select(Department.id, Department.name).where(Department.id.in_(dept_ids)))
+        dept_map = {r[0]: r[1] for r in rows}
+
     items = []
     for a in alerts:
-        # Resolve target name
         target_name = f"{a.target_type}#{a.target_id}"
-        if a.target_type == "user":
-            u = await db.get(User, a.target_id)
-            if u:
-                target_name = u.name
-        elif a.target_type == "department":
-            d = await db.get(Department, a.target_id)
-            if d:
-                target_name = d.name
+        if a.target_type == "user" and a.target_id in user_map:
+            target_name = user_map[a.target_id]
+        elif a.target_type == "department" and a.target_id in dept_map:
+            target_name = dept_map[a.target_id]
         items.append(AlertItem(
             id=a.id, alert_type=a.alert_type, target_type=a.target_type,
             target_name=target_name, message=a.message,
@@ -550,3 +511,45 @@ async def get_logs(
         for r in rows.all()
     ]
     return UsageLogResponse(items=items, total=total)
+
+
+@router.get("/admin/unpriced-models")
+async def get_unpriced_models(
+    days: int = Query(30, ge=1, le=365),
+    db: AsyncSession = Depends(get_db),
+):
+    """返回有流量但未配置定价的模型列表，按 token 消耗降序。"""
+    tz = dashboard_tz()
+    now = datetime.now(tz)
+    start = datetime.combine(now.date() - timedelta(days=days - 1), dt_time.min, tzinfo=tz)
+
+    priced_q = select(ModelPricing.model_name).where(ModelPricing.effective_to.is_(None))
+    priced_rows = await db.execute(priced_q)
+    priced_models = {r[0] for r in priced_rows.all()}
+
+    usage_q = (
+        select(
+            TokenUsageLog.model_name,
+            func.sum(func.coalesce(TokenUsageLog.total_tokens, 0)).label("total_tokens"),
+            func.count().label("requests"),
+        )
+        .where(TokenUsageLog.request_at >= start)
+        .where(TokenUsageLog.source != ESTIMATE_SOURCE)
+        .group_by(TokenUsageLog.model_name)
+        .order_by(func.sum(func.coalesce(TokenUsageLog.total_tokens, 0)).desc())
+    )
+    rows = await db.execute(usage_q)
+    result = []
+    for r in rows.all():
+        model = r[0] or "unknown"
+        # 前缀匹配检查（与 pricing.py 的 calc_cost_usd 一致）
+        is_priced = model in priced_models or any(
+            model.startswith(p) for p in priced_models
+        )
+        if not is_priced:
+            result.append({
+                "model": model,
+                "total_tokens": int(r[1]),
+                "requests": int(r[2]),
+            })
+    return result

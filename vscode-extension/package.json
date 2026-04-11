@@ -2,7 +2,7 @@
   "name": "ai-token-monitor",
   "displayName": "腾轩旅游集团 - AI Token 监控",
   "description": "腾轩旅游集团 AI 编程助手用量监控平台 — 支持 Copilot、Cursor、Claude、Continue 等 10+ 工具的 Token 统计与上报",
-  "version": "0.1.17",
+  "version": "0.1.22",
   "publisher": "txly",
   "author": {
     "name": "Zhi.Chen",
@@ -86,12 +86,77 @@
         "mac": "cmd+shift+m"
       }
     ],
+    "languageModelTools": [
+      {
+        "name": "token-monitor-codeReview",
+        "displayName": "Code Review",
+        "modelDescription": "Review code for bugs, performance issues, and best practices",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "code": { "type": "string", "description": "Code to review" }
+          },
+          "required": ["code"]
+        }
+      },
+      {
+        "name": "token-monitor-explainCode",
+        "displayName": "Explain Code",
+        "modelDescription": "Explain what code does, step by step",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "code": { "type": "string", "description": "Code to explain" }
+          },
+          "required": ["code"]
+        }
+      },
+      {
+        "name": "token-monitor-generateTests",
+        "displayName": "Generate Tests",
+        "modelDescription": "Generate unit tests for code",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "code": { "type": "string", "description": "Code to generate tests for" },
+            "language": { "type": "string", "description": "Programming language" }
+          },
+          "required": ["code"]
+        }
+      },
+      {
+        "name": "token-monitor-generateDocs",
+        "displayName": "Generate Docs",
+        "modelDescription": "Generate documentation for code",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "code": { "type": "string", "description": "Code to document" },
+            "style": { "type": "string", "description": "Documentation style" }
+          },
+          "required": ["code"]
+        }
+      },
+      {
+        "name": "token-monitor-refactorSuggestions",
+        "displayName": "Refactor Suggestions",
+        "modelDescription": "Suggest refactoring improvements for code",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "code": { "type": "string", "description": "Code to refactor" },
+            "goal": { "type": "string", "description": "Refactoring goal" }
+          },
+          "required": ["code"]
+        }
+      }
+    ],
     "configuration": {
       "title": "腾轩 AI 监控",
       "properties": {
         "aiTokenMonitor.serverUrl": {
           "type": "string",
-          "default": "http://192.168.0.135:8000",
+          "default": "https://otw.tech:59889",
           "description": "后端服务器地址，用于上报 Token 用量数据"
         },
         "aiTokenMonitor.userId": {

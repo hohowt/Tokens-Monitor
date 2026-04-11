@@ -8,6 +8,18 @@ import (
 
 var modelHintKeyPattern = regexp.MustCompile(`(?i)(?:model(?:_name|name|_id|id|version)?|deployment(?:_id|id)?|engine)[^A-Za-z0-9]{0,8}["']?([A-Za-z0-9][A-Za-z0-9._:-]{2,80})["']?`)
 
+// knownModelPrefixes 用于判断一个字符串是否像已知 AI 模型名（共享给 opaque.go）。
+var knownModelPrefixes = []string{
+	"gpt-", "claude-", "gemini-", "deepseek-", "qwen", "mistral",
+	"llama", "grok-", "command-r", "kimi", "moonshot-", "doubao-",
+	"yi-", "o1", "o3", "o4", "cursor-", "glm-", "gemma-",
+	"ernie-", "baichuan-", "internlm-", "wizard", "zephyr", "phi-",
+	"mixtral-", "falcon-", "olmo", "skywork", "chatglm", "minicpm",
+	"tinyllama", "aquila", "codegeex", "starcoder", "codet5", "pangu",
+	"bloom", "opt-", "flan-t5", "jurassic-", "pplx", "replit",
+	"gopher", "chinchilla", "xverse",
+}
+
 var modelHintValuePatterns = []*regexp.Regexp{
 	regexp.MustCompile(`(?i)\b(gpt-[a-z0-9][a-z0-9._-]{0,40})\b`),
 	regexp.MustCompile(`(?i)\b(claude-[a-z0-9][a-z0-9._-]{0,50})\b`),
@@ -66,7 +78,6 @@ type UsageInfo struct {
 // ExtractUsage extracts token usage information from an AI API response body.
 // It handles both regular JSON responses and SSE streaming responses.
 func ExtractUsage(vendor string, data []byte) *UsageInfo {
-	dumpData(vendor, data)
 	str := string(data)
 	if strings.HasPrefix(str, "data:") || strings.Contains(str, "\ndata:") {
 		return extractFromSSE(vendor, data)
@@ -243,17 +254,7 @@ func looksLikeModelHint(model string) bool {
 	if strings.ContainsAny(model, `/\\`) || strings.HasPrefix(model, "http") {
 		return false
 	}
-	prefixes := []string{
-		"gpt-", "claude-", "gemini-", "deepseek-", "qwen", "mistral",
-		"llama", "grok-", "command-r", "kimi", "moonshot-", "doubao-",
-		"yi-", "o1", "o3", "o4", "cursor-", "glm-", "gemma-",
-		"ernie-", "baichuan-", "internlm-", "wizard", "zephyr", "phi-",
-		"mixtral-", "falcon-", "olmo", "skywork", "chatglm", "minicpm",
-		"tinyllama", "aquila", "codegeex", "starcoder", "codet5", "pangu",
-		"bloom", "opt-", "flan-t5", "jurassic-", "pplx", "replit",
-		"gopher", "chinchilla", "xverse",
-	}
-	for _, prefix := range prefixes {
+	for _, prefix := range knownModelPrefixes {
 		if strings.HasPrefix(model, prefix) {
 			return true
 		}

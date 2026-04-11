@@ -27,7 +27,7 @@ describe('config', () => {
 
             const cfg = getConfig();
 
-            expect(cfg.serverUrl).toBe('http://192.168.0.135:8000');
+            expect(cfg.serverUrl).toBe('https://otw.tech:59889');
             expect(cfg.userId).toBe('');
             expect(cfg.userName).toBe('');
             expect(cfg.department).toBe('');

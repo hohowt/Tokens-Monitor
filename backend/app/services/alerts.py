@@ -2,12 +2,12 @@
 
 import logging
 from datetime import date, timedelta, datetime, timezone
-from zoneinfo import ZoneInfo
 
 import httpx
 from sqlalchemy import Date as SADate, cast, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.canonical import dashboard_tz
 from app.config import settings
 from app.database import async_session
 from app.models import Alert, DailyUsageSummary, Department, User
@@ -15,15 +15,8 @@ from app.models import Alert, DailyUsageSummary, Department, User
 logger = logging.getLogger(__name__)
 
 
-def _dashboard_tz() -> ZoneInfo:
-    try:
-        return ZoneInfo(settings.DASHBOARD_TIMEZONE)
-    except Exception:
-        return ZoneInfo("Asia/Shanghai")
-
-
 def _tz_today() -> date:
-    return datetime.now(_dashboard_tz()).date()
+    return datetime.now(dashboard_tz()).date()
 
 
 def _month_start_local() -> date:

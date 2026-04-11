@@ -16,6 +16,13 @@ import { ContinueCollector } from './collectors/continueCollector';
 const PROXY_RELOAD_PENDING_KEY = 'aiTokenMonitor.proxyReloadPending';
 
 export async function activate(context: vscode.ExtensionContext) {
+    // Migrate old default server URL to new one
+    const cfgSection = vscode.workspace.getConfiguration('aiTokenMonitor');
+    const currentUrl = cfgSection.get<string>('serverUrl', '');
+    if (currentUrl === 'http://192.168.0.135:8000') {
+        await cfgSection.update('serverUrl', 'https://otw.tech:59889', vscode.ConfigurationTarget.Global);
+    }
+
     const cfg = getConfig();
 
     // Create EventBus for decoupled architecture
@@ -68,7 +75,8 @@ export async function activate(context: vscode.ExtensionContext) {
         );
 
         if (action === '立即重载') {
-            await syncReloadPendingState(false);
+            // Keep pending=true so that after reload, wasReloadPending suppresses re-prompting.
+            // applyTransportMode will clear it on next activation.
             await vscode.commands.executeCommand('workbench.action.reloadWindow');
         }
     };
@@ -79,6 +87,9 @@ export async function activate(context: vscode.ExtensionContext) {
         reason: 'startup' | 'config-change' = 'startup',
     ) => {
         proxyManager.updateConfig(config);
+        // 如果上次设置了"待重载"，说明这次激活就是用户重载后的结果，应直接清除标记
+        const wasReloadPending = context.globalState.get<boolean>(PROXY_RELOAD_PENDING_KEY, false);
+
         const result = restartProxy ? await proxyManager.restart(config) : await proxyManager.start();
         if (result.status === 'off') {
             await syncReloadPendingState(false);
@@ -87,11 +98,12 @@ export async function activate(context: vscode.ExtensionContext) {
         }
 
         stopInterceptor();
-        if (result.routingChanged) {
+        if (wasReloadPending) {
+            // 用户已完成重载，proxy routing 已生效，清除标记
+            await syncReloadPendingState(false);
+        } else if (result.routingChanged) {
             console.log('[Extension] Transparent proxy routing updated. Reload window to route existing connections.');
             void promptReloadForProxyRouting(reason);
-        } else if (context.globalState.get<boolean>(PROXY_RELOAD_PENDING_KEY, false)) {
-            await syncReloadPendingState(false);
         }
     };
 

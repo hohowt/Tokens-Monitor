@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { Radio, Select, Space } from "antd";
+import React, { Suspense, lazy, useState, useEffect, useCallback } from "react";
+import { Alert, Button, Radio, Select, Space } from "antd";
 import {
   DashboardOutlined,
   ThunderboltOutlined,
@@ -9,11 +9,12 @@ import {
   RobotOutlined,
   DesktopOutlined,
 } from "@ant-design/icons";
-import ReactECharts from "echarts-for-react";
 import { api, type Overview, type TrendData, type RankingItem, type BreakdownItem } from "./api";
 import { formatNumber, formatCNY, formatTokens } from "./utils";
 import AnimatedNumber from "./AnimatedNumber";
 import AutoScroll from "./AutoScroll";
+
+const DashboardChart = lazy(() => import("./DashboardChart"));
 
 const COLORS = {
   green: "#3fb950",
@@ -31,6 +32,11 @@ function App() {
   const [trendDays, setTrendDays] = useState(15);
   const [trendType, setTrendType] = useState<"bar" | "line">("bar");
   const [selectedSourceApp, setSelectedSourceApp] = useState<string>("all");
+  const [sourceAppMetric, setSourceAppMetric] = useState<"tokens" | "cost">("tokens");
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<string>("--");
 
   const emptyOverview: Overview = { total_tokens: 0, total_cost_cny: 0, total_requests: 0, active_users: 0, avg_tokens_per_user: 0, avg_cost_per_user: 0, exact_tokens: 0, estimated_tokens: 0, exact_requests: 0, estimated_requests: 0, tokens_change_pct: null, cost_change_pct: null };
   const emptyTrend: TrendData = { points: [], avg_tokens: 0, avg_cost: 0 };
@@ -48,7 +54,13 @@ function App() {
 
   const activeSourceApp = selectedSourceApp === "all" ? undefined : selectedSourceApp;
 
-  const fetchAll = useCallback(async () => {
+  const fetchAll = useCallback(async (showLoading = false) => {
+    if (showLoading) {
+      setIsLoading(true);
+    } else {
+      setIsRefreshing(true);
+    }
+    setLoadError(null);
     try {
       const [ov, tr, usr, dept, mdl, prov, src, srcApp, endpoint, clients] = await Promise.all([
         api.getOverview(trendDays, activeSourceApp),
@@ -72,14 +84,26 @@ function App() {
       setSourceAppBreakdown(srcApp.items || []);
       setEndpointBreakdown(endpoint.items || []);
       setOnlineClients(clients.online_count);
+      setLastUpdatedAt(new Intl.DateTimeFormat("zh-CN", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+      }).format(new Date()));
     } catch (e) {
       console.error("Failed to fetch dashboard data:", e);
+      setLoadError(e instanceof Error ? e.message : "数据加载失败，请稍后重试");
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
     }
   }, [activeSourceApp, trendDays]);
 
   useEffect(() => {
-    fetchAll();
-    const timer = setInterval(fetchAll, 30000); // refresh every 30s
+    void fetchAll(true);
+    const timer = setInterval(() => {
+      void fetchAll(false);
+    }, 30000);
     return () => clearInterval(timer);
   }, [fetchAll]);
 
@@ -97,6 +121,13 @@ function App() {
   const currentSourceAppLabel = selectedSourceApp === "all"
     ? "全部应用"
     : sourceAppOptions.find((item) => item.value === selectedSourceApp)?.label ?? selectedSourceApp;
+  const hasTrendData = trend.points.length > 0;
+  const hasModelData = modelBreakdown.length > 0;
+  const hasProviderData = providerBreakdown.length > 0;
+
+  const renderEmptyState = (message: string) => (
+    <div className="card-empty">{message}</div>
+  );
 
   // ── Stat Cards (with animated numbers) ──
   const statCards = [
@@ -220,7 +251,7 @@ function App() {
       {/* Header */}
       <div className="dashboard-header">
         <h1><DashboardOutlined /> 腾轩旅游集团 · AI Token 监控大屏</h1>
-        <Space>
+        <Space size={8} className="dashboard-top-actions">
           <Select
             value={selectedSourceApp}
             onChange={setSelectedSourceApp}
@@ -229,18 +260,38 @@ function App() {
             popupMatchSelectWidth={false}
             className="dashboard-select"
           />
-          <Radio.Group value={trendDays} onChange={(e) => setTrendDays(e.target.value)} buttonStyle="solid" size="small">
+          <Radio.Group className="dashboard-radio-group" value={trendDays} onChange={(e) => setTrendDays(e.target.value)} buttonStyle="solid" size="small">
             <Radio.Button value={7}>近7天</Radio.Button>
             <Radio.Button value={15}>近15天</Radio.Button>
             <Radio.Button value={30}>近30天</Radio.Button>
           </Radio.Group>
-          <Radio.Group value={trendType} onChange={(e) => setTrendType(e.target.value)} buttonStyle="solid" size="small">
+          <Radio.Group className="dashboard-radio-group" value={trendType} onChange={(e) => setTrendType(e.target.value)} buttonStyle="solid" size="small">
             <Radio.Button value="bar">柱状图</Radio.Button>
             <Radio.Button value="line">折线图</Radio.Button>
           </Radio.Group>
+          <Button className="dashboard-refresh-btn dashboard-refresh-btn-inline" type="primary" ghost onClick={() => void fetchAll(false)} loading={isRefreshing && !isLoading}>
+            刷新
+          </Button>
         </Space>
       </div>
-      <div className="dashboard-filter-note">当前视图：{currentSourceAppLabel}</div>
+
+      <div className="dashboard-filter-note">
+        当前视图：{currentSourceAppLabel}
+        <span className={`dashboard-status dashboard-status-inline${isRefreshing ? " is-refreshing" : ""}`}>
+          {isLoading ? "首次加载中" : isRefreshing ? "刷新中" : `已更新 ${lastUpdatedAt}`}
+        </span>
+      </div>
+
+      {loadError ? (
+        <Alert
+          className="dashboard-alert"
+          type="error"
+          showIcon
+          message="数据同步失败"
+          description={loadError}
+          action={<Button size="small" onClick={() => void fetchAll(false)}>重试</Button>}
+        />
+      ) : null}
 
       {/* Stat Cards */}
       <div className="stat-cards">
@@ -259,19 +310,35 @@ function App() {
       <div className="charts-row-4">
         <div className="chart-card">
           <h3>Token 消耗趋势</h3>
-          <ReactECharts option={trendOption} style={{ height: "100%", minHeight: 0 }} />
+          {hasTrendData ? (
+            <Suspense fallback={<div className="chart-fallback">图表模块加载中...</div>}>
+              <DashboardChart option={trendOption} />
+            </Suspense>
+          ) : renderEmptyState("当前时间范围内暂无 Token 趋势数据")}
         </div>
         <div className="chart-card">
           <h3>成本趋势 (¥)</h3>
-          <ReactECharts option={costTrendOption} style={{ height: "100%", minHeight: 0 }} />
+          {hasTrendData ? (
+            <Suspense fallback={<div className="chart-fallback">图表模块加载中...</div>}>
+              <DashboardChart option={costTrendOption} />
+            </Suspense>
+          ) : renderEmptyState("当前时间范围内暂无成本趋势数据")}
         </div>
         <div className="chart-card">
           <h3>模型消耗占比</h3>
-          <ReactECharts option={modelPieOption} style={{ height: "100%", minHeight: 0 }} />
+          {hasModelData ? (
+            <Suspense fallback={<div className="chart-fallback">图表模块加载中...</div>}>
+              <DashboardChart option={modelPieOption} />
+            </Suspense>
+          ) : renderEmptyState("暂无模型维度数据")}
         </div>
         <div className="chart-card">
           <h3>供应商消耗占比</h3>
-          <ReactECharts option={providerPieOption} style={{ height: "100%", minHeight: 0 }} />
+          {hasProviderData ? (
+            <Suspense fallback={<div className="chart-fallback">图表模块加载中...</div>}>
+              <DashboardChart option={providerPieOption} />
+            </Suspense>
+          ) : renderEmptyState("暂无供应商维度数据")}
         </div>
       </div>
 
@@ -280,35 +347,39 @@ function App() {
         <div className="ranking-card">
           <h3>👤 用户 Token 消耗 Top {userRanking.length}</h3>
           <AutoScroll speed={18}>
-            <div className="rank-list">
-              {userRanking.map((u, i) => (
-                <div className="rank-row" key={u.name}>
-                  <span className="rank-idx" style={{ color: i < 3 ? COLORS.yellow : "#8b949e" }}>{i + 1}</span>
-                  <span className="rank-name">{u.name}</span>
-                  <div className="rank-bar-bg">
-                    <div className="rank-bar" style={{ width: `${(u.total_tokens / maxUserTokens) * 100}%`, background: BAR_COLORS[i % BAR_COLORS.length] }} />
+            {userRanking.length > 0 ? (
+              <div className="rank-list">
+                {userRanking.map((u, i) => (
+                  <div className="rank-row" key={u.name}>
+                    <span className="rank-idx" style={{ color: i < 3 ? COLORS.yellow : "#8b949e" }}>{i + 1}</span>
+                    <span className="rank-name">{u.name}</span>
+                    <div className="rank-bar-bg">
+                      <div className="rank-bar" style={{ width: `${(u.total_tokens / maxUserTokens) * 100}%`, background: BAR_COLORS[i % BAR_COLORS.length] }} />
+                    </div>
+                    <span className="rank-val">{formatTokens(u.total_tokens)}</span>
                   </div>
-                  <span className="rank-val">{formatTokens(u.total_tokens)}</span>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : renderEmptyState("暂无用户排行数据")}
           </AutoScroll>
         </div>
         <div className="ranking-card">
           <h3>🏢 部门 Token 消耗排行</h3>
           <AutoScroll speed={18}>
-            <div className="rank-list">
-              {deptRanking.map((d, i) => (
-                <div className="rank-row" key={d.name}>
-                  <span className="rank-idx" style={{ color: i < 3 ? COLORS.yellow : "#8b949e" }}>{i + 1}</span>
-                  <span className="rank-name">{d.name}</span>
-                  <div className="rank-bar-bg">
-                    <div className="rank-bar" style={{ width: `${(d.total_tokens / maxDeptTokens) * 100}%`, background: BAR_COLORS[i % BAR_COLORS.length] }} />
+            {deptRanking.length > 0 ? (
+              <div className="rank-list">
+                {deptRanking.map((d, i) => (
+                  <div className="rank-row" key={d.name}>
+                    <span className="rank-idx" style={{ color: i < 3 ? COLORS.yellow : "#8b949e" }}>{i + 1}</span>
+                    <span className="rank-name">{d.name}</span>
+                    <div className="rank-bar-bg">
+                      <div className="rank-bar" style={{ width: `${(d.total_tokens / maxDeptTokens) * 100}%`, background: BAR_COLORS[i % BAR_COLORS.length] }} />
+                    </div>
+                    <span className="rank-val">{formatTokens(d.total_tokens)}</span>
                   </div>
-                  <span className="rank-val">{formatTokens(d.total_tokens)}</span>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : renderEmptyState("暂无部门排行数据")}
           </AutoScroll>
         </div>
         <div className="ranking-card">
@@ -369,52 +440,71 @@ function App() {
         <div className="ranking-card">
           <h3>🧭 采集来源占比</h3>
           <AutoScroll speed={18}>
-            <div className="rank-list">
-              {sourceBreakdown.map((item, i) => (
-                <div className="rank-row" key={item.name}>
-                  <span className="rank-idx" style={{ color: i < 3 ? COLORS.yellow : "#8b949e" }}>{i + 1}</span>
-                  <span className="rank-name rank-name-wide">{item.name}</span>
-                  <div className="rank-bar-bg">
-                    <div className="rank-bar" style={{ width: `${item.percentage}%`, background: BAR_COLORS[i % BAR_COLORS.length] }} />
+            {sourceBreakdown.length > 0 ? (
+              <div className="rank-list">
+                {sourceBreakdown.map((item, i) => (
+                  <div className="rank-row" key={item.name}>
+                    <span className="rank-idx" style={{ color: i < 3 ? COLORS.yellow : "#8b949e" }}>{i + 1}</span>
+                    <span className="rank-name rank-name-wide">{item.name}</span>
+                    <div className="rank-bar-bg">
+                      <div className="rank-bar" style={{ width: `${item.percentage}%`, background: BAR_COLORS[i % BAR_COLORS.length] }} />
+                    </div>
+                    <span className="rank-val rank-val-wide">{item.percentage}%</span>
                   </div>
-                  <span className="rank-val rank-val-wide">{item.percentage}%</span>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : renderEmptyState("暂无采集来源数据")}
           </AutoScroll>
         </div>
         <div className="ranking-card">
-          <h3>🖥️ 应用来源排行</h3>
+          <div className="ranking-card-head">
+            <h3>🖥️ 应用来源排行</h3>
+            <Radio.Group className="dashboard-radio-group source-metric-group" size="small" value={sourceAppMetric} onChange={(e) => setSourceAppMetric(e.target.value)} buttonStyle="solid">
+              <Radio.Button value="tokens">Token</Radio.Button>
+              <Radio.Button value="cost">成本</Radio.Button>
+            </Radio.Group>
+          </div>
           <AutoScroll speed={18}>
-            <div className="rank-list">
-              {sourceAppBreakdown.map((item, i) => (
-                <div className="rank-row" key={item.name}>
-                  <span className="rank-idx" style={{ color: i < 3 ? COLORS.yellow : "#8b949e" }}>{i + 1}</span>
-                  <span className="rank-name rank-name-wide">{item.name}</span>
-                  <div className="rank-bar-bg">
-                    <div className="rank-bar" style={{ width: `${item.percentage}%`, background: BAR_COLORS[i % BAR_COLORS.length] }} />
-                  </div>
-                  <span className="rank-val rank-val-wide">{item.percentage}%</span>
-                </div>
-              ))}
-            </div>
+            {sourceAppBreakdown.length > 0 ? (
+              <div className="rank-list">
+                {(() => {
+                  const maxVal = sourceAppBreakdown.reduce((m, it) => Math.max(m, sourceAppMetric === "cost" ? it.cost_cny : it.total_tokens), 0);
+                  return sourceAppBreakdown.map((item, i) => {
+                    const val = sourceAppMetric === "cost" ? item.cost_cny : item.total_tokens;
+                    const pct = maxVal > 0 ? (val / maxVal) * 100 : 0;
+                    return (
+                      <div className="rank-row" key={item.name}>
+                        <span className="rank-idx" style={{ color: i < 3 ? COLORS.yellow : "#8b949e" }}>{i + 1}</span>
+                        <span className="rank-name rank-name-wide">{item.name}</span>
+                        <div className="rank-bar-bg">
+                          <div className="rank-bar" style={{ width: `${pct}%`, background: BAR_COLORS[i % BAR_COLORS.length] }} />
+                        </div>
+                        <span className="rank-val rank-val-wide">{sourceAppMetric === "cost" ? formatCNY(val) : formatTokens(val)}</span>
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+            ) : renderEmptyState("暂无应用来源排行数据")}
           </AutoScroll>
         </div>
         <div className="ranking-card">
           <h3>🔌 接口维度排行</h3>
           <AutoScroll speed={18}>
-            <div className="rank-list">
-              {endpointBreakdown.map((item, i) => (
-                <div className="rank-row" key={item.name}>
-                  <span className="rank-idx" style={{ color: i < 3 ? COLORS.yellow : "#8b949e" }}>{i + 1}</span>
-                  <span className="rank-name rank-name-endpoint">{item.name}</span>
-                  <div className="rank-bar-bg">
-                    <div className="rank-bar" style={{ width: `${item.percentage}%`, background: BAR_COLORS[i % BAR_COLORS.length] }} />
+            {endpointBreakdown.length > 0 ? (
+              <div className="rank-list">
+                {endpointBreakdown.map((item, i) => (
+                  <div className="rank-row" key={item.name}>
+                    <span className="rank-idx" style={{ color: i < 3 ? COLORS.yellow : "#8b949e" }}>{i + 1}</span>
+                    <span className="rank-name rank-name-endpoint">{item.name}</span>
+                    <div className="rank-bar-bg">
+                      <div className="rank-bar" style={{ width: `${item.percentage}%`, background: BAR_COLORS[i % BAR_COLORS.length] }} />
+                    </div>
+                    <span className="rank-val rank-val-wide">{item.percentage}%</span>
                   </div>
-                  <span className="rank-val rank-val-wide">{item.percentage}%</span>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : renderEmptyState("暂无接口维度排行数据")}
           </AutoScroll>
         </div>
       </div>

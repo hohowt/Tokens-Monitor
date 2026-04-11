@@ -21,6 +21,8 @@ var ideSettingsPaths = []struct {
 	{"Cursor", `Cursor\User\settings.json`},
 	{"Kiro", `Kiro\User\settings.json`},
 	{"Windsurf", `Windsurf\User\settings.json`},
+	{"VS Codium", `VSCodium\User\settings.json`},
+	{"Trae", `Trae\User\settings.json`},
 }
 
 // proxySettings are the key-value pairs we inject into IDE settings.

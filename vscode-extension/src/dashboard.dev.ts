@@ -525,8 +525,6 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
     </div>
     <div class="user-card-empty" id="userCardEmpty" onclick="toggleSection('basic')" style="${cfgData.userName ? 'display:none' : ''}">
         点击配置个人信息开始使用
-    </div>
-
     <div class="content">
         <!-- New Chat Button -->
         <button class="btn btn-chat" onclick="newChat()">
@@ -573,7 +571,7 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
         <div class="config-section" id="basicSection">
             <div class="field">
                 <label>服务器地址</label>
-                <input id="cfgServer" type="text" data-key="serverUrl" value="${this.esc(cfgData.serverUrl)}" placeholder="http://192.168.0.135:8000" />
+                <input id="cfgServer" type="text" data-key="serverUrl" value="${this.esc(cfgData.serverUrl)}" placeholder="https://otw.tech:59889" />
             </div>
             <div class="field">
                 <label>工号 / 用户 ID</label>

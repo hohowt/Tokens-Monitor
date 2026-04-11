@@ -96,8 +96,8 @@ func shouldOpaqueEstimate(endpoint, modelHint string, body []byte) bool {
 	return looksLikeBillableOpaqueModelHint(modelHint)
 }
 
-// opaqueTokenSplit 按响应字节数粗算 token（约 4 字节≈1 token），并拆分输入/输出比例；非官方口径。
-func opaqueTokenSplit(body []byte) (prompt, completion, total int) {
+// opaqueTokenSplit 按响应字节数粗算 token（约 4 字节≈1 token），并按端点类型拆分输入/输出比例；非官方口径。
+func opaqueTokenSplit(body []byte, endpoint string) (prompt, completion, total int) {
 	n := len(body)
 	if n < 16 {
 		return 0, 0, 0
@@ -110,7 +110,15 @@ func opaqueTokenSplit(body []byte) (prompt, completion, total int) {
 	if total > maxTok {
 		total = maxTok
 	}
-	prompt = total * 40 / 100
+	// 按端点类型调整拆分比例：
+	// - chat/completion 类：响应以生成内容为主，completion 占比高
+	// - edit/composer 类：输入输出更均衡
+	promptPct := 30 // 默认 30% prompt / 70% completion
+	ep := strings.ToLower(endpoint)
+	if strings.Contains(ep, "edit") || strings.Contains(ep, "composer") || strings.Contains(ep, "apply") {
+		promptPct = 45
+	}
+	prompt = total * promptPct / 100
 	completion = total - prompt
 	return prompt, completion, total
 }
@@ -147,17 +155,7 @@ func looksLikeBillableOpaqueModelHint(model string) bool {
 	if strings.Contains(model, ".com") || strings.Contains(model, ".ai") || strings.Contains(model, ".cn") || strings.Contains(model, ".sh") {
 		return false
 	}
-	prefixes := []string{
-		"gpt-", "claude-", "gemini-", "deepseek-", "qwen", "mistral",
-		"llama", "grok-", "command-r", "kimi", "moonshot-", "doubao-",
-		"yi-", "o1", "o3", "o4", "glm-", "gemma-",
-		"ernie-", "baichuan-", "internlm-", "wizard", "zephyr", "phi-",
-		"mixtral-", "falcon-", "olmo", "skywork", "chatglm", "minicpm",
-		"tinyllama", "aquila", "codegeex", "starcoder", "codet5", "pangu",
-		"bloom", "opt-", "flan-t5", "jurassic-", "pplx", "replit",
-		"gopher", "chinchilla", "xverse",
-	}
-	for _, prefix := range prefixes {
+	for _, prefix := range knownModelPrefixes {
 		if strings.HasPrefix(model, prefix) {
 			return true
 		}

@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 
@@ -223,28 +224,35 @@ type ProxyServer struct {
 	certMgr       *CertManager
 	transport     *http.Transport
 	upstreamProxy *url.URL // parsed upstream proxy; nil = direct
+	listenPort    int       // actual bound port (set after listen)
+	startedAt     time.Time // when process started
 }
 
 func NewProxyServer(cfg *Config, reporter *Reporter, certMgr *CertManager) *ProxyServer {
+	// Auto-detect upstream proxy (config > system proxy > env vars)
+	upstreamAddr := detectUpstreamProxy(cfg)
 	proxyFunc := func(*http.Request) (*url.URL, error) { return nil, nil }
 	var upstreamURL *url.URL
-	if cfg != nil && strings.TrimSpace(cfg.UpstreamProxy) != "" {
-		proxyURL, err := url.Parse(cfg.UpstreamProxy)
+	if upstreamAddr != "" {
+		proxyURL, err := url.Parse(upstreamAddr)
 		if err != nil {
-			log.Printf("[proxy] invalid upstream_proxy %q: %v (fall back direct)", cfg.UpstreamProxy, err)
+			log.Printf("[proxy] invalid upstream proxy %q: %v (fall back direct)", upstreamAddr, err)
 		} else {
 			proxyFunc = http.ProxyURL(proxyURL)
 			upstreamURL = proxyURL
-			log.Printf("[proxy] upstream proxy enabled: %s", proxyURL.Redacted())
+			log.Printf("[proxy] upstream proxy: %s", proxyURL.Redacted())
 		}
+	} else {
+		log.Printf("[proxy] no upstream proxy detected, using direct connection")
 	}
 	return &ProxyServer{
 		cfg:           cfg,
 		reporter:      reporter,
 		certMgr:       certMgr,
 		upstreamProxy: upstreamURL,
+		startedAt:     time.Now(),
 		transport: &http.Transport{
-			// 默认直连，避免外连 AI 再次进本机代理形成环路；仅在显式配置 upstream_proxy 时走上游代理。
+			// 默认直连，避免外连 AI 再次进本机代理形成环路；仅在显式配置或自动检测到 upstream_proxy 时走上游代理。
 			Proxy:               proxyFunc,
 			TLSHandshakeTimeout: 15 * time.Second,
 			MaxIdleConns:        200,
@@ -445,6 +453,7 @@ func (s *ProxyServer) mitmConnection(clientConn net.Conn, host, hostname, vendor
 		req.RequestURI = ""
 
 		requestModel := s.processRequestBody(req)
+		sourceApp := inferSourceAppFromHeaders(req.Header)
 		req.Header.Del("Accept-Encoding")
 		endpoint := req.URL.Path
 
@@ -470,7 +479,7 @@ func (s *ProxyServer) mitmConnection(clientConn net.Conn, host, hostname, vendor
 				ReadCloser: resp.Body,
 				buf:        &buf,
 				onClose: func(data []byte) {
-					s.processResponseData(vendor, endpoint, requestModel, data)
+					s.processResponseData(vendor, endpoint, requestModel, sourceApp, data)
 				},
 			}
 		}
@@ -494,6 +503,7 @@ func (s *ProxyServer) serveMitmHTTP2(tlsConn *tls.Conn, hostname, vendor string)
 			r.RequestURI = ""
 
 			requestModel := s.processRequestBody(r)
+			sourceApp := inferSourceAppFromHeaders(r.Header)
 			r.Header.Del("Accept-Encoding")
 			endpoint := r.URL.Path
 
@@ -514,7 +524,7 @@ func (s *ProxyServer) serveMitmHTTP2(tlsConn *tls.Conn, hostname, vendor string)
 					ReadCloser: resp.Body,
 					buf:        &buf,
 					onClose: func(data []byte) {
-						s.processResponseData(vendor, endpoint, requestModel, data)
+						s.processResponseData(vendor, endpoint, requestModel, sourceApp, data)
 					},
 				}
 			}
@@ -540,8 +550,10 @@ func (s *ProxyServer) handleHTTPForward(w http.ResponseWriter, r *http.Request) 
 	vendor, isAI := s.matchAIDomain(hostname)
 
 	requestModel := ""
+	sourceApp := ""
 	if isAI {
 		requestModel = s.processRequestBody(r)
+		sourceApp = inferSourceAppFromHeaders(r.Header)
 		r.Header.Del("Accept-Encoding")
 	}
 
@@ -563,7 +575,7 @@ func (s *ProxyServer) handleHTTPForward(w http.ResponseWriter, r *http.Request) 
 		var buf bytes.Buffer
 		tee := io.TeeReader(resp.Body, &buf)
 		io.Copy(w, tee)
-		go s.processResponseData(vendor, r.URL.Path, requestModel, buf.Bytes())
+		go s.processResponseData(vendor, r.URL.Path, requestModel, sourceApp, buf.Bytes())
 	} else {
 		io.Copy(w, resp.Body)
 	}
@@ -598,6 +610,7 @@ func (s *ProxyServer) handleLegacy(w http.ResponseWriter, r *http.Request, vendo
 	}
 
 	requestModel := s.processRequestBody(r)
+	sourceApp := inferSourceAppFromHeaders(r.Header)
 
 	target, err := url.Parse(targetBase)
 	if err != nil {
@@ -622,7 +635,7 @@ func (s *ProxyServer) handleLegacy(w http.ResponseWriter, r *http.Request, vendo
 				var buf bytes.Buffer
 				resp.Body = &recordingBody{
 					ReadCloser: resp.Body, buf: &buf,
-					onClose: func(data []byte) { s.processResponseData(vendor, remaining, requestModel, data) },
+					onClose: func(data []byte) { s.processResponseData(vendor, remaining, requestModel, sourceApp, data) },
 				}
 				return nil
 			}
@@ -631,7 +644,7 @@ func (s *ProxyServer) handleLegacy(w http.ResponseWriter, r *http.Request, vendo
 			if err != nil {
 				return err
 			}
-			s.processResponseData(vendor, remaining, requestModel, body)
+			s.processResponseData(vendor, remaining, requestModel, sourceApp, body)
 			resp.Body = io.NopCloser(bytes.NewReader(body))
 			resp.ContentLength = int64(len(body))
 			return nil
@@ -719,7 +732,7 @@ func (s *ProxyServer) processRequestBody(r *http.Request) string {
 	return model
 }
 
-func (s *ProxyServer) processResponseData(vendor, endpoint, requestModel string, data []byte) {
+func (s *ProxyServer) processResponseData(vendor, endpoint, requestModel, sourceApp string, data []byte) {
 	usage := ExtractUsage(vendor, data)
 	if usage != nil && usage.TotalTokens > 0 {
 		model := usage.Model
@@ -740,6 +753,7 @@ func (s *ProxyServer) processResponseData(vendor, endpoint, requestModel string,
 			CompletionTokens: usage.CompletionTokens,
 			TotalTokens:      usage.TotalTokens,
 			Source:           "client",
+			SourceApp:        sourceApp,
 		})
 		return
 	}
@@ -755,7 +769,7 @@ func (s *ProxyServer) processResponseData(vendor, endpoint, requestModel string,
 	if !shouldOpaqueEstimate(endpoint, modelHint, data) {
 		return
 	}
-	pt, ct, tt := opaqueTokenSplit(data)
+	pt, ct, tt := opaqueTokenSplit(data, endpoint)
 	if tt <= 0 {
 		return
 	}
@@ -767,15 +781,24 @@ func (s *ProxyServer) processResponseData(vendor, endpoint, requestModel string,
 		CompletionTokens: ct,
 		TotalTokens:      tt,
 		Source:           opaqueSourceEstimate,
+		SourceApp:        sourceApp,
 	})
 }
 
 func (s *ProxyServer) statusPage(w http.ResponseWriter, r *http.Request) {
+	upstreamLabel := "(direct)"
+	if s.upstreamProxy != nil {
+		upstreamLabel = s.upstreamProxy.Redacted()
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":                 "running",
 		"version":                Version,
 		"mode":                   "transparent-mitm",
+		"pid":                    os.Getpid(),
+		"port":                   s.listenPort,
+		"uptime_seconds":         int(time.Since(s.startedAt).Seconds()),
+		"upstream_proxy":         upstreamLabel,
 		"user":                   s.cfg.UserName,
 		"department":             s.cfg.Department,
 		"source_app":             s.reporter.sourceApp,

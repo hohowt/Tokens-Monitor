@@ -15,9 +15,23 @@ export default function AutoScroll({ children, speed = 20, pauseOnHover = true }
   const innerRef = useRef<HTMLDivElement>(null);
   const [needsScroll, setNeedsScroll] = useState(false);
   const [paused, setPaused] = useState(false);
+  const [compactMode, setCompactMode] = useState(false);
   const offset = useRef(0);
   const raf = useRef(0);
   const lastTime = useRef(0);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const media = window.matchMedia("(max-width: 768px)");
+    const updateCompactMode = () => setCompactMode(media.matches);
+    updateCompactMode();
+    if (typeof media.addEventListener === "function") {
+      media.addEventListener("change", updateCompactMode);
+      return () => media.removeEventListener("change", updateCompactMode);
+    }
+    media.addListener(updateCompactMode);
+    return () => media.removeListener(updateCompactMode);
+  }, []);
 
   useEffect(() => {
     const outer = outerRef.current;
@@ -32,13 +46,19 @@ export default function AutoScroll({ children, speed = 20, pauseOnHover = true }
     return () => ro.disconnect();
   }, [children]);
 
+  const shouldAnimate = needsScroll && !compactMode;
+
   useEffect(() => {
-    if (!needsScroll || paused) {
+    const inner = innerRef.current;
+    if (!shouldAnimate || paused) {
       cancelAnimationFrame(raf.current);
       lastTime.current = 0;
+      offset.current = 0;
+      if (inner) {
+        inner.style.transform = "translateY(0)";
+      }
       return;
     }
-    const inner = innerRef.current;
     if (!inner) return;
     const halfH = inner.scrollHeight / 2;
 
@@ -54,19 +74,22 @@ export default function AutoScroll({ children, speed = 20, pauseOnHover = true }
     };
     raf.current = requestAnimationFrame(step);
     return () => cancelAnimationFrame(raf.current);
-  }, [needsScroll, paused, speed]);
+  }, [paused, shouldAnimate, speed]);
 
   return (
     <div
       ref={outerRef}
-      className="auto-scroll-outer"
-      onMouseEnter={() => pauseOnHover && setPaused(true)}
-      onMouseLeave={() => { setPaused(false); lastTime.current = 0; }}
+      className={`auto-scroll-outer${compactMode ? " is-compact" : ""}`}
+      onMouseEnter={() => !compactMode && pauseOnHover && setPaused(true)}
+      onMouseLeave={() => {
+        setPaused(false);
+        lastTime.current = 0;
+      }}
     >
       <div ref={innerRef} className="auto-scroll-inner">
         {children}
         {/* Duplicate for seamless loop */}
-        {needsScroll && children}
+        {shouldAnimate && children}
       </div>
     </div>
   );

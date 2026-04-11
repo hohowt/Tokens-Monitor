@@ -15,7 +15,9 @@ import (
 	"time"
 )
 
-const Version = "2.0.10"
+// Version is set at build time via -ldflags "-X main.Version=..."
+// Fallback to "dev" when built without ldflags.
+var Version = "dev"
 
 // proxyEnvKeys lists environment variables cleared by --uninstall（含旧版曾写入的 HTTP_PROXY 等）.
 var proxyEnvKeys = []string{
@@ -54,11 +56,17 @@ func main() {
 	uninstall := flag.Bool("uninstall", false, "卸载: 移除CA证书, 清除系统代理和环境变量")
 	setup := flag.Bool("setup", false, "傻瓜式配置向导：生成 config.json 并安装证书/代理")
 	configPath := flag.String("config", "config.json", "配置文件路径")
+	showVersion := flag.Bool("version", false, "显示版本号并退出")
 	flag.Parse()
+
+	if *showVersion {
+		fmt.Println(Version)
+		os.Exit(0)
+	}
 
 	fmt.Println()
 	fmt.Println("  ╔══════════════════════════════════════════╗")
-	fmt.Println("  ║   AI Token 监控客户端 v" + Version + "              ║")
+	fmt.Printf("  ║   AI Token 监控客户端 %-20s║\n", "v"+Version)
 	fmt.Println("  ║   模式: 本地 MITM（流量须指向本代理）    ║")
 	fmt.Println("  ╚══════════════════════════════════════════╝")
 	fmt.Println()
@@ -97,7 +105,9 @@ func main() {
 	noProxy := buildNoProxyEnv()
 
 	if *install {
-		proxyAddr := fmt.Sprintf("localhost:%d", cfg.Port)
+		// Resolve actual port: reuse running instance or probe available port.
+		actualPort := resolveActualPort(cfg)
+		proxyAddr := fmt.Sprintf("localhost:%d", actualPort)
 		full := (*installFull || cfg.EffectiveInstallSystemProxy()) && !*installCertOnly
 		patchIDE := *installIDE || cfg.EffectiveInstallIDEProxy()
 		doInstall(certMgr, cfg, proxyAddr, bypass, noProxy, full, patchIDE)
@@ -112,9 +122,21 @@ func main() {
 	}
 
 	// ── Normal run ──
+	// Singleton check: if a healthy instance already exists, don't start a second one.
+	existingPort, alive := checkExistingInstance()
+	if alive {
+		fmt.Printf("  已有 ai-monitor 实例运行于端口 %d，当前进程退出。\n", existingPort)
+		fmt.Println("  如需重启，请先终止已有进程。")
+		os.Exit(0)
+	}
+	removeInstanceInfo() // clean up any stale PID file
+
 	runtime, err := startMonitorRuntime(cfg, certMgr, "")
 	if err != nil {
 		log.Fatalf("  %v", err)
+	}
+	if err := writeInstanceInfo(runtime.listenPort); err != nil {
+		log.Printf("[singleton] 写入 instance.json 失败: %v", err)
 	}
 	if runtime.listenPort != cfg.Port {
 		log.Printf("[提示] 配置端口 %d 已被占用，已自动改用 %d（定向启动应用时请指向新端口）", cfg.Port, runtime.listenPort)
@@ -126,6 +148,7 @@ func main() {
 		signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
 		<-sigCh
 		fmt.Println("\n  正在关闭...")
+		removeInstanceInfo()
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		runtime.Shutdown(ctx)
@@ -204,7 +227,19 @@ func doInstall(certMgr *CertManager, cfg *Config, proxyAddr, bypass, noProxy str
 		return
 	}
 
+	// Save current proxy state BEFORE overwriting so we can restore on uninstall
+	previousProxy := readCurrentSystemProxy()
+	saveInstallState(&InstallState{
+		SystemProxySet:       true,
+		PreviousProxyAddr:    previousProxy,
+		PreviousProxyEnabled: previousProxy != "",
+		IDESettingsPatched:   patchIDE,
+	})
+
 	fmt.Println("  [2/4] 设置系统代理...")
+	if previousProxy != "" {
+		fmt.Printf("    ℹ 检测到现有系统代理: %s（已备份，卸载时将恢复）\n", previousProxy)
+	}
 	if err := EnableSystemProxy(proxyAddr, bypass); err != nil {
 		log.Printf("    ✗ 系统代理设置失败: %v", err)
 	} else {
@@ -271,7 +306,13 @@ func doUninstall(certMgr *CertManager) {
 	fmt.Println("    ✓ done")
 
 	fmt.Println("  [2/4] 清除系统代理...")
-	DisableSystemProxy()
+	state := loadInstallState()
+	if state != nil && state.PreviousProxyEnabled && state.PreviousProxyAddr != "" {
+		fmt.Printf("    ℹ 恢复之前的系统代理: %s\n", state.PreviousProxyAddr)
+		EnableSystemProxy(state.PreviousProxyAddr, "")
+	} else {
+		DisableSystemProxy()
+	}
 	fmt.Println("    ✓ done")
 
 	fmt.Println("  [3/4] 清除环境变量...")
@@ -282,6 +323,30 @@ func doUninstall(certMgr *CertManager) {
 	removeIDEProxy()
 	fmt.Println("    ✓ done")
 
+	// Clean up state files
+	clearInstallState()
+	removeInstanceInfo()
+
 	fmt.Println()
 	fmt.Println("  ✓ 卸载完成! 重新打开终端窗口和 IDE 使更改生效。")
+}
+
+// resolveActualPort determines the port that IDE settings should point to.
+// If a running instance exists, use its port. Otherwise probe to find the
+// port that would actually be bound.
+func resolveActualPort(cfg *Config) int {
+	// Check if an existing instance is running
+	if port, alive := checkExistingInstance(); alive {
+		log.Printf("[install] 检测到已运行的 ai-monitor 实例，使用端口 %d", port)
+		return port
+	}
+
+	// No running instance — probe which port would be bound
+	ln, port, err := tryListenMitmPort(cfg.Port)
+	if err != nil {
+		log.Printf("[install] 端口探测失败: %v，使用配置端口 %d", err, cfg.Port)
+		return cfg.Port
+	}
+	ln.Close()
+	return port
 }

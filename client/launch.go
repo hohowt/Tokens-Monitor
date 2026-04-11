@@ -50,6 +50,79 @@ var managedLaunchPresets = []launchPreset{
 		},
 	},
 	{
+		Name:        "windsurf",
+		Description: "启动 Windsurf",
+		Candidates:  []string{"windsurf.exe", "windsurf.cmd", "windsurf"},
+		KnownPaths: []string{
+			"%LOCALAPPDATA%\\Programs\\Windsurf\\Windsurf.exe",
+		},
+	},
+	{
+		Name:        "kiro",
+		Description: "启动 Kiro",
+		Candidates:  []string{"kiro.exe", "kiro.cmd", "kiro"},
+		KnownPaths: []string{
+			"%LOCALAPPDATA%\\Programs\\Kiro\\Kiro.exe",
+		},
+	},
+	{
+		Name:        "vscodium",
+		Description: "启动 VS Codium",
+		Candidates:  []string{"codium.cmd", "codium.exe", "codium"},
+		KnownPaths: []string{
+			"%LOCALAPPDATA%\\Programs\\VSCodium\\VSCodium.exe",
+			"%PROGRAMFILES%\\VSCodium\\VSCodium.exe",
+		},
+	},
+	{
+		Name:        "trae",
+		Description: "启动 Trae",
+		Candidates:  []string{"trae.exe", "trae.cmd", "trae"},
+		KnownPaths: []string{
+			"%LOCALAPPDATA%\\Programs\\Trae\\Trae.exe",
+		},
+	},
+	{
+		Name:        "zed",
+		Description: "启动 Zed 编辑器",
+		Candidates:  []string{"zed.exe", "zed"},
+		KnownPaths: []string{
+			"%LOCALAPPDATA%\\Programs\\Zed\\zed.exe",
+		},
+	},
+	{
+		Name:        "idea",
+		Description: "启动 IntelliJ IDEA",
+		Candidates:  []string{"idea64.exe", "idea.cmd", "idea"},
+		KnownPaths: []string{
+			"%PROGRAMFILES%\\JetBrains\\IntelliJ IDEA *\\bin\\idea64.exe",
+		},
+	},
+	{
+		Name:        "webstorm",
+		Description: "启动 WebStorm",
+		Candidates:  []string{"webstorm64.exe", "webstorm.cmd", "webstorm"},
+		KnownPaths: []string{
+			"%PROGRAMFILES%\\JetBrains\\WebStorm *\\bin\\webstorm64.exe",
+		},
+	},
+	{
+		Name:        "pycharm",
+		Description: "启动 PyCharm",
+		Candidates:  []string{"pycharm64.exe", "pycharm.cmd", "pycharm"},
+		KnownPaths: []string{
+			"%PROGRAMFILES%\\JetBrains\\PyCharm *\\bin\\pycharm64.exe",
+		},
+	},
+	{
+		Name:        "goland",
+		Description: "启动 GoLand",
+		Candidates:  []string{"goland64.exe", "goland.cmd", "goland"},
+		KnownPaths: []string{
+			"%PROGRAMFILES%\\JetBrains\\GoLand *\\bin\\goland64.exe",
+		},
+	},
+	{
 		Name:        "powershell",
 		Description: "启动 PowerShell 终端（适合再在里面运行 CLI 工具）",
 		Candidates:  []string{"pwsh.exe", "powershell.exe"},
@@ -98,6 +171,7 @@ func startMonitorRuntime(cfg *Config, certMgr *CertManager, sourceApp string) (*
 	if err != nil {
 		return nil, err
 	}
+	proxy.listenPort = listenPort
 
 	rt := &monitorRuntime{
 		reporter: reporter,
@@ -151,6 +225,15 @@ func runManagedProcess(cfg *Config, certMgr *CertManager, args []string, presetN
 		return err
 	}
 
+	// Singleton check for launch mode: if a healthy instance is already running, reuse it
+	// instead of starting another one. We still launch the child process but skip starting a new proxy.
+	existingPort, alive := checkExistingInstance()
+	if alive {
+		log.Printf("[launch] 检测到已运行的 ai-monitor 实例 (端口 %d)，复用已有实例", existingPort)
+		return launchChildWithExistingProxy(cfg, certMgr, commandArgs, preset, existingPort)
+	}
+	removeInstanceInfo()
+
 	if err := certMgr.InstallCA(); err != nil {
 		log.Printf("[launch] 安装 CA 失败，请手动信任 %s: %v", certMgr.CACertPath(), err)
 	} else {
@@ -162,6 +245,9 @@ func runManagedProcess(cfg *Config, certMgr *CertManager, args []string, presetN
 	if err != nil {
 		return err
 	}
+	if err := writeInstanceInfo(runtime.listenPort); err != nil {
+		log.Printf("[launch] 写入 instance.json 失败: %v", err)
+	}
 	go func() {
 		if err := runtime.server.Serve(runtime.listener); err != nil && err != http.ErrServerClosed {
 			log.Printf("[launch] 本地 MITM 退出: %v", err)
@@ -172,7 +258,7 @@ func runManagedProcess(cfg *Config, certMgr *CertManager, args []string, presetN
 	envVars := map[string]string{
 		"HTTP_PROXY":             httpProxy,
 		"HTTPS_PROXY":            httpProxy,
-		"NO_PROXY":               buildNoProxyEnv(),
+		"NO_PROXY":               buildNoProxyEnvWithConfig(cfg),
 		"OPENAI_BASE_URL":        httpProxy + "/openai/v1",
 		"OPENAI_API_BASE":        httpProxy + "/openai/v1",
 		"ANTHROPIC_BASE_URL":     httpProxy + "/anthropic",
@@ -195,10 +281,8 @@ func runManagedProcess(cfg *Config, certMgr *CertManager, args []string, presetN
 	} else {
 		log.Printf("[launch] 仅对目标进程注入代理环境变量: %s", strings.Join(commandArgs, " "))
 	}
-	if strings.TrimSpace(cfg.UpstreamProxy) != "" {
-		log.Printf("[launch] 本地 MITM 外联将继续走上游代理: %s", cfg.UpstreamProxy)
-	}
 	err = cmd.Run()
+	removeInstanceInfo()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	shutdownErr := runtime.Shutdown(ctx)
@@ -206,6 +290,36 @@ func runManagedProcess(cfg *Config, certMgr *CertManager, args []string, presetN
 		return err
 	}
 	return shutdownErr
+}
+
+// launchChildWithExistingProxy launches the target process pointing at an already-running
+// ai-monitor instance. No new proxy is started.
+func launchChildWithExistingProxy(cfg *Config, certMgr *CertManager, commandArgs []string, preset *launchPreset, port int) error {
+	sourceApp := inferSourceApp(commandArgs, preset)
+	httpProxy := fmt.Sprintf("http://localhost:%d", port)
+	envVars := map[string]string{
+		"HTTP_PROXY":             httpProxy,
+		"HTTPS_PROXY":            httpProxy,
+		"NO_PROXY":               buildNoProxyEnvWithConfig(cfg),
+		"OPENAI_BASE_URL":        httpProxy + "/openai/v1",
+		"OPENAI_API_BASE":        httpProxy + "/openai/v1",
+		"ANTHROPIC_BASE_URL":     httpProxy + "/anthropic",
+		"AI_MONITOR_LAUNCH_MODE": "managed-process",
+		"AI_MONITOR_SOURCE_APP":  sourceApp,
+		"NODE_EXTRA_CA_CERTS":    certMgr.CACertPath(),
+	}
+	if preset != nil {
+		envVars["AI_MONITOR_LAUNCH_PRESET"] = preset.Name
+	}
+
+	cmd := exec.Command(commandArgs[0], commandArgs[1:]...)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Env = mergeEnv(os.Environ(), envVars)
+
+	log.Printf("[launch] 复用已有代理 (localhost:%d)，启动: %s", port, strings.Join(commandArgs, " "))
+	return cmd.Run()
 }
 
 func inferSourceApp(commandArgs []string, preset *launchPreset) string {
@@ -224,6 +338,24 @@ func inferSourceApp(commandArgs []string, preset *launchPreset) string {
 		return "vscode"
 	case "cursor":
 		return "cursor"
+	case "windsurf":
+		return "windsurf"
+	case "kiro":
+		return "kiro"
+	case "codium", "vscodium":
+		return "vscodium"
+	case "trae":
+		return "trae"
+	case "zed":
+		return "zed"
+	case "idea", "idea64":
+		return "jetbrains"
+	case "webstorm", "webstorm64":
+		return "jetbrains"
+	case "pycharm", "pycharm64":
+		return "jetbrains"
+	case "goland", "goland64":
+		return "jetbrains"
 	case "pwsh", "powershell":
 		return "powershell"
 	case "cmd":
@@ -293,6 +425,14 @@ func managedPresetProcessImage(preset *launchPreset) (imageName, displayName str
 		return "Code.exe", "VS Code"
 	case "cursor":
 		return "Cursor.exe", "Cursor"
+	case "windsurf":
+		return "Windsurf.exe", "Windsurf"
+	case "kiro":
+		return "Kiro.exe", "Kiro"
+	case "vscodium":
+		return "VSCodium.exe", "VS Codium"
+	case "trae":
+		return "Trae.exe", "Trae"
 	default:
 		return "", ""
 	}

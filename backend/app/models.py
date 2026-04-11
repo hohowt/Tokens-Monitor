@@ -145,4 +145,4 @@ class SyncState(Base):
     last_sync_id: Mapped[str | None] = mapped_column(String(100))
     status: Mapped[str] = mapped_column(String(20), default="idle")
     error_message: Mapped[str | None] = mapped_column(Text)
-    updated_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(default=_utcnow)
