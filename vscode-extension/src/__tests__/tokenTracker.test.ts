@@ -22,6 +22,7 @@ describe('TokenTracker', () => {
         proxyPort: 18090,
         gatewayPort: 18091,
         upstreamProxy: '',
+        apiKey: '',
     };
 
     const getTodayStatsKey = (userId: string, appKey = 'vscode') => `${mockConfig.serverUrl}::${userId}::${appKey}`;

@@ -145,6 +145,14 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
                     ],
                 });
                 await this.refreshLinkCheck(true);
+            } else if (msg.type === 'authLogin') {
+                await this.handleLogin(msg.data);
+            } else if (msg.type === 'authRegister') {
+                await this.handleRegister(msg.data);
+            } else if (msg.type === 'authSetPassword') {
+                await this.handleSetPassword(msg.data);
+            } else if (msg.type === 'authLogout') {
+                await this.handleLogout();
             }
         });
     }
@@ -174,7 +182,10 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
     } | null> {
         if (!this.config.serverUrl) return null;
         try {
-            const url = `${this.config.serverUrl}/api/dashboard/overview?days=${this.selectedDays}`;
+            let url = `${this.config.serverUrl}/api/dashboard/overview?days=${this.selectedDays}`;
+            if (this.config.userId) {
+                url += `&employee_id=${encodeURIComponent(this.config.userId)}`;
+            }
             const controller = new AbortController();
             const timer = setTimeout(() => controller.abort(), 8000);
             const res = await fetch(url, { signal: controller.signal });
@@ -218,6 +229,92 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
         this.tracker.updateConfig(this.config);
         this.view?.webview.postMessage({ type: 'configSaved' });
         await this.refreshDashboard(true);
+    }
+
+    // ── Auth handlers ──────────────────────────────────────────
+
+    private async authFetch(endpoint: string, body: Record<string, unknown>): Promise<any> {
+        const url = `${this.config.serverUrl}/api/auth/${endpoint}`;
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 10_000);
+        try {
+            const resp = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+                signal: controller.signal,
+            });
+            clearTimeout(timer);
+            const json = await resp.json().catch(() => ({}));
+            return { ok: resp.ok, status: resp.status, data: json };
+        } catch {
+            clearTimeout(timer);
+            return { ok: false, status: 0, data: { detail: '无法连接服务器，请检查上报地址。' } };
+        }
+    }
+
+    private async applyAuthResult(data: { employee_id: string; name: string; department?: string; auth_token: string }): Promise<void> {
+        await this.secrets.store('authToken', data.auth_token);
+        this.tracker.setAuthToken(data.auth_token);
+        const cfg = vscode.workspace.getConfiguration('aiTokenMonitor');
+        await cfg.update('userId', data.employee_id, vscode.ConfigurationTarget.Global);
+        await cfg.update('userName', data.name, vscode.ConfigurationTarget.Global);
+        await cfg.update('department', data.department ?? '', vscode.ConfigurationTarget.Global);
+        this.config = getConfig();
+        this.tracker.updateConfig(this.config);
+    }
+
+    private async handleLogin(data: { employeeId: string; password: string }): Promise<void> {
+        const result = await this.authFetch('login', { employee_id: data.employeeId, password: data.password });
+        if (result.ok) {
+            await this.applyAuthResult(result.data);
+            this.view?.webview.postMessage({ type: 'authSuccess', data: { ...result.data, mode: 'login' } });
+            await this.refreshDashboard(true);
+        } else if (result.status === 403 && result.data?.detail === 'password_not_set') {
+            this.view?.webview.postMessage({ type: 'authNeedSetPassword', data: { employeeId: data.employeeId } });
+        } else {
+            const msg = result.status === 401 ? '工号或密码错误' : (result.data?.detail ?? '登录失败');
+            this.view?.webview.postMessage({ type: 'authError', data: { message: msg } });
+        }
+    }
+
+    private async handleRegister(data: { name: string; department: string; password: string }): Promise<void> {
+        const result = await this.authFetch('register', { name: data.name, department: data.department, password: data.password });
+        if (result.ok) {
+            await this.applyAuthResult(result.data);
+            this.view?.webview.postMessage({ type: 'authSuccess', data: { ...result.data, mode: 'register' } });
+            await this.refreshDashboard(true);
+        } else {
+            const msg = result.data?.detail ?? '注册失败';
+            this.view?.webview.postMessage({ type: 'authError', data: { message: msg } });
+        }
+    }
+
+    private async handleSetPassword(data: { employeeId: string; name: string; password: string }): Promise<void> {
+        const result = await this.authFetch('set-password', { employee_id: data.employeeId, name: data.name, password: data.password });
+        if (result.ok) {
+            await this.applyAuthResult(result.data);
+            this.view?.webview.postMessage({ type: 'authSuccess', data: { ...result.data, mode: 'setPassword' } });
+            await this.refreshDashboard(true);
+        } else {
+            const msg = result.status === 403 ? '姓名与服务器记录不匹配' :
+                        result.status === 409 ? '该账号已设置过密码，请直接登录' :
+                        (result.data?.detail ?? '设置密码失败');
+            this.view?.webview.postMessage({ type: 'authError', data: { message: msg } });
+        }
+    }
+
+    private async handleLogout(): Promise<void> {
+        await this.secrets.delete('authToken');
+        this.tracker.setAuthToken(undefined);
+        const cfg = vscode.workspace.getConfiguration('aiTokenMonitor');
+        await cfg.update('userId', '', vscode.ConfigurationTarget.Global);
+        await cfg.update('userName', '', vscode.ConfigurationTarget.Global);
+        await cfg.update('department', '', vscode.ConfigurationTarget.Global);
+        this.config = getConfig();
+        this.tracker.updateConfig(this.config);
+        this.view?.webview.postMessage({ type: 'authLoggedOut' });
+        await this.refreshDashboard();
     }
 
     private postStatsUpdate(overview?: {
@@ -289,6 +386,12 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
     }
 
     private async fetchIdentityStatus(): Promise<IdentityStatusData> {
+        // 已登录（有 auth token）时无需检查身份
+        const token = await this.secrets.get('authToken');
+        if (token && this.config.userId && this.config.userName) {
+            return { status: 'matched', message: '已登录认证，身份已确认。' };
+        }
+
         const fallback = this.getDefaultIdentityStatus();
         if (fallback.status !== 'checking') {
             return fallback;
@@ -302,9 +405,13 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
             });
             const controller = new AbortController();
             const timer = setTimeout(() => controller.abort(), 5000);
+            const hdrs: Record<string, string> = {};
+            if (this.config.apiKey) { hdrs['X-API-Key'] = this.config.apiKey; }
+            const authTok = await this.secrets.get('authToken');
+            if (authTok) { hdrs['Authorization'] = `Bearer ${authTok}`; }
             const response = await fetch(`${this.config.serverUrl}/api/clients/identity-check?${params.toString()}`, {
                 signal: controller.signal,
-                headers: this.config.apiKey ? { 'X-API-Key': this.config.apiKey } : {},
+                headers: hdrs,
             });
             clearTimeout(timer);
             if (!response.ok) {
@@ -1182,6 +1289,32 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
     .proxy-dot.pending {
         background: #ffb84d;
         box-shadow: 0 0 8px rgba(255, 184, 77, 0.7);
+    }
+    .auth-btn {
+        padding: 8px 14px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #fff;
+        background: var(--accent-strong, #FF8C57);
+        border: 1px solid transparent;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.2s ease, opacity 0.2s ease;
+    }
+    .auth-btn:hover {
+        opacity: 0.88;
+    }
+    .auth-btn:disabled {
+        opacity: 0.5;
+        cursor: default;
+    }
+    .auth-btn-secondary {
+        color: var(--text-main);
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid var(--border-strong);
+    }
+    .auth-btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.1);
     }
     .btn-proxy {
         min-width: 72px;
@@ -2071,8 +2204,8 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
             <div class="section-block glass-panel">
                 <div class="section-title" id="basicToggle" data-section="basic">
                     <div class="section-copy">
-                        <div class="section-heading">基础设置</div>
-                        <div class="section-caption">配置上报地址、姓名、工号与部门信息</div>
+                        <div class="section-heading">账号设置</div>
+                        <div class="section-caption">上报地址与身份认证</div>
                     </div>
                     <span class="arrow" id="basicArrow">▶</span>
                 </div>
@@ -2081,20 +2214,89 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
                         <label>上报地址</label>
                         <input id="cfgServer" type="text" data-key="serverUrl" value="${this.esc(cfgData.serverUrl)}" placeholder="例如：https://otw.tech:59889" />
                     </div>
-                    <div class="field">
-                        <label>工号</label>
-                        <input id="cfgUserId" type="text" data-key="userId" value="${this.esc(cfgData.userId)}" placeholder="例如：10001" />
+
+                    <!-- 已登录状态 -->
+                    <div id="authLoggedIn" class="field-span-2" style="display:${cfgData.userId ? 'block' : 'none'}">
+                        <div class="identity-check-panel ok field-span-2" style="margin-bottom:8px;">
+                            <div>已登录：<strong id="authDisplayName">${this.esc(cfgData.userName)}</strong>（工号 <strong id="authDisplayId">${this.esc(cfgData.userId)}</strong>）</div>
+                            <div style="font-size:11px;opacity:0.7;margin-top:2px;" id="authDisplayDept">${cfgData.department ? '部门：' + this.esc(cfgData.department) : ''}</div>
+                        </div>
+                        <button class="auth-btn auth-btn-secondary" id="authLogoutBtn" style="width:100%">退出登录</button>
                     </div>
-                    <div class="field">
-                        <label>姓名</label>
-                        <input id="cfgUserName" type="text" data-key="userName" value="${this.esc(cfgData.userName)}" placeholder="例如：张三" />
+
+                    <!-- 登录表单 -->
+                    <div id="authLoginForm" class="field-span-2" style="display:${cfgData.userId ? 'none' : 'block'}">
+                        <div class="field">
+                            <label>工号</label>
+                            <input id="authLoginId" type="text" placeholder="输入工号" />
+                        </div>
+                        <div class="field">
+                            <label>密码</label>
+                            <input id="authLoginPwd" type="password" placeholder="输入密码" />
+                        </div>
+                        <div class="field field-span-2" style="display:flex;gap:8px;">
+                            <button class="auth-btn" id="authLoginBtn" style="flex:1">登录</button>
+                            <button class="auth-btn auth-btn-secondary" id="authShowRegister" style="flex:1">注册新账号</button>
+                        </div>
+                        <div class="identity-check-panel subtle field-span-2" id="authLoginMsg" style="display:none">
+                            <div id="authLoginMsgText"></div>
+                        </div>
                     </div>
-                    <div class="field field-span-2">
-                        <label>部门</label>
-                        <input id="cfgDept" type="text" data-key="department" value="${this.esc(cfgData.department)}" placeholder="例如：公共技术部" />
+
+                    <!-- 注册表单 -->
+                    <div id="authRegisterForm" class="field-span-2" style="display:none">
+                        <div class="field">
+                            <label>姓名</label>
+                            <input id="authRegName" type="text" placeholder="真实姓名" />
+                        </div>
+                        <div class="field">
+                            <label>部门</label>
+                            <input id="authRegDept" type="text" placeholder="例如：公共技术部" />
+                        </div>
+                        <div class="field">
+                            <label>密码</label>
+                            <input id="authRegPwd" type="password" placeholder="至少4位" />
+                        </div>
+                        <div class="field">
+                            <label>确认密码</label>
+                            <input id="authRegPwd2" type="password" placeholder="再次输入密码" />
+                        </div>
+                        <div class="field field-span-2" style="display:flex;gap:8px;">
+                            <button class="auth-btn" id="authRegBtn" style="flex:1">注册</button>
+                            <button class="auth-btn auth-btn-secondary" id="authShowLogin" style="flex:1">返回登录</button>
+                        </div>
+                        <div class="identity-check-panel subtle field-span-2" id="authRegMsg" style="display:none">
+                            <div id="authRegMsgText"></div>
+                        </div>
                     </div>
+
+                    <!-- 设置密码表单（老用户迁移） -->
+                    <div id="authSetPwdForm" class="field-span-2" style="display:none">
+                        <div class="identity-check-panel warning field-span-2" style="margin-bottom:8px">
+                            <div>该工号尚未设置密码，请验证姓名并设置密码。</div>
+                        </div>
+                        <div class="field" style="display:none">
+                            <input id="authSetPwdId" type="hidden" />
+                        </div>
+                        <div class="field">
+                            <label>姓名（需与服务器一致）</label>
+                            <input id="authSetPwdName" type="text" placeholder="真实姓名" />
+                        </div>
+                        <div class="field">
+                            <label>设置密码</label>
+                            <input id="authSetPwdPwd" type="password" placeholder="至少4位" />
+                        </div>
+                        <div class="field field-span-2" style="display:flex;gap:8px;">
+                            <button class="auth-btn" id="authSetPwdBtn" style="flex:1">确认设置</button>
+                            <button class="auth-btn auth-btn-secondary" id="authSetPwdBack" style="flex:1">返回登录</button>
+                        </div>
+                        <div class="identity-check-panel subtle field-span-2" id="authSetPwdMsg" style="display:none">
+                            <div id="authSetPwdMsgText"></div>
+                        </div>
+                    </div>
+
                     <div class="identity-check-panel subtle field-span-2" id="identityCheckPanel">
-                        <div id="identityCheckText">填写工号和姓名后会自动检查是否与服务器已有身份冲突。同一工号可在 VS Code、Cursor、PowerShell 等多个应用共用。</div>
+                        <div id="identityCheckText">登录或注册后即可开始上报数据。注册后系统自动分配工号。</div>
                     </div>
                 </div>
             </div>
@@ -2381,14 +2583,7 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
     }
 
     function setIdentityInputsState(level) {
-        const userIdInput = document.getElementById('cfgUserId');
-        const userNameInput = document.getElementById('cfgUserName');
-        [userIdInput, userNameInput].forEach(input => {
-            if (!input) return;
-            input.classList.remove('input-warning', 'input-error');
-            if (level === 'warning') input.classList.add('input-warning');
-            if (level === 'error') input.classList.add('input-error');
-        });
+        // Auth fields are now managed through login/register forms, no standalone identity inputs to style
     }
 
     function updateIdentityCheck(data) {
@@ -2476,6 +2671,113 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
     }
 
     bindUiActions();
+
+    // 未登录时自动展开账号设置区
+    (function autoExpandIfNotLoggedIn() {
+        const loggedIn = document.getElementById('authLoggedIn');
+        const isLoggedIn = loggedIn && loggedIn.style.display !== 'none';
+        if (!isLoggedIn) {
+            toggleSection('basic');
+        }
+    })();
+
+    // ── Auth UI logic ──────────────────────────────
+
+    function showAuthForm(formId) {
+        ['authLoginForm', 'authRegisterForm', 'authSetPwdForm', 'authLoggedIn'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = (id === formId) ? 'block' : 'none';
+        });
+    }
+
+    function showAuthMsg(panelId, textId, message, level) {
+        const panel = document.getElementById(panelId);
+        const text = document.getElementById(textId);
+        if (panel && text) {
+            panel.style.display = 'block';
+            panel.className = 'identity-check-panel field-span-2 ' + (level || 'error');
+            text.textContent = message;
+        }
+    }
+
+    function hideAuthMsg(panelId) {
+        const el = document.getElementById(panelId);
+        if (el) el.style.display = 'none';
+    }
+
+    // Login button
+    const authLoginBtn = document.getElementById('authLoginBtn');
+    if (authLoginBtn) {
+        authLoginBtn.addEventListener('click', () => {
+            const id = document.getElementById('authLoginId')?.value?.trim();
+            const pwd = document.getElementById('authLoginPwd')?.value;
+            if (!id || !pwd) { showAuthMsg('authLoginMsg', 'authLoginMsgText', '请填写工号和密码', 'warning'); return; }
+            hideAuthMsg('authLoginMsg');
+            authLoginBtn.disabled = true;
+            authLoginBtn.textContent = '登录中…';
+            vscode.postMessage({ type: 'authLogin', data: { employeeId: id, password: pwd } });
+        });
+    }
+
+    // Show register
+    const authShowRegister = document.getElementById('authShowRegister');
+    if (authShowRegister) {
+        authShowRegister.addEventListener('click', () => { showAuthForm('authRegisterForm'); hideAuthMsg('authRegMsg'); });
+    }
+
+    // Show login
+    const authShowLogin = document.getElementById('authShowLogin');
+    if (authShowLogin) {
+        authShowLogin.addEventListener('click', () => { showAuthForm('authLoginForm'); hideAuthMsg('authLoginMsg'); });
+    }
+
+    // Register button
+    const authRegBtn = document.getElementById('authRegBtn');
+    if (authRegBtn) {
+        authRegBtn.addEventListener('click', () => {
+            const name = document.getElementById('authRegName')?.value?.trim();
+            const dept = document.getElementById('authRegDept')?.value?.trim() || '';
+            const pwd = document.getElementById('authRegPwd')?.value;
+            const pwd2 = document.getElementById('authRegPwd2')?.value;
+            if (!name) { showAuthMsg('authRegMsg', 'authRegMsgText', '请填写姓名', 'warning'); return; }
+            if (!pwd || pwd.length < 4) { showAuthMsg('authRegMsg', 'authRegMsgText', '密码至少4位', 'warning'); return; }
+            if (pwd !== pwd2) { showAuthMsg('authRegMsg', 'authRegMsgText', '两次密码不一致', 'warning'); return; }
+            hideAuthMsg('authRegMsg');
+            authRegBtn.disabled = true;
+            authRegBtn.textContent = '注册中…';
+            vscode.postMessage({ type: 'authRegister', data: { name, department: dept, password: pwd } });
+        });
+    }
+
+    // Logout button
+    const authLogoutBtn = document.getElementById('authLogoutBtn');
+    if (authLogoutBtn) {
+        authLogoutBtn.addEventListener('click', () => {
+            vscode.postMessage({ type: 'authLogout' });
+        });
+    }
+
+    // Set password button
+    const authSetPwdBtn = document.getElementById('authSetPwdBtn');
+    if (authSetPwdBtn) {
+        authSetPwdBtn.addEventListener('click', () => {
+            const id = document.getElementById('authSetPwdId')?.value?.trim();
+            const name = document.getElementById('authSetPwdName')?.value?.trim();
+            const pwd = document.getElementById('authSetPwdPwd')?.value;
+            if (!name) { showAuthMsg('authSetPwdMsg', 'authSetPwdMsgText', '请填写姓名', 'warning'); return; }
+            if (!pwd || pwd.length < 4) { showAuthMsg('authSetPwdMsg', 'authSetPwdMsgText', '密码至少4位', 'warning'); return; }
+            hideAuthMsg('authSetPwdMsg');
+            authSetPwdBtn.disabled = true;
+            authSetPwdBtn.textContent = '设置中…';
+            vscode.postMessage({ type: 'authSetPassword', data: { employeeId: id, name, password: pwd } });
+        });
+    }
+
+    // Back from set-password
+    const authSetPwdBack = document.getElementById('authSetPwdBack');
+    if (authSetPwdBack) {
+        authSetPwdBack.addEventListener('click', () => { showAuthForm('authLoginForm'); });
+    }
 
     function showToast(text) {
         const t = document.getElementById('toast');
@@ -2657,15 +2959,6 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
 
             if (msg.type === 'configSaved') {
                 showToast('已自动保存');
-                const cfgUserNameEl = document.getElementById('cfgUserName');
-                const cfgUserIdEl = document.getElementById('cfgUserId');
-                const cfgDeptEl = document.getElementById('cfgDept');
-                const cfg = {
-                    userName: cfgUserNameEl ? cfgUserNameEl.value.trim() : '',
-                    userId: cfgUserIdEl ? cfgUserIdEl.value.trim() : '',
-                    department: cfgDeptEl ? cfgDeptEl.value.trim() : ''
-                };
-                updateUserCard(cfg);
                 const srvEl = document.getElementById('cfgServer');
                 if (srvEl) {
                     updateServerAddress(srvEl.value.trim());
@@ -2678,19 +2971,26 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
 
             if (msg.type === 'configUpdated') {
                 const cfgServerEl = document.getElementById('cfgServer');
-                const cfgUserIdEl = document.getElementById('cfgUserId');
-                const cfgUserNameEl = document.getElementById('cfgUserName');
-                const cfgDeptEl = document.getElementById('cfgDept');
                 const cfgUpstreamProxyEl = document.getElementById('cfgUpstreamProxy');
                 const cfgCopilotOrgEl = document.getElementById('cfgCopilotOrg');
                 if (cfgServerEl) cfgServerEl.value = msg.data.serverUrl || '';
-                if (cfgUserIdEl) cfgUserIdEl.value = msg.data.userId || '';
-                if (cfgUserNameEl) cfgUserNameEl.value = msg.data.userName || '';
-                if (cfgDeptEl) cfgDeptEl.value = msg.data.department || '';
                 if (cfgUpstreamProxyEl) cfgUpstreamProxyEl.value = msg.data.upstreamProxy || '';
                 if (cfgCopilotOrgEl) cfgCopilotOrgEl.value = msg.data.copilotOrg || '';
                 updateUserCard(msg.data || {});
                 updateServerAddress((msg.data && msg.data.serverUrl) || '');
+                // Update auth display if logged in
+                const authNameEl = document.getElementById('authDisplayName');
+                const authIdEl = document.getElementById('authDisplayId');
+                const authDeptEl = document.getElementById('authDisplayDept');
+                if (authNameEl) authNameEl.textContent = msg.data.userName || '';
+                if (authIdEl) authIdEl.textContent = msg.data.userId || '';
+                if (authDeptEl) authDeptEl.textContent = msg.data.department ? '部门：' + msg.data.department : '';
+                // Show/hide auth forms based on login state
+                if (msg.data.userId) {
+                    showAuthForm('authLoggedIn');
+                } else {
+                    showAuthForm('authLoginForm');
+                }
             }
 
             if (msg.type === 'identityStatus') {
@@ -2744,6 +3044,74 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
 
             if (msg.type === 'linkCheck') {
                 renderLinkCheck(msg.data || {});
+            }
+
+            if (msg.type === 'authSuccess') {
+                const d = msg.data || {};
+                showAuthForm('authLoggedIn');
+                const nameEl = document.getElementById('authDisplayName');
+                const idEl = document.getElementById('authDisplayId');
+                const deptEl = document.getElementById('authDisplayDept');
+                if (nameEl) nameEl.textContent = d.name || '';
+                if (idEl) idEl.textContent = d.employee_id || '';
+                if (deptEl) deptEl.textContent = d.department ? '部门：' + d.department : '';
+                updateUserCard({ userName: d.name || '', userId: d.employee_id || '', department: d.department || '' });
+                if (d.mode === 'register') {
+                    showToast('注册成功，工号：' + (d.employee_id || ''));
+                } else if (d.mode === 'setPassword') {
+                    showToast('密码设置成功');
+                } else {
+                    showToast('登录成功');
+                }
+                // Re-enable buttons
+                const loginBtn = document.getElementById('authLoginBtn');
+                const regBtn = document.getElementById('authRegBtn');
+                const setPwdBtn = document.getElementById('authSetPwdBtn');
+                if (loginBtn) { loginBtn.disabled = false; loginBtn.textContent = '登录'; }
+                if (regBtn) { regBtn.disabled = false; regBtn.textContent = '注册'; }
+                if (setPwdBtn) { setPwdBtn.disabled = false; setPwdBtn.textContent = '确认设置'; }
+                // 登录成功后折叠账号设置区
+                var basicSec = document.getElementById('basicSection');
+                if (basicSec && basicSec.classList.contains('show')) {
+                    toggleSection('basic');
+                }
+            }
+
+            if (msg.type === 'authError') {
+                const errMsg = (msg.data && msg.data.message) || '操作失败';
+                // Show error on whichever form is visible
+                const loginForm = document.getElementById('authLoginForm');
+                const regForm = document.getElementById('authRegisterForm');
+                const setPwdForm = document.getElementById('authSetPwdForm');
+                if (setPwdForm && setPwdForm.style.display !== 'none') {
+                    showAuthMsg('authSetPwdMsg', 'authSetPwdMsgText', errMsg, 'error');
+                    const btn = document.getElementById('authSetPwdBtn');
+                    if (btn) { btn.disabled = false; btn.textContent = '确认设置'; }
+                } else if (regForm && regForm.style.display !== 'none') {
+                    showAuthMsg('authRegMsg', 'authRegMsgText', errMsg, 'error');
+                    const btn = document.getElementById('authRegBtn');
+                    if (btn) { btn.disabled = false; btn.textContent = '注册'; }
+                } else {
+                    showAuthMsg('authLoginMsg', 'authLoginMsgText', errMsg, 'error');
+                    const btn = document.getElementById('authLoginBtn');
+                    if (btn) { btn.disabled = false; btn.textContent = '登录'; }
+                }
+            }
+
+            if (msg.type === 'authNeedSetPassword') {
+                const eid = (msg.data && msg.data.employeeId) || '';
+                showAuthForm('authSetPwdForm');
+                const idInput = document.getElementById('authSetPwdId');
+                if (idInput) idInput.value = eid;
+                const loginBtn = document.getElementById('authLoginBtn');
+                if (loginBtn) { loginBtn.disabled = false; loginBtn.textContent = '登录'; }
+            }
+
+            if (msg.type === 'authLoggedOut') {
+                showAuthForm('authLoginForm');
+                hideAuthMsg('authLoginMsg');
+                updateUserCard({ userName: '', userId: '', department: '' });
+                showToast('已退出登录');
             }
 
         } catch (error) {

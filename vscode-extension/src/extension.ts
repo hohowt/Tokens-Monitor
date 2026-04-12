@@ -156,6 +156,10 @@ export async function activate(context: vscode.ExtensionContext) {
     statusBar.setReloadPending(context.globalState.get<boolean>(PROXY_RELOAD_PENDING_KEY, false));
 
     // Start token tracker (real-time reporting)
+    const storedAuthToken = await context.secrets.get('authToken');
+    if (storedAuthToken) {
+        tracker.setAuthToken(storedAuthToken);
+    }
     tracker.start();
     context.subscriptions.push({ dispose: () => tracker.stop() });
 

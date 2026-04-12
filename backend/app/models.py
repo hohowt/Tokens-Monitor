@@ -33,6 +33,10 @@ class User(Base):
     quota_monthly: Mapped[int] = mapped_column(BigInteger, default=0)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+    # 认证字段
+    password_hash: Mapped[str | None] = mapped_column(String(128))
+    auth_token: Mapped[str | None] = mapped_column(String(64))
+    auth_token_created_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class Project(Base):

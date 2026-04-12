@@ -78,6 +78,7 @@ export class TokenTracker {
     private lastCollectError?: string;
     private lastStatsSyncAt?: string;
     private lastStatsSyncError?: string;
+    private authToken?: string;
 
     // Stats (observable by StatusBar)
     public todayTokens = 0;
@@ -236,6 +237,10 @@ export class TokenTracker {
         }
     }
 
+    setAuthToken(token: string | undefined) {
+        this.authToken = token;
+    }
+
     /**
      * 直接添加记录（用于后向兼容或预处理后的数据）
      */
@@ -389,6 +394,7 @@ export class TokenTracker {
                 timeout: 10_000,
                 headers: {
                     ...(this.config.apiKey ? { 'X-API-Key': this.config.apiKey } : {}),
+                    ...(this.authToken ? { 'Authorization': `Bearer ${this.authToken}` } : {}),
                 },
             };
 
@@ -430,6 +436,7 @@ export class TokenTracker {
                     'Content-Type': 'application/json; charset=utf-8',
                     'Content-Length': Buffer.byteLength(body, 'utf8'),
                     ...(this.config.apiKey ? { 'X-API-Key': this.config.apiKey } : {}),
+                    ...(this.authToken ? { 'Authorization': `Bearer ${this.authToken}` } : {}),
                 },
                 timeout: 15_000,
             };

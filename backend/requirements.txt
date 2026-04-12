@@ -8,3 +8,4 @@ redis==5.*
 httpx==0.28.*
 apscheduler==3.10.*
 python-dateutil==2.*
+bcrypt==4.*

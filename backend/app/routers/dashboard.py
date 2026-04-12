@@ -82,23 +82,41 @@ def _request_local_date_column():
 async def get_overview(
     days: int = Query(30, ge=1, le=365),
     source_app: str | None = Query(None),
+    employee_id: str | None = Query(None),
     db: AsyncSession = Depends(get_db),
 ):
     start_ts, end_ts = _ts_range(days)
     prev_start_ts = start_ts - timedelta(days=days)
 
+    # 可选：按 employee_id 过滤（扩展侧边栏用）
+    user_filter_id: int | None = None
+    if employee_id:
+        user_row = await db.execute(
+            select(User.id).where(User.employee_id == employee_id.strip())
+        )
+        found_id = user_row.scalar_one_or_none()
+        if found_id is None:
+            # 用户不存在，直接返回空数据
+            return OverviewResponse(
+                total_tokens=0, total_cost_cny=0.0, total_requests=0,
+                active_users=0, avg_tokens_per_user=0, avg_cost_per_user=0.0,
+                exact_tokens=0, estimated_tokens=0, exact_requests=0,
+                estimated_requests=0, tokens_change_pct=None, cost_change_pct=None,
+            )
+        user_filter_id = found_id
+
     # Current period
-    current_stmt = _apply_source_app_filter(
-        select(
-            func.coalesce(func.sum(TokenUsageLog.total_tokens), 0),
-            func.coalesce(func.sum(TokenUsageLog.cost_cny), 0),
-            func.coalesce(func.sum(_request_count_expr()), 0),
-            func.count(func.distinct(TokenUsageLog.user_id)),
-            func.coalesce(func.sum(case((TokenUsageLog.source == ESTIMATE_SOURCE, TokenUsageLog.total_tokens), else_=0)), 0),
-            func.coalesce(func.sum(case((TokenUsageLog.source == ESTIMATE_SOURCE, _request_count_expr()), else_=0)), 0),
-        ).where(TokenUsageLog.request_at.between(start_ts, end_ts)),
-        source_app,
-    )
+    current_base = select(
+        func.coalesce(func.sum(TokenUsageLog.total_tokens), 0),
+        func.coalesce(func.sum(TokenUsageLog.cost_cny), 0),
+        func.coalesce(func.sum(_request_count_expr()), 0),
+        func.count(func.distinct(TokenUsageLog.user_id)),
+        func.coalesce(func.sum(case((TokenUsageLog.source == ESTIMATE_SOURCE, TokenUsageLog.total_tokens), else_=0)), 0),
+        func.coalesce(func.sum(case((TokenUsageLog.source == ESTIMATE_SOURCE, _request_count_expr()), else_=0)), 0),
+    ).where(TokenUsageLog.request_at.between(start_ts, end_ts))
+    if user_filter_id is not None:
+        current_base = current_base.where(TokenUsageLog.user_id == user_filter_id)
+    current_stmt = _apply_source_app_filter(current_base, source_app)
     cur = await db.execute(current_stmt)
     tokens, cost, requests, users, estimated_tokens, estimated_requests = cur.one()
     users_count = int(users or 0)
@@ -106,13 +124,13 @@ async def get_overview(
     exact_requests = int(requests) - int(estimated_requests)
 
     # Previous period for comparison
-    prev_stmt = _apply_source_app_filter(
-        select(
-            func.coalesce(func.sum(TokenUsageLog.total_tokens), 0),
-            func.coalesce(func.sum(TokenUsageLog.cost_cny), 0),
-        ).where(TokenUsageLog.request_at.between(prev_start_ts, start_ts - timedelta(seconds=1))),
-        source_app,
-    )
+    prev_base = select(
+        func.coalesce(func.sum(TokenUsageLog.total_tokens), 0),
+        func.coalesce(func.sum(TokenUsageLog.cost_cny), 0),
+    ).where(TokenUsageLog.request_at.between(prev_start_ts, start_ts - timedelta(seconds=1)))
+    if user_filter_id is not None:
+        prev_base = prev_base.where(TokenUsageLog.user_id == user_filter_id)
+    prev_stmt = _apply_source_app_filter(prev_base, source_app)
     prev = await db.execute(prev_stmt)
     prev_tokens, prev_cost = prev.one()
 

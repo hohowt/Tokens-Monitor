@@ -11,7 +11,7 @@ from pydantic import BaseModel
 from sqlalchemy import case, delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth import require_api_key
+from app.auth import require_api_key_or_user_token
 from app.canonical import dashboard_tz, source_app_display_name
 from app.config import settings
 from app.database import get_db
@@ -294,6 +294,8 @@ async def _get_or_create_user(db: AsyncSession, employee_id: str, name: str, dep
         cached_user = await db.get(User, _user_cache[normalized_employee_id])
         if cached_user:
             if normalized_name and not _same_person_name(cached_user.name, normalized_name):
+                if cached_user.password_hash:
+                    raise IdentityConflictError(cached_user.employee_id, cached_user.name, normalized_name)
                 cached_user.name = normalized_name
             if department_id != cached_user.department_id:
                 cached_user.department_id = department_id
@@ -304,6 +306,8 @@ async def _get_or_create_user(db: AsyncSession, employee_id: str, name: str, dep
     user = await _get_existing_user_by_employee_id(db, normalized_employee_id)
     if user:
         if normalized_name and not _same_person_name(user.name, normalized_name):
+            if user.password_hash:
+                raise IdentityConflictError(user.employee_id, user.name, normalized_name)
             user.name = normalized_name
         if department_id != user.department_id:
             user.department_id = department_id
@@ -366,7 +370,7 @@ async def _upsert_client_presence(
     ))
 
 
-@router.get("/clients/identity-check", response_model=IdentityCheckResponse, dependencies=[Depends(require_api_key)])
+@router.get("/clients/identity-check", response_model=IdentityCheckResponse, dependencies=[Depends(require_api_key_or_user_token)])
 async def identity_check(
     user_id: str,
     user_name: str,
@@ -434,8 +438,13 @@ async def identity_check(
 MAX_BATCH_SIZE = 500
 
 
-@router.post("/collect", dependencies=[Depends(require_api_key)])
-async def collect_usage(records: list[UsageRecordIn], db: AsyncSession = Depends(get_db)):
+@router.post("/collect")
+async def collect_usage(
+    records: list[UsageRecordIn],
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    auth_user: User | None = Depends(require_api_key_or_user_token),
+):
     """Receive batched token usage records from client applications."""
     if len(records) > MAX_BATCH_SIZE:
         raise HTTPException(status_code=400, detail=f"batch too large (max {MAX_BATCH_SIZE})")
@@ -465,8 +474,19 @@ async def collect_usage(records: list[UsageRecordIn], db: AsyncSession = Depends
             skipped_duplicates += 1
             continue
 
+        # 当有认证用户时，强制使用认证用户的 employee_id/name/department
+        if auth_user:
+            effective_employee_id = auth_user.employee_id
+            effective_name = auth_user.name
+            dept = await db.get(Department, auth_user.department_id) if auth_user.department_id else None
+            effective_department = dept.name if dept else None
+        else:
+            effective_employee_id = rec.user_id
+            effective_name = rec.user_name
+            effective_department = rec.department
+
         try:
-            user_id = await _get_or_create_user(db, rec.user_id, rec.user_name, rec.department)
+            user_id = await _get_or_create_user(db, effective_employee_id, effective_name, effective_department)
         except IdentityConflictError as exc:
             _raise_identity_conflict(exc)
 
@@ -509,7 +529,7 @@ async def collect_usage(records: list[UsageRecordIn], db: AsyncSession = Depends
     return {"status": "ok", "inserted": inserted, "skipped_duplicates": skipped_duplicates}
 
 
-@router.post("/collect/tokscale", dependencies=[Depends(require_api_key)])
+@router.post("/collect/tokscale", dependencies=[Depends(require_api_key_or_user_token)])
 async def collect_tokscale_usage(
     data: TokscaleSubmitRequest,
     request: Request,
@@ -604,7 +624,7 @@ async def collect_tokscale_usage(
     }
 
 
-@router.post("/clients/heartbeat", dependencies=[Depends(require_api_key)])
+@router.post("/clients/heartbeat", dependencies=[Depends(require_api_key_or_user_token)])
 async def client_heartbeat(
     data: ClientHeartbeatIn,
     request: Request,
@@ -663,7 +683,7 @@ async def client_heartbeat(
 
 from app.routers.dashboard import ESTIMATE_SOURCE, _request_local_date_column, _ts_range
 
-@router.get("/clients/my-stats", response_model=MyStatsResponse, dependencies=[Depends(require_api_key)])
+@router.get("/clients/my-stats", response_model=MyStatsResponse, dependencies=[Depends(require_api_key_or_user_token)])
 async def get_my_stats(
     user_id: str,
     user_name: str,
@@ -700,7 +720,7 @@ async def get_my_stats(
     return MyStatsResponse(today_tokens=int(today_tokens), today_requests=int(today_requests))
 
 
-@router.get("/clients/my-daily-usage", response_model=MyDailyUsageResponse, dependencies=[Depends(require_api_key)])
+@router.get("/clients/my-daily-usage", response_model=MyDailyUsageResponse, dependencies=[Depends(require_api_key_or_user_token)])
 async def get_my_daily_usage(
     user_id: str,
     user_name: str,
