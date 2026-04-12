@@ -366,7 +366,7 @@ body {
 }
 
 .rank-name {
-  width: clamp(44px, 4.5vw, 70px);
+  width: clamp(60px, 6vw, 110px);
   flex-shrink: 0;
   overflow: hidden;
   text-overflow: ellipsis;

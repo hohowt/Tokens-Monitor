@@ -30,6 +30,8 @@ export interface Overview {
   estimated_requests: number;
   tokens_change_pct: number | null;
   cost_change_pct: number | null;
+  priced_tokens: number;
+  unpriced_tokens: number;
 }
 
 export interface TrendPoint {
@@ -50,6 +52,7 @@ export interface TrendData {
 export interface RankingItem {
   id: number;
   name: string;
+  employee_id?: string;
   total_tokens: number;
   cost_cny: number;
   requests: number;

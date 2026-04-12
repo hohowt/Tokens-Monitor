@@ -32,6 +32,7 @@ class User(Base):
     quota_daily: Mapped[int] = mapped_column(BigInteger, default=0)
     quota_monthly: Mapped[int] = mapped_column(BigInteger, default=0)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    is_test: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
     # 认证字段
     password_hash: Mapped[str | None] = mapped_column(String(128))

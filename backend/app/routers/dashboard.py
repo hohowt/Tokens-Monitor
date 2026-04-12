@@ -1,11 +1,11 @@
 from datetime import date, datetime, time as dt_time, timedelta
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import case, func, select, cast, Date as SADate
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import require_admin
-from app.canonical import dashboard_tz, source_app_display_name, source_app_key_sql_case
+from app.canonical import dashboard_tz, provider_key_sql_case, source_app_display_name, source_app_key_sql_case
 from app.config import settings
 from app.database import get_db
 from app.models import Alert, Client, Department, ModelPricing, TokenUsageLog, User
@@ -105,23 +105,35 @@ async def get_overview(
             )
         user_filter_id = found_id
 
+    # 排除测试/停用用户的 user_id 集合
+    _excluded_user_ids = select(User.id).where(
+        (User.is_test == True) | (User.is_active == False)  # noqa: E712
+    ).scalar_subquery()
+
     # Current period
     current_base = select(
         func.coalesce(func.sum(TokenUsageLog.total_tokens), 0),
         func.coalesce(func.sum(TokenUsageLog.cost_cny), 0),
         func.coalesce(func.sum(_request_count_expr()), 0),
-        func.count(func.distinct(TokenUsageLog.user_id)),
+        func.count(func.distinct(case(
+            (TokenUsageLog.user_id.not_in(_excluded_user_ids), TokenUsageLog.user_id),
+            else_=None,
+        ))),
         func.coalesce(func.sum(case((TokenUsageLog.source == ESTIMATE_SOURCE, TokenUsageLog.total_tokens), else_=0)), 0),
         func.coalesce(func.sum(case((TokenUsageLog.source == ESTIMATE_SOURCE, _request_count_expr()), else_=0)), 0),
+        # 定价覆盖：cost_cny > 0 的 token 认为"已定价"
+        func.coalesce(func.sum(case((TokenUsageLog.cost_cny > 0, TokenUsageLog.total_tokens), else_=0)), 0),
     ).where(TokenUsageLog.request_at.between(start_ts, end_ts))
     if user_filter_id is not None:
         current_base = current_base.where(TokenUsageLog.user_id == user_filter_id)
     current_stmt = _apply_source_app_filter(current_base, source_app)
     cur = await db.execute(current_stmt)
-    tokens, cost, requests, users, estimated_tokens, estimated_requests = cur.one()
+    tokens, cost, requests, users, estimated_tokens, estimated_requests, priced_tokens = cur.one()
     users_count = int(users or 0)
     exact_tokens = int(tokens) - int(estimated_tokens)
     exact_requests = int(requests) - int(estimated_requests)
+    priced_tokens_val = int(priced_tokens)
+    unpriced_tokens_val = int(tokens) - priced_tokens_val
 
     # Previous period for comparison
     prev_base = select(
@@ -152,6 +164,8 @@ async def get_overview(
         estimated_requests=int(estimated_requests),
         tokens_change_pct=pct(tokens, prev_tokens),
         cost_change_pct=pct(cost, prev_cost),
+        priced_tokens=max(priced_tokens_val, 0),
+        unpriced_tokens=max(unpriced_tokens_val, 0),
     )
 
 
@@ -207,21 +221,25 @@ async def get_by_user(
     start_ts, end_ts = _ts_range(days)
     stmt = _apply_source_app_filter(
         select(
-            User.id, User.name,
+            User.id, User.name, User.employee_id,
             func.sum(TokenUsageLog.total_tokens),
             func.sum(TokenUsageLog.cost_cny),
             func.coalesce(func.sum(_request_count_expr()), 0),
         )
         .join(User, TokenUsageLog.user_id == User.id)
-        .where(TokenUsageLog.request_at.between(start_ts, end_ts))
-        .group_by(User.id, User.name)
+        .where(
+            TokenUsageLog.request_at.between(start_ts, end_ts),
+            User.is_test == False,  # noqa: E712
+            User.is_active == True,  # noqa: E712
+        )
+        .group_by(User.id, User.name, User.employee_id)
         .order_by(func.sum(TokenUsageLog.total_tokens).desc())
         .limit(limit),
         source_app,
     )
     result = await db.execute(stmt)
     items = [
-        RankingItem(id=r[0], name=r[1], total_tokens=int(r[2]), cost_cny=round(float(r[3]), 2), requests=int(r[4]))
+        RankingItem(id=r[0], name=r[1], employee_id=r[2] or "", total_tokens=int(r[3]), cost_cny=round(float(r[4]), 2), requests=int(r[5]))
         for r in result.all()
     ]
     return RankingResponse(items=items)
@@ -248,6 +266,8 @@ async def get_by_department(
         .where(
             TokenUsageLog.request_at.between(start_ts, end_ts),
             User.department_id.isnot(None),
+            User.is_test == False,  # noqa: E712
+            User.is_active == True,  # noqa: E712
         )
         .group_by(Department.id, Department.name)
         .order_by(func.sum(TokenUsageLog.total_tokens).desc()),
@@ -303,14 +323,15 @@ async def get_by_provider(
     db: AsyncSession = Depends(get_db),
 ):
     start_ts, end_ts = _ts_range(days)
+    canon_provider = provider_key_sql_case(TokenUsageLog.provider)
     stmt = _apply_source_app_filter(
         select(
-            TokenUsageLog.provider,
+            canon_provider.label("provider_key"),
             func.sum(TokenUsageLog.total_tokens),
             func.sum(TokenUsageLog.cost_cny),
         )
         .where(TokenUsageLog.request_at.between(start_ts, end_ts))
-        .group_by(TokenUsageLog.provider)
+        .group_by(canon_provider)
         .order_by(func.sum(TokenUsageLog.total_tokens).desc()),
         source_app,
     )
@@ -572,3 +593,69 @@ async def get_unpriced_models(
                 "requests": int(r[2]),
             })
     return result
+
+
+@router.post("/admin/merge-users", dependencies=[Depends(require_admin)])
+async def merge_users(
+    source_employee_id: str = Query(..., description="被合并的用户工号（数据迁移到目标用户后停用）"),
+    target_employee_id: str = Query(..., description="目标用户工号（保留）"),
+    db: AsyncSession = Depends(get_db),
+):
+    """将源用户的所有 token_usage_logs 迁移到目标用户，然后停用源用户。"""
+    from sqlalchemy import update as sa_update
+
+    src_row = await db.execute(select(User).where(User.employee_id == source_employee_id.strip()))
+    src_user = src_row.scalar_one_or_none()
+    if not src_user:
+        raise HTTPException(404, f"源用户 {source_employee_id} 不存在")
+
+    tgt_row = await db.execute(select(User).where(User.employee_id == target_employee_id.strip()))
+    tgt_user = tgt_row.scalar_one_or_none()
+    if not tgt_user:
+        raise HTTPException(404, f"目标用户 {target_employee_id} 不存在")
+
+    if src_user.id == tgt_user.id:
+        raise HTTPException(400, "源用户和目标用户相同")
+
+    # 迁移 token_usage_logs
+    result = await db.execute(
+        sa_update(TokenUsageLog)
+        .where(TokenUsageLog.user_id == src_user.id)
+        .values(user_id=tgt_user.id)
+    )
+    migrated = result.rowcount or 0
+
+    # 停用源用户
+    src_user.is_active = False
+    await db.commit()
+
+    return {
+        "status": "ok",
+        "migrated_records": migrated,
+        "source": {"employee_id": src_user.employee_id, "name": src_user.name, "is_active": False},
+        "target": {"employee_id": tgt_user.employee_id, "name": tgt_user.name},
+    }
+
+
+@router.patch("/admin/users/{employee_id}", dependencies=[Depends(require_admin)])
+async def update_user_flags(
+    employee_id: str,
+    is_test: bool | None = Query(None, description="标记为测试用户"),
+    db: AsyncSession = Depends(get_db),
+):
+    """管理接口：更新用户标记（如 is_test）。"""
+    row = await db.execute(select(User).where(User.employee_id == employee_id.strip()))
+    user = row.scalar_one_or_none()
+    if not user:
+        raise HTTPException(404, f"用户 {employee_id} 不存在")
+
+    if is_test is not None:
+        user.is_test = is_test
+
+    await db.commit()
+    return {
+        "employee_id": user.employee_id,
+        "name": user.name,
+        "is_test": user.is_test,
+        "is_active": user.is_active,
+    }

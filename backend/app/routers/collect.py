@@ -12,7 +12,7 @@ from sqlalchemy import case, delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import require_api_key_or_user_token
-from app.canonical import dashboard_tz, source_app_display_name
+from app.canonical import dashboard_tz, canonical_provider_key, source_app_display_name
 from app.config import settings
 from app.database import get_db
 from app.models import Client, Department, ModelPricing, TokenUsageLog, User
@@ -507,7 +507,7 @@ async def collect_usage(
         log_entry = TokenUsageLog(
             user_id=user_id,
             model_name=rec.model,
-            provider=rec.vendor,
+            provider=canonical_provider_key(rec.vendor),
             source=source,
             source_app=(rec.source_app or "").strip() or None,
             endpoint=(rec.endpoint or "").strip() or None,

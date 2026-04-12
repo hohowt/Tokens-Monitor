@@ -38,7 +38,7 @@ function App() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [lastUpdatedAt, setLastUpdatedAt] = useState<string>("--");
 
-  const emptyOverview: Overview = { total_tokens: 0, total_cost_cny: 0, total_requests: 0, active_users: 0, avg_tokens_per_user: 0, avg_cost_per_user: 0, exact_tokens: 0, estimated_tokens: 0, exact_requests: 0, estimated_requests: 0, tokens_change_pct: null, cost_change_pct: null };
+  const emptyOverview: Overview = { total_tokens: 0, total_cost_cny: 0, total_requests: 0, active_users: 0, avg_tokens_per_user: 0, avg_cost_per_user: 0, exact_tokens: 0, estimated_tokens: 0, exact_requests: 0, estimated_requests: 0, tokens_change_pct: null, cost_change_pct: null, priced_tokens: 0, unpriced_tokens: 0 };
   const emptyTrend: TrendData = { points: [], avg_tokens: 0, avg_cost: 0 };
 
   const [overview, setOverview] = useState<Overview>(emptyOverview);
@@ -129,10 +129,12 @@ function App() {
     <div className="card-empty">{message}</div>
   );
 
+  const pricedPct = overview.total_tokens > 0 ? (overview.priced_tokens / overview.total_tokens) * 100 : 0;
+
   // ── Stat Cards (with animated numbers) ──
   const statCards = [
-    { label: "总 Token 消耗", icon: <ThunderboltOutlined />, rawValue: overview.total_tokens, format: formatTokens, color: "yellow", sub: "所有 AI 模型消耗的 Token 总数" },
-    { label: "总成本", icon: <DollarOutlined />, rawValue: overview.total_cost_cny, format: formatCNY, color: "green", sub: overview.cost_change_pct != null ? `环比 ${overview.cost_change_pct > 0 ? "+" : ""}${overview.cost_change_pct}%` : "环比 暂无" },
+    { label: "总 Token 消耗", icon: <ThunderboltOutlined />, rawValue: overview.total_tokens, format: formatTokens, color: "yellow", sub: overview.tokens_change_pct != null ? `环比 ${overview.tokens_change_pct > 0 ? "+" : ""}${overview.tokens_change_pct}%` : "所有 AI 模型消耗的 Token 总数" },
+    { label: "总成本", icon: <DollarOutlined />, rawValue: overview.total_cost_cny, format: formatCNY, color: "green", sub: overview.cost_change_pct != null ? `环比 ${overview.cost_change_pct > 0 ? "+" : ""}${overview.cost_change_pct}%　已定价 ${pricedPct.toFixed(0)}%` : `环比 暂无　已定价 ${pricedPct.toFixed(0)}%` },
     { label: "总请求数", icon: <ApiOutlined />, rawValue: overview.total_requests, format: formatNumber, color: "purple", sub: "API 调用总次数" },
     { label: "精确 Token 占比", icon: <ThunderboltOutlined />, rawValue: exactTokenPct, format: (n: number) => `${n.toFixed(1)}%`, color: "orange", sub: `精确 ${formatTokens(overview.exact_tokens)} / 估算 ${formatTokens(overview.estimated_tokens)}` },
     { label: "活跃用户", icon: <TeamOutlined />, rawValue: overview.active_users, format: (n: number) => Math.round(n).toString(), color: "cyan", sub: "本月有 AI 调用的用户数" },
@@ -210,7 +212,7 @@ function App() {
   const modelPieOption = {
     backgroundColor: "transparent",
     tooltip: { trigger: "item" as const, formatter: "{b}: {d}%" },
-    legend: { orient: "horizontal" as const, bottom: 0, left: "center", textStyle: { color: "#8b949e", fontSize: 11 }, formatter: (name: string) => name.length > 10 ? name.slice(0, 10) + "…" : name, itemWidth: 10, itemHeight: 10, itemGap: 8 },
+    legend: { orient: "horizontal" as const, bottom: 0, left: "center", textStyle: { color: "#8b949e", fontSize: 11 }, formatter: (name: string) => name.length > 18 ? name.slice(0, 18) + "…" : name, itemWidth: 10, itemHeight: 10, itemGap: 8 },
     series: [{
       type: "pie",
       radius: ["35%", "65%"],
@@ -350,9 +352,9 @@ function App() {
             {userRanking.length > 0 ? (
               <div className="rank-list">
                 {userRanking.map((u, i) => (
-                  <div className="rank-row" key={u.name}>
+                  <div className="rank-row" key={u.id}>
                     <span className="rank-idx" style={{ color: i < 3 ? COLORS.yellow : "#8b949e" }}>{i + 1}</span>
-                    <span className="rank-name">{u.name}</span>
+                    <span className="rank-name" title={u.employee_id ? `${u.name}(${u.employee_id})` : u.name}>{u.name}{u.employee_id ? `(${u.employee_id})` : ""}</span>
                     <div className="rank-bar-bg">
                       <div className="rank-bar" style={{ width: `${(u.total_tokens / maxUserTokens) * 100}%`, background: BAR_COLORS[i % BAR_COLORS.length] }} />
                     </div>

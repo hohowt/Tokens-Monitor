@@ -18,6 +18,9 @@ class OverviewResponse(BaseModel):
     # 环比
     tokens_change_pct: float | None = None
     cost_change_pct: float | None = None
+    # 定价覆盖
+    priced_tokens: int = 0
+    unpriced_tokens: int = 0
 
 
 # === Trend ===
@@ -40,6 +43,7 @@ class TrendResponse(BaseModel):
 class RankingItem(BaseModel):
     id: int
     name: str
+    employee_id: str = ""
     total_tokens: int
     cost_cny: float
     requests: int
