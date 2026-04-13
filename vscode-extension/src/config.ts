@@ -49,7 +49,7 @@ export function getConfig(): MonitorConfig {
     const cfg = vscode.workspace.getConfiguration('aiTokenMonitor');
     const identity = loadIdentity();
     return {
-        serverUrl: cfg.get<string>('serverUrl', 'https://otw.tech:59889').replace(/\/+$/, ''),
+        serverUrl: cfg.get<string>('serverUrl', 'http://192.168.0.135:8000').replace(/\/+$/, ''),
         userId: cfg.get<string>('userId', '') || identity?.user_id || '',
         userName: cfg.get<string>('userName', '') || identity?.user_name || '',
         department: cfg.get<string>('department', '') || identity?.department || '',

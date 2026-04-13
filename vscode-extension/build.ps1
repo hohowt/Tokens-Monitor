@@ -63,7 +63,7 @@ function Resolve-ClientBinary($name) {
         throw "Client build script not found: $CLIENT_BUILD"
     }
 
-    Write-Host "  Client binary for '$name' not found. Building it now..." -ForegroundColor Cyan
+    Write-Host "  Building client binary for '$name'..." -ForegroundColor Cyan
     & $CLIENT_BUILD -Platform $name
     if ($LASTEXITCODE -ne 0) {
         throw "Client build failed for target '$name'"
@@ -173,4 +173,3 @@ foreach ($pkg in $builtPackages) {
     Write-Host "    📦 $($file.Name) ($sizeMB MB)" -ForegroundColor Green
 }
 Write-Host ""
-

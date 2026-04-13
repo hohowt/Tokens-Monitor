@@ -197,6 +197,10 @@ INSERT INTO model_pricing (model_name, provider, input_price_per_1k, output_pric
 ('gpt-4.1', 'openai', 0.002, 0.008, '2025-04-01'),
 ('gpt-4.1-mini', 'openai', 0.0004, 0.0016, '2025-04-01'),
 ('gpt-4.1-nano', 'openai', 0.0001, 0.0004, '2025-04-01'),
+('gpt-5.4-2026-03-05', 'openai', 0.0025, 0.015, '2026-03-05'),
+('gpt-5.4', 'openai', 0.0025, 0.015, '2026-03-05'),
+('gpt-5.4-mini', 'openai', 0.0005, 0.003, '2026-03-05'),
+('gpt-5.4-nano', 'openai', 0.00015, 0.0009, '2026-03-05'),
 -- Embedding & 其他
 ('text-embedding-3-large', 'openai', 0.00013, 0, '2024-01-01'),
 ('text-embedding-3-small', 'openai', 0.00002, 0, '2024-01-01'),
@@ -221,6 +225,10 @@ INSERT INTO model_pricing (model_name, provider, input_price_per_1k, output_pric
 ('claude-3-5-haiku-latest', 'anthropic', 0.0008, 0.004, '2024-10-22'),
 ('claude-sonnet-4-latest', 'anthropic', 0.003, 0.015, '2025-05-14'),
 ('claude-opus-4-latest', 'anthropic', 0.015, 0.075, '2025-09-18'),
+('claude-opus-4.6', 'anthropic', 0.005, 0.025, '2026-01-01'),
+('claude-sonnet-4.6', 'anthropic', 0.0015, 0.0075, '2026-01-01'),
+('claude-haiku-4.5', 'anthropic', 0.0003, 0.0015, '2025-10-01'),
+('claude-sonnet-4.5', 'anthropic', 0.003, 0.015, '2025-06-01'),
 
 -- ── Google (Gemini) ─────────────────────────────────────────
 ('gemini-1.0-pro', 'google', 0.0005, 0.0015, '2024-01-01'),
@@ -241,6 +249,7 @@ INSERT INTO model_pricing (model_name, provider, input_price_per_1k, output_pric
 
 -- ── DeepSeek ────────────────────────────────────────────────
 ('deepseek-chat', 'deepseek', 0.00014, 0.00028, '2025-01-01'),
+('deepseek-chat-v3.1', 'deepseek', 0.00027, 0.0011, '2025-12-01'),
 ('deepseek-reasoner', 'deepseek', 0.00055, 0.00219, '2025-01-01'),
 ('deepseek-coder', 'deepseek', 0.00014, 0.00028, '2024-06-01'),
 ('deepseek-v3', 'deepseek', 0.00014, 0.00028, '2025-03-01'),
@@ -444,5 +453,9 @@ INSERT INTO model_pricing (model_name, provider, input_price_per_1k, output_pric
 ('llama-3.1-8b-instant', 'groq', 0.00005, 0.00008, '2024-07-01'),
 ('gemma2-9b-it', 'groq', 0.0002, 0.0002, '2024-06-01'),
 ('mixtral-8x7b-32768', 'groq', 0.00024, 0.00024, '2024-01-01'),
-('deepseek-r1-distill-llama-70b', 'groq', 0.00075, 0.00099, '2025-02-01')
+('deepseek-r1-distill-llama-70b', 'groq', 0.00075, 0.00099, '2025-02-01'),
+
+-- ── GitHub Copilot (内部模型) ─────────────────────────────
+('copilot-nes-oct', 'github', 0.00015, 0.0006, '2025-10-01'),
+('copilot-suggestions-himalia-001', 'github', 0.00015, 0.0006, '2025-10-01')
 ;

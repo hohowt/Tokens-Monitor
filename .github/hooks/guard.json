@@ -1,0 +1,20 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": "python3 .github/hooks/agent_guard.py",
+        "windows": "py -3 .github/hooks/agent_guard.py",
+        "timeout": 10
+      }
+    ],
+    "PreToolUse": [
+      {
+        "type": "command",
+        "command": "python3 .github/hooks/agent_guard.py",
+        "windows": "py -3 .github/hooks/agent_guard.py",
+        "timeout": 10
+      }
+    ]
+  }
+}

@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import { getWindowsCertificateTrustStatus, WindowsCertificateTrustStatus } from './certificateTrust';
+import { AUTH_SESSION_SECRET_KEY, authSessionMatchesConfig, parseAuthSession, serializeAuthSession } from './authSession';
 import { TokenTracker, TrackerRuntimeStatus } from './tokenTracker';
 import { MonitorConfig, getConfig } from './config';
 import { LocalProxyStatusSnapshot, ProxyEnvironmentDiagnosis, ProxyManager } from './proxyManager';
@@ -137,6 +138,7 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
                 this.postLinkCheck({
                     overallStatus: 'checking',
                     items: [
+                        { id: 'identity', title: '身份校验', status: 'checking', summary: '正在检查当前工号与姓名是否可写入服务器…' },
                         { id: 'local-proxy', title: '本地代理', status: 'checking', summary: '正在检查本地代理与当前路由…' },
                         { id: 'environment', title: '代理环境', status: 'checking', summary: '正在检查当前代理环境与接管策略…' },
                         { id: 'certificate', title: '证书安装', status: 'checking', summary: '正在检查当前用户证书信任状态…' },
@@ -254,7 +256,12 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
     }
 
     private async applyAuthResult(data: { employee_id: string; name: string; department?: string; auth_token: string }): Promise<void> {
-        await this.secrets.store('authToken', data.auth_token);
+        await this.secrets.store(AUTH_SESSION_SECRET_KEY, serializeAuthSession({
+            token: data.auth_token,
+            serverUrl: this.config.serverUrl,
+            employeeId: data.employee_id,
+            userName: data.name,
+        }));
         this.tracker.setAuthToken(data.auth_token);
         const cfg = vscode.workspace.getConfiguration('aiTokenMonitor');
         await cfg.update('userId', data.employee_id, vscode.ConfigurationTarget.Global);
@@ -305,6 +312,7 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
     }
 
     private async handleLogout(): Promise<void> {
+        await this.secrets.delete(AUTH_SESSION_SECRET_KEY);
         await this.secrets.delete('authToken');
         this.tracker.setAuthToken(undefined);
         const cfg = vscode.workspace.getConfiguration('aiTokenMonitor');
@@ -386,12 +394,6 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
     }
 
     private async fetchIdentityStatus(): Promise<IdentityStatusData> {
-        // 已登录（有 auth token）时无需检查身份
-        const token = await this.secrets.get('authToken');
-        if (token && this.config.userId && this.config.userName) {
-            return { status: 'matched', message: '已登录认证，身份已确认。' };
-        }
-
         const fallback = this.getDefaultIdentityStatus();
         if (fallback.status !== 'checking') {
             return fallback;
@@ -407,12 +409,24 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
             const timer = setTimeout(() => controller.abort(), 5000);
             const hdrs: Record<string, string> = {};
             if (this.config.apiKey) { hdrs['X-API-Key'] = this.config.apiKey; }
-            const authTok = await this.secrets.get('authToken');
-            if (authTok) { hdrs['Authorization'] = `Bearer ${authTok}`; }
-            const response = await fetch(`${this.config.serverUrl}/api/clients/identity-check?${params.toString()}`, {
+            const authSession = parseAuthSession(await this.secrets.get(AUTH_SESSION_SECRET_KEY));
+            if (authSession && authSessionMatchesConfig(authSession, this.config)) {
+                hdrs['Authorization'] = `Bearer ${authSession.token}`;
+            }
+
+            let response = await fetch(`${this.config.serverUrl}/api/clients/identity-check?${params.toString()}`, {
                 signal: controller.signal,
                 headers: hdrs,
             });
+
+            if (response.status === 401 && hdrs.Authorization) {
+                delete hdrs.Authorization;
+                response = await fetch(`${this.config.serverUrl}/api/clients/identity-check?${params.toString()}`, {
+                    signal: controller.signal,
+                    headers: hdrs,
+                });
+            }
+
             clearTimeout(timer);
             if (!response.ok) {
                 return {
@@ -477,18 +491,20 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
     }
 
     private async buildLinkCheckData(): Promise<LinkCheckData> {
-        const [localStatus, serverHealth, diagnosis] = await Promise.all([
+        const [localStatus, serverHealth, diagnosis, identityStatus] = await Promise.all([
             this.proxyManager?.getLocalStatus() ?? Promise.resolve(null),
             this.checkServerHealth(),
             this.proxyManager?.getEnvironmentDiagnosis() ?? Promise.resolve(this.getDefaultDiagnosis()),
+            this.fetchIdentityStatus(),
         ]);
         const trackerStatus = this.tracker.getRuntimeStatus();
         const items = [
+            this.buildIdentityItem(identityStatus),
             this.buildLocalProxyItem(localStatus, diagnosis),
             this.buildEnvironmentItem(diagnosis),
             this.buildCertificateItem(),
             this.buildUpstreamItem(localStatus, diagnosis),
-            this.buildReportingItem(localStatus, trackerStatus, serverHealth),
+            this.buildReportingItem(localStatus, trackerStatus, serverHealth, identityStatus),
         ];
 
         return {
@@ -588,6 +604,80 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
             summary: diagnosis.summary,
             detail: [diagnosis.detail, diagnosis.recommendedAction].filter(Boolean).join(' '),
         };
+    }
+
+    private buildIdentityItem(identityStatus: IdentityStatusData): LinkCheckItemData {
+        const knownApps = Array.isArray(identityStatus.known_apps) && identityStatus.known_apps.length > 0
+            ? `已记录应用：${identityStatus.known_apps.join('、')}`
+            : '';
+
+        if (!this.config.userId.trim() || !this.config.userName.trim()) {
+            return {
+                id: 'identity',
+                title: '身份校验',
+                status: 'warning',
+                summary: '工号或姓名未填写完整，服务端无法稳定归属当前账号。',
+                detail: '请先填写工号和姓名，再检查是否与服务器已有身份冲突。',
+            };
+        }
+
+        switch (identityStatus.status) {
+            case 'matched':
+                return {
+                    id: 'identity',
+                    title: '身份校验',
+                    status: 'ok',
+                    summary: '当前工号与服务器记录一致，可在多个应用共用。',
+                    detail: knownApps || identityStatus.message,
+                };
+            case 'new':
+                return {
+                    id: 'identity',
+                    title: '身份校验',
+                    status: 'ok',
+                    summary: '服务器尚无该工号记录，首次上报时会按新用户创建。',
+                    detail: identityStatus.message,
+                };
+            case 'warning':
+                return {
+                    id: 'identity',
+                    title: '身份校验',
+                    status: 'warning',
+                    summary: identityStatus.message,
+                    detail: knownApps || '请再次确认工号和姓名，再继续观察 collect 是否成功。',
+                };
+            case 'conflict':
+                return {
+                    id: 'identity',
+                    title: '身份校验',
+                    status: 'error',
+                    summary: '当前工号与服务器已有姓名不一致，collect 会被服务器拒绝。',
+                    detail: knownApps ? `${identityStatus.message} ${knownApps}` : identityStatus.message,
+                };
+            case 'unavailable':
+                return {
+                    id: 'identity',
+                    title: '身份校验',
+                    status: 'warning',
+                    summary: '暂时无法完成身份校验，当前无法提前判断服务器会不会拒绝写入。',
+                    detail: identityStatus.message,
+                };
+            case 'checking':
+                return {
+                    id: 'identity',
+                    title: '身份校验',
+                    status: 'checking',
+                    summary: identityStatus.message,
+                };
+            default:
+                return {
+                    id: 'identity',
+                    title: '身份校验',
+                    status: 'neutral',
+                    summary: identityStatus.message,
+                    detail: knownApps || undefined,
+                };
+        }
     }
 
     private buildCertificateItem(): LinkCheckItemData {
@@ -719,6 +809,7 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
         localStatus: LocalProxyStatusSnapshot | null,
         trackerStatus: TrackerRuntimeStatus,
         serverHealth: { ok: boolean; detail: string },
+        identityStatus: IdentityStatusData,
     ): LinkCheckItemData {
         if (!this.config.serverUrl.trim() || !this.config.userId.trim() || !this.config.userName.trim()) {
             return {
@@ -731,6 +822,9 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
         }
 
         const queueInfo = `待发送 ${trackerStatus.pendingQueueLength} 条`;
+        const lastAttempt = trackerStatus.lastCollectAttemptAt
+            ? `最近尝试 ${this.formatTimestamp(trackerStatus.lastCollectAttemptAt)}`
+            : '当前会话还没有新的 collect 尝试';
         const lastCollect = trackerStatus.lastCollectSuccessAt
             ? `最近 collect 成功 ${this.formatTimestamp(trackerStatus.lastCollectSuccessAt)}`
             : (localStatus?.stats?.total_reported
@@ -750,13 +844,85 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
             };
         }
 
+        if (identityStatus.status === 'conflict' || trackerStatus.lastCollectErrorCategory === 'identity_conflict') {
+            return {
+                id: 'reporting',
+                title: '最近上报',
+                status: 'error',
+                summary: '服务器已拒绝当前上报，原因是工号与姓名冲突。',
+                detail: `${trackerStatus.lastCollectError || identityStatus.message}；${queueInfo}`,
+            };
+        }
+
         if (trackerStatus.lastCollectError) {
+            if (trackerStatus.lastCollectErrorCategory === 'server_unreachable' || trackerStatus.lastCollectErrorCategory === 'timeout') {
+                return {
+                    id: 'reporting',
+                    title: '最近上报',
+                    status: 'error',
+                    summary: '本地已经产生上报请求，但服务器暂时不可达或请求超时。',
+                    detail: `${trackerStatus.lastCollectError}；${queueInfo}；${lastAttempt}`,
+                };
+            }
             return {
                 id: 'reporting',
                 title: '最近上报',
                 status: trackerStatus.pendingQueueLength > 0 ? 'error' : 'warning',
                 summary: `最近一次上报失败：${trackerStatus.lastCollectError}`,
                 detail: `${queueInfo}；${lastSync}`,
+            };
+        }
+
+        if (trackerStatus.lastStatsSyncError && !trackerStatus.lastCollectSuccessAt && trackerStatus.pendingQueueLength === 0) {
+            return {
+                id: 'reporting',
+                title: '最近上报',
+                status: 'warning',
+                summary: '当前还没拿到服务器侧统计，暂时无法确认本账号是否已经成功写入。',
+                detail: `${trackerStatus.lastStatsSyncError}；${lastAttempt}`,
+            };
+        }
+
+        const reloadRequired = this.globalState.get<boolean>(PROXY_RELOAD_PENDING_KEY, false);
+        if (reloadRequired) {
+            return {
+                id: 'reporting',
+                title: '最近上报',
+                status: 'warning',
+                summary: '当前窗口仍待重载，新的 Copilot / AI 请求可能还没进入监控链路。',
+                detail: `${lastCollect}；${queueInfo}`,
+            };
+        }
+
+        if (trackerStatus.pendingQueueLength > 0) {
+            return {
+                id: 'reporting',
+                title: '最近上报',
+                status: 'warning',
+                summary: '本地已经采集到请求，但这些记录还在待发送队列里。',
+                detail: `${queueInfo}；${lastAttempt}；${lastSync}`,
+            };
+        }
+
+        const hasAnyReported = Boolean(trackerStatus.lastCollectSuccessAt || localStatus?.stats?.total_reported);
+        if (!hasAnyReported) {
+            if (this.config.transparentMode && localStatus?.status === 'running') {
+                return {
+                    id: 'reporting',
+                    title: '最近上报',
+                    status: 'warning',
+                    summary: '链路已经就绪，但当前会话还没捕获到新的 AI 请求。',
+                    detail: '请在当前窗口实际发起一次 Copilot / AI 请求，再观察 collect 是否出现。',
+                };
+            }
+            return {
+                id: 'reporting',
+                title: '最近上报',
+                status: 'neutral',
+                summary: '当前还没有新的上报记录。',
+                detail: this.config.transparentMode
+                    ? '请先发起一次新的 AI 请求，系统才会产生 collect。'
+                    : '当前未启用透明代理时，只有部分来源会产生可见上报。',
             };
         }
 
@@ -2212,7 +2378,7 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
                 <div class="config-section" id="basicSection">
                     <div class="field field-span-2">
                         <label>上报地址</label>
-                        <input id="cfgServer" type="text" data-key="serverUrl" value="${this.esc(cfgData.serverUrl)}" placeholder="例如：https://otw.tech:59889" />
+                        <input id="cfgServer" type="text" data-key="serverUrl" value="${this.esc(cfgData.serverUrl)}" placeholder="例如：http://192.168.0.135:8000" />
                     </div>
 
                     <!-- 已登录状态 -->
@@ -3124,4 +3290,3 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
 </html>`;
     }
 }
-

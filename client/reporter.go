@@ -24,19 +24,20 @@ const reportMaxAttempts = 4
 
 // UsageRecord is a single token usage event to be reported to the server.
 type UsageRecord struct {
-	ClientID         string `json:"client_id"`
-	UserName         string `json:"user_name"`
-	UserID           string `json:"user_id"`
-	Department       string `json:"department"`
-	RequestID        string `json:"request_id,omitempty"`
-	SourceApp        string `json:"source_app,omitempty"`
-	Vendor           string `json:"vendor"`
-	Model            string `json:"model"`
-	Endpoint         string `json:"endpoint"`
-	PromptTokens     int    `json:"prompt_tokens"`
-	CompletionTokens int    `json:"completion_tokens"`
-	TotalTokens      int    `json:"total_tokens"`
-	RequestTime      string `json:"request_time"`
+	ClientID         string  `json:"client_id"`
+	UserName         string  `json:"user_name"`
+	UserID           string  `json:"user_id"`
+	Department       string  `json:"department"`
+	RequestID        string  `json:"request_id,omitempty"`
+	SourceApp        string  `json:"source_app,omitempty"`
+	Vendor           string  `json:"vendor"`
+	Model            string  `json:"model"`
+	Endpoint         string  `json:"endpoint"`
+	PromptTokens     int     `json:"prompt_tokens"`
+	CompletionTokens int     `json:"completion_tokens"`
+	TotalTokens      int     `json:"total_tokens"`
+	CostMultiplier   float64 `json:"cost_multiplier,omitempty"`
+	RequestTime      string  `json:"request_time"`
 	// Source 上报来源：client 为 JSON 解析；client-mitm-estimate 为 gRPC/二进制体积估算。
 	Source string `json:"source,omitempty"`
 }
@@ -282,4 +283,3 @@ func (r *Reporter) sendHeartbeatWithRetry() {
 		log.Printf("[心跳] 已连接上报服务器 %s（此后每 30s 静默心跳）", r.cfg.ServerURL)
 	})
 }
-

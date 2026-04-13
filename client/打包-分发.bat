@@ -19,7 +19,13 @@ if errorlevel 1 (
     exit /b 1
 )
 
-go build -ldflags="-s -w" -o "%OUT%\ai-monitor.exe" .
+set "VERSION=dev"
+if exist "%~dp0VERSION" (
+    set /p VERSION=<"%~dp0VERSION"
+)
+set "LDFLAGS=-s -w -X main.Version=%VERSION%"
+
+go build -ldflags="%LDFLAGS%" -o "%OUT%\ai-monitor.exe" .
 if errorlevel 1 (
     echo   [错误] 编译失败
     pause
@@ -46,3 +52,4 @@ echo   请将文件夹「ai-monitor-分发版」打成 zip 发给同事。
 echo   提醒：不要附带仓库里的 config.json（真实配置）。
 echo.
 pause
+

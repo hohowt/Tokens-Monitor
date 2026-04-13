@@ -36,7 +36,7 @@ func TestReporterFlushRetriesUntilOK(t *testing.T) {
 	if atomic.LoadInt32(&attempts) != 3 {
 		t.Fatalf("attempts=%d want 3", attempts)
 	}
-	if rp.Stats.TotalReported != 1 {
-		t.Fatalf("TotalReported=%d", rp.Stats.TotalReported)
+	if rp.Stats.TotalReported.Load() != 1 {
+		t.Fatalf("TotalReported=%d", rp.Stats.TotalReported.Load())
 	}
 }

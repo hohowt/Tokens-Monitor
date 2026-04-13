@@ -2,7 +2,7 @@
   "name": "ai-token-monitor",
   "displayName": "腾轩旅游集团 - AI Token 监控",
   "description": "腾轩旅游集团 AI 编程助手用量监控平台 — 支持 Copilot、Cursor、Claude、Continue 等 10+ 工具的 Token 统计与上报",
-  "version": "0.1.37",
+  "version": "0.1.40",
   "publisher": "txly",
   "author": {
     "name": "Zhi.Chen",
@@ -35,8 +35,12 @@
   "engines": {
     "vscode": "^1.90.0"
   },
-  "categories": ["Other"],
-  "activationEvents": ["onStartupFinished"],
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "main": "./out/extension.js",
   "contributes": {
     "chatParticipants": [
@@ -99,9 +103,14 @@
         "inputSchema": {
           "type": "object",
           "properties": {
-            "code": { "type": "string", "description": "Code to review" }
+            "code": {
+              "type": "string",
+              "description": "Code to review"
+            }
           },
-          "required": ["code"]
+          "required": [
+            "code"
+          ]
         }
       },
       {
@@ -111,9 +120,14 @@
         "inputSchema": {
           "type": "object",
           "properties": {
-            "code": { "type": "string", "description": "Code to explain" }
+            "code": {
+              "type": "string",
+              "description": "Code to explain"
+            }
           },
-          "required": ["code"]
+          "required": [
+            "code"
+          ]
         }
       },
       {
@@ -123,10 +137,18 @@
         "inputSchema": {
           "type": "object",
           "properties": {
-            "code": { "type": "string", "description": "Code to generate tests for" },
-            "language": { "type": "string", "description": "Programming language" }
+            "code": {
+              "type": "string",
+              "description": "Code to generate tests for"
+            },
+            "language": {
+              "type": "string",
+              "description": "Programming language"
+            }
           },
-          "required": ["code"]
+          "required": [
+            "code"
+          ]
         }
       },
       {
@@ -136,10 +158,18 @@
         "inputSchema": {
           "type": "object",
           "properties": {
-            "code": { "type": "string", "description": "Code to document" },
-            "style": { "type": "string", "description": "Documentation style" }
+            "code": {
+              "type": "string",
+              "description": "Code to document"
+            },
+            "style": {
+              "type": "string",
+              "description": "Documentation style"
+            }
           },
-          "required": ["code"]
+          "required": [
+            "code"
+          ]
         }
       },
       {
@@ -149,10 +179,18 @@
         "inputSchema": {
           "type": "object",
           "properties": {
-            "code": { "type": "string", "description": "Code to refactor" },
-            "goal": { "type": "string", "description": "Refactoring goal" }
+            "code": {
+              "type": "string",
+              "description": "Code to refactor"
+            },
+            "goal": {
+              "type": "string",
+              "description": "Refactoring goal"
+            }
           },
-          "required": ["code"]
+          "required": [
+            "code"
+          ]
         }
       }
     ],
@@ -161,7 +199,7 @@
       "properties": {
         "aiTokenMonitor.serverUrl": {
           "type": "string",
-          "default": "https://otw.tech:59889",
+          "default": "http://192.168.0.135:8000",
           "description": "后端服务器地址，用于上报 Token 用量数据"
         },
         "aiTokenMonitor.userId": {

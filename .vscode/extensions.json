@@ -1,0 +1,10 @@
+{
+  "recommendations": [
+    "GitHub.copilot",
+    "github.copilot-chat",
+    "github.vscode-pull-request-github",
+    "anthropic.claude-code",
+    "continue.continue",
+    "rooveterinaryinc.roo-cline"
+  ]
+}

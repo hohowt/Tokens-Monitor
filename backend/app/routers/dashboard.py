@@ -33,6 +33,10 @@ def _request_count_expr():
     return func.coalesce(TokenUsageLog.request_count, 1)
 
 
+def _billable_cost_expr(column):
+    return case((TokenUsageLog.source == ESTIMATE_SOURCE, 0), else_=column)
+
+
 def _source_display_name(source: str | None) -> str:
     mapping = {
         "gateway": "网关同步",
@@ -113,7 +117,7 @@ async def get_overview(
     # Current period
     current_base = select(
         func.coalesce(func.sum(TokenUsageLog.total_tokens), 0),
-        func.coalesce(func.sum(TokenUsageLog.cost_cny), 0),
+        func.coalesce(func.sum(_billable_cost_expr(TokenUsageLog.cost_cny)), 0),
         func.coalesce(func.sum(_request_count_expr()), 0),
         func.count(func.distinct(case(
             (TokenUsageLog.user_id.not_in(_excluded_user_ids), TokenUsageLog.user_id),
@@ -121,8 +125,8 @@ async def get_overview(
         ))),
         func.coalesce(func.sum(case((TokenUsageLog.source == ESTIMATE_SOURCE, TokenUsageLog.total_tokens), else_=0)), 0),
         func.coalesce(func.sum(case((TokenUsageLog.source == ESTIMATE_SOURCE, _request_count_expr()), else_=0)), 0),
-        # 定价覆盖：cost_cny > 0 的 token 认为"已定价"
-        func.coalesce(func.sum(case((TokenUsageLog.cost_cny > 0, TokenUsageLog.total_tokens), else_=0)), 0),
+        # 定价覆盖：排除估算流量后，cost_cny > 0 的 token 认为"已定价"
+        func.coalesce(func.sum(case((((TokenUsageLog.source != ESTIMATE_SOURCE) & (TokenUsageLog.cost_cny > 0)), TokenUsageLog.total_tokens), else_=0)), 0),
     ).where(TokenUsageLog.request_at.between(start_ts, end_ts))
     if user_filter_id is not None:
         current_base = current_base.where(TokenUsageLog.user_id == user_filter_id)
@@ -138,7 +142,7 @@ async def get_overview(
     # Previous period for comparison
     prev_base = select(
         func.coalesce(func.sum(TokenUsageLog.total_tokens), 0),
-        func.coalesce(func.sum(TokenUsageLog.cost_cny), 0),
+        func.coalesce(func.sum(_billable_cost_expr(TokenUsageLog.cost_cny)), 0),
     ).where(TokenUsageLog.request_at.between(prev_start_ts, start_ts - timedelta(seconds=1)))
     if user_filter_id is not None:
         prev_base = prev_base.where(TokenUsageLog.user_id == user_filter_id)
@@ -186,7 +190,7 @@ async def get_trend(
             func.sum(TokenUsageLog.total_tokens),
             func.sum(TokenUsageLog.input_tokens),
             func.sum(TokenUsageLog.output_tokens),
-            func.sum(TokenUsageLog.cost_cny),
+            func.sum(_billable_cost_expr(TokenUsageLog.cost_cny)),
             func.coalesce(func.sum(_request_count_expr()), 0),
         )
         .where(TokenUsageLog.request_at.between(start_ts, end_ts))
@@ -223,7 +227,7 @@ async def get_by_user(
         select(
             User.id, User.name, User.employee_id,
             func.sum(TokenUsageLog.total_tokens),
-            func.sum(TokenUsageLog.cost_cny),
+            func.sum(_billable_cost_expr(TokenUsageLog.cost_cny)),
             func.coalesce(func.sum(_request_count_expr()), 0),
         )
         .join(User, TokenUsageLog.user_id == User.id)
@@ -258,7 +262,7 @@ async def get_by_department(
             Department.id,
             Department.name,
             func.sum(TokenUsageLog.total_tokens),
-            func.sum(TokenUsageLog.cost_cny),
+            func.sum(_billable_cost_expr(TokenUsageLog.cost_cny)),
             func.coalesce(func.sum(_request_count_expr()), 0),
         )
         .join(User, TokenUsageLog.user_id == User.id)
@@ -293,7 +297,7 @@ async def get_by_model(
         select(
             TokenUsageLog.model_name,
             func.sum(TokenUsageLog.total_tokens),
-            func.sum(TokenUsageLog.cost_cny),
+            func.sum(_billable_cost_expr(TokenUsageLog.cost_cny)),
         )
         .where(TokenUsageLog.request_at.between(start_ts, end_ts))
         .group_by(TokenUsageLog.model_name)
@@ -328,7 +332,7 @@ async def get_by_provider(
         select(
             canon_provider.label("provider_key"),
             func.sum(TokenUsageLog.total_tokens),
-            func.sum(TokenUsageLog.cost_cny),
+            func.sum(_billable_cost_expr(TokenUsageLog.cost_cny)),
         )
         .where(TokenUsageLog.request_at.between(start_ts, end_ts))
         .group_by(canon_provider)
@@ -362,7 +366,7 @@ async def get_by_source(
         select(
             TokenUsageLog.source,
             func.sum(TokenUsageLog.total_tokens),
-            func.sum(TokenUsageLog.cost_cny),
+            func.sum(_billable_cost_expr(TokenUsageLog.cost_cny)),
         )
         .where(TokenUsageLog.request_at.between(start_ts, end_ts))
         .group_by(TokenUsageLog.source)
@@ -398,7 +402,7 @@ async def get_by_source_app(
         select(
             source_app_key.label("source_app"),
             func.sum(TokenUsageLog.total_tokens),
-            func.sum(TokenUsageLog.cost_cny),
+            func.sum(_billable_cost_expr(TokenUsageLog.cost_cny)),
         )
         .where(TokenUsageLog.request_at.between(start_ts, end_ts))
         .group_by(source_app_key)
@@ -433,7 +437,7 @@ async def get_by_endpoint(
         select(
             TokenUsageLog.endpoint.label("endpoint"),
             func.sum(TokenUsageLog.total_tokens),
-            func.sum(TokenUsageLog.cost_cny),
+            func.sum(_billable_cost_expr(TokenUsageLog.cost_cny)),
         )
         .where(
             TokenUsageLog.request_at.between(start_ts, end_ts),
@@ -524,7 +528,7 @@ async def get_logs(
             TokenUsageLog.model_name, TokenUsageLog.provider,
             TokenUsageLog.endpoint,
             TokenUsageLog.input_tokens, TokenUsageLog.output_tokens,
-            TokenUsageLog.total_tokens, TokenUsageLog.cost_cny,
+            TokenUsageLog.total_tokens, _billable_cost_expr(TokenUsageLog.cost_cny),
             TokenUsageLog.request_at,
         )
         .outerjoin(User, TokenUsageLog.user_id == User.id)

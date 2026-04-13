@@ -89,7 +89,7 @@ func TestReporterFlushRecordedByServer(t *testing.T) {
 	if rec.RequestID == "" {
 		t.Fatal("expected request_id to be populated for idempotent retries")
 	}
-	if rp.Stats.TotalReported != 1 {
-		t.Fatalf("Stats.TotalReported = %d", rp.Stats.TotalReported)
+	if rp.Stats.TotalReported.Load() != 1 {
+		t.Fatalf("Stats.TotalReported = %d", rp.Stats.TotalReported.Load())
 	}
 }

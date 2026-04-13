@@ -9,6 +9,7 @@ import { getConfig } from './config';
 import { EventBus } from './eventBus';
 import { NetworkInterceptor } from './networkInterceptor';
 import { ProxyManager, ProxyStartResult } from './proxyManager';
+import { AUTH_SESSION_SECRET_KEY, authSessionMatchesConfig, parseAuthSession } from './authSession';
 import { CursorCollector } from './collectors/cursorCollector';
 import { ClineCollector } from './collectors/clineCollector';
 import { ContinueCollector } from './collectors/continueCollector';
@@ -17,12 +18,7 @@ import { checkForUpdates } from './updater';
 const PROXY_RELOAD_PENDING_KEY = 'aiTokenMonitor.proxyReloadPending';
 
 export async function activate(context: vscode.ExtensionContext) {
-    // Migrate old default server URL to new one
     const cfgSection = vscode.workspace.getConfiguration('aiTokenMonitor');
-    const currentUrl = cfgSection.get<string>('serverUrl', '');
-    if (currentUrl === 'http://192.168.0.135:8000') {
-        await cfgSection.update('serverUrl', 'https://otw.tech:59889', vscode.ConfigurationTarget.Global);
-    }
 
     const cfg = getConfig();
 
@@ -156,9 +152,9 @@ export async function activate(context: vscode.ExtensionContext) {
     statusBar.setReloadPending(context.globalState.get<boolean>(PROXY_RELOAD_PENDING_KEY, false));
 
     // Start token tracker (real-time reporting)
-    const storedAuthToken = await context.secrets.get('authToken');
-    if (storedAuthToken) {
-        tracker.setAuthToken(storedAuthToken);
+    const authSession = parseAuthSession(await context.secrets.get(AUTH_SESSION_SECRET_KEY));
+    if (authSession && authSessionMatchesConfig(authSession, cfg)) {
+        tracker.setAuthToken(authSession.token);
     }
     tracker.start();
     context.subscriptions.push({ dispose: () => tracker.stop() });

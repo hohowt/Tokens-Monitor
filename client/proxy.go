@@ -16,6 +16,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"golang.org/x/net/http2"
@@ -219,13 +220,15 @@ var legacyRoutes = map[string]string{
 // ProxyServer is a forward proxy with selective MITM for AI domains
 // and backward-compatible reverse proxy for /vendor/path routes.
 type ProxyServer struct {
-	cfg           *Config
-	reporter      *Reporter
-	certMgr       *CertManager
-	transport     *http.Transport
-	upstreamProxy *url.URL  // parsed upstream proxy; nil = direct
-	listenPort    int       // actual bound port (set after listen)
-	startedAt     time.Time // when process started
+	cfg              *Config
+	reporter         *Reporter
+	certMgr          *CertManager
+	transport        *http.Transport
+	upstreamProxy    *url.URL  // parsed upstream proxy; nil = direct
+	listenPort       int       // actual bound port (set after listen)
+	startedAt        time.Time // when process started
+	copilotMu        sync.RWMutex
+	copilotDiscounts map[string]float64
 }
 
 func NewProxyServer(cfg *Config, reporter *Reporter, certMgr *CertManager) *ProxyServer {
@@ -246,11 +249,12 @@ func NewProxyServer(cfg *Config, reporter *Reporter, certMgr *CertManager) *Prox
 		log.Printf("[proxy] no upstream proxy detected, using direct connection")
 	}
 	return &ProxyServer{
-		cfg:           cfg,
-		reporter:      reporter,
-		certMgr:       certMgr,
-		upstreamProxy: upstreamURL,
-		startedAt:     time.Now(),
+		cfg:              cfg,
+		reporter:         reporter,
+		certMgr:          certMgr,
+		upstreamProxy:    upstreamURL,
+		startedAt:        time.Now(),
+		copilotDiscounts: map[string]float64{},
 		transport: &http.Transport{
 			// 默认直连，避免外连 AI 再次进本机代理形成环路；仅在显式配置或自动检测到 upstream_proxy 时走上游代理。
 			Proxy:               proxyFunc,
@@ -735,6 +739,10 @@ func (s *ProxyServer) processRequestBody(r *http.Request) string {
 }
 
 func (s *ProxyServer) processResponseData(vendor, endpoint, requestModel, sourceApp string, data []byte) {
+	if vendor == "github-copilot" {
+		s.updateGitHubCopilotDiscounts(data)
+	}
+
 	usage := ExtractUsage(vendor, data)
 	if usage != nil && usage.TotalTokens > 0 {
 		model := usage.Model
@@ -754,6 +762,7 @@ func (s *ProxyServer) processResponseData(vendor, endpoint, requestModel, source
 			PromptTokens:     usage.PromptTokens,
 			CompletionTokens: usage.CompletionTokens,
 			TotalTokens:      usage.TotalTokens,
+			CostMultiplier:   s.githubCopilotDiscountMultiplier(model),
 			Source:           "client",
 			SourceApp:        sourceApp,
 		})

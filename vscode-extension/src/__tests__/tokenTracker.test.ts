@@ -1,6 +1,8 @@
 import { TokenTracker, UsageRecord } from '../tokenTracker';
 import { EventBus } from '../eventBus';
 import * as vscode from 'vscode';
+import * as http from 'http';
+import { EventEmitter } from 'events';
 
 // Mock vscode, http, https at module level
 jest.mock('http');
@@ -47,6 +49,28 @@ describe('TokenTracker', () => {
         consoleErrorSpy.mockRestore();
         (vscode.env as any).appName = 'Visual Studio Code';
     });
+
+    function mockHttpResponse(statusCode: number, body: string) {
+        const requestMock = http.request as unknown as jest.Mock;
+        requestMock.mockImplementation((_options: unknown, callback: (res: EventEmitter & { statusCode?: number }) => void) => {
+            const response = new EventEmitter() as EventEmitter & { statusCode?: number };
+            response.statusCode = statusCode;
+
+            const req = new EventEmitter() as EventEmitter & {
+                write: jest.Mock;
+                end: () => void;
+                destroy: jest.Mock;
+            };
+            req.write = jest.fn();
+            req.destroy = jest.fn();
+            req.end = () => {
+                callback(response);
+                response.emit('data', Buffer.from(body, 'utf8'));
+                response.emit('end');
+            };
+            return req;
+        });
+    }
 
     test('should initialize with config and global state', () => {
         expect(tracker.todayTokens).toBe(0);
@@ -269,5 +293,66 @@ describe('TokenTracker', () => {
 
         expect(tracker.todayTokens).toBe(525); // 150 + 300 + 75
         expect(tracker.todayRequests).toBe(3);
+    });
+
+    test('marks collect status as config_incomplete when reporting config is missing', async () => {
+        const incompleteTracker = new TokenTracker({
+            ...mockConfig,
+            userName: '',
+        }, mockGlobalState, eventBus);
+
+        incompleteTracker.addRecord({
+            vendor: 'openai',
+            model: 'gpt-4',
+            endpoint: '/v1/chat/completions',
+            promptTokens: 1,
+            completionTokens: 1,
+            totalTokens: 2,
+            requestTime: new Date().toISOString(),
+            source: 'vscode-lm',
+            sourceApp: 'Visual Studio Code',
+        });
+
+        await incompleteTracker.flushOfflineQueue();
+
+        expect(incompleteTracker.getRuntimeStatus()).toEqual(expect.objectContaining({
+            pendingQueueLength: 1,
+            lastCollectError: '上报地址、工号或姓名未填写完整',
+            lastCollectErrorCategory: 'config_incomplete',
+            lastCollectHttpStatus: undefined,
+        }));
+
+        incompleteTracker.stop();
+    });
+
+    test('parses identity conflict response into structured collect status', async () => {
+        mockHttpResponse(409, JSON.stringify({
+            detail: {
+                code: 'identity_conflict',
+                message: '工号 10001 已绑定姓名“张三”，与当前填写的“李四”不一致。',
+            },
+        }));
+
+        tracker.addRecord({
+            vendor: 'openai',
+            model: 'gpt-4',
+            endpoint: '/v1/chat/completions',
+            promptTokens: 10,
+            completionTokens: 5,
+            totalTokens: 15,
+            requestTime: new Date().toISOString(),
+            source: 'vscode-lm',
+            sourceApp: 'Visual Studio Code',
+        });
+
+        await tracker.flushOfflineQueue();
+
+        expect(tracker.getRuntimeStatus()).toEqual(expect.objectContaining({
+            pendingQueueLength: 1,
+            lastCollectErrorCategory: 'identity_conflict',
+            lastCollectHttpStatus: 409,
+            lastCollectErrorCode: 'identity_conflict',
+            lastCollectError: '最近一次上报失败：工号 10001 已绑定姓名“张三”，与当前填写的“李四”不一致。',
+        }));
     });
 });

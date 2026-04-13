@@ -38,6 +38,7 @@ class UsageRecordIn(BaseModel):
     request_id: str | None = None
     source_app: str | None = None
     endpoint: str | None = None
+    cost_multiplier: float | None = None
 
 
 class IdentityCheckResponse(BaseModel):
@@ -490,13 +491,22 @@ async def collect_usage(
         except IdentityConflictError as exc:
             _raise_identity_conflict(exc)
 
-        # 估算流量（gRPC/二进制体积粗算）不计入成本，避免虚报费用。
-        # 精确来源（client / gateway 等）正常计算成本。
-        if source == "client-mitm-estimate":
+        provider_key = canonical_provider_key(rec.vendor)
+
+        # 估算补齐流量用于展示 token/request 规模，不参与成本统计。
+        if source == ESTIMATE_SOURCE:
             cost_usd = 0.0
             cost_cny = 0.0
         else:
-            cost_usd = calc_cost_usd(pricing, rec.model, rec.prompt_tokens, rec.completion_tokens)
+            cost_usd = calc_cost_usd(
+                pricing,
+                rec.model,
+                rec.prompt_tokens,
+                rec.completion_tokens,
+                rec.total_tokens,
+                provider=provider_key,
+                cost_multiplier=rec.cost_multiplier,
+            )
             cost_cny = round(cost_usd * settings.USD_TO_CNY, 4)
 
         try:
@@ -504,12 +514,16 @@ async def collect_usage(
         except ValueError:
             request_at = datetime.now(timezone.utc)
 
+        source_app_value = (rec.source_app or "").strip() or None
+        if source_app_value is None and provider_key == "cursor":
+            source_app_value = "cursor"
+
         log_entry = TokenUsageLog(
             user_id=user_id,
             model_name=rec.model,
-            provider=canonical_provider_key(rec.vendor),
+            provider=provider_key,
             source=source,
-            source_app=(rec.source_app or "").strip() or None,
+            source_app=source_app_value,
             endpoint=(rec.endpoint or "").strip() or None,
             input_tokens=rec.prompt_tokens,
             output_tokens=rec.completion_tokens,
@@ -760,8 +774,8 @@ async def get_my_daily_usage(
             func.coalesce(func.sum(TokenUsageLog.total_tokens), 0),
             func.coalesce(func.sum(TokenUsageLog.input_tokens), 0),
             func.coalesce(func.sum(TokenUsageLog.output_tokens), 0),
-            func.coalesce(func.sum(TokenUsageLog.cost_usd), 0),
-            func.coalesce(func.sum(TokenUsageLog.cost_cny), 0),
+            func.coalesce(func.sum(case((TokenUsageLog.source == ESTIMATE_SOURCE, 0), else_=TokenUsageLog.cost_usd)), 0),
+            func.coalesce(func.sum(case((TokenUsageLog.source == ESTIMATE_SOURCE, 0), else_=TokenUsageLog.cost_cny)), 0),
             func.coalesce(func.sum(request_count_expr), 0),
             func.coalesce(func.sum(case((TokenUsageLog.source == ESTIMATE_SOURCE, TokenUsageLog.total_tokens), else_=0)), 0),
             func.coalesce(func.sum(case((TokenUsageLog.source == ESTIMATE_SOURCE, request_count_expr), else_=0)), 0),

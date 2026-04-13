@@ -23,13 +23,28 @@ export interface UsageRecord {
 export interface TrackerRuntimeStatus {
     pendingQueueLength: number;
     isReporting: boolean;
+    lastCollectAttemptAt?: string;
     lastCollectSuccessAt?: string;
     lastCollectError?: string;
+    lastCollectErrorCategory?: TrackerErrorCategory;
+    lastCollectHttpStatus?: number;
+    lastCollectErrorCode?: string;
     lastStatsSyncAt?: string;
     lastStatsSyncError?: string;
+    lastStatsSyncErrorCategory?: TrackerErrorCategory;
+    lastStatsSyncHttpStatus?: number;
+    lastStatsSyncErrorCode?: string;
     totalFailed: number;
     totalReported: number;
 }
+
+export type TrackerErrorCategory =
+    | 'identity_conflict'
+    | 'timeout'
+    | 'server_unreachable'
+    | 'http_error'
+    | 'config_incomplete'
+    | 'unknown';
 
 interface ApiUsageRecord {
     client_id: string;
@@ -62,6 +77,37 @@ const EMPTY_TODAY_STATS: PersistedTodayStats = {
     requests: 0,
 };
 
+class TrackerRequestError extends Error {
+    statusCode?: number;
+    responseBody?: string;
+    errorCode?: string;
+    category: TrackerErrorCategory;
+
+    constructor(
+        message: string,
+        options: {
+            statusCode?: number;
+            responseBody?: string;
+            errorCode?: string;
+            category?: TrackerErrorCategory;
+        } = {},
+    ) {
+        super(message);
+        this.name = 'TrackerRequestError';
+        this.statusCode = options.statusCode;
+        this.responseBody = options.responseBody;
+        this.errorCode = options.errorCode;
+        this.category = options.category ?? 'unknown';
+    }
+}
+
+interface TrackerFailureSnapshot {
+    message: string;
+    category: TrackerErrorCategory;
+    statusCode?: number;
+    errorCode?: string;
+}
+
 export class TokenTracker {
     private offlineQueue: UsageRecord[] = [];
     private offlineQueueTimer: ReturnType<typeof setInterval> | null = null;
@@ -74,10 +120,17 @@ export class TokenTracker {
     private isReporting = false;
     private eventBus?: EventBus;
     private tokenUsageListener?: (data: any) => void;
+    private lastCollectAttemptAt?: string;
     private lastCollectSuccessAt?: string;
     private lastCollectError?: string;
     private lastStatsSyncAt?: string;
     private lastStatsSyncError?: string;
+    private lastCollectErrorCategory?: TrackerErrorCategory;
+    private lastCollectHttpStatus?: number;
+    private lastCollectErrorCode?: string;
+    private lastStatsSyncErrorCategory?: TrackerErrorCategory;
+    private lastStatsSyncHttpStatus?: number;
+    private lastStatsSyncErrorCode?: string;
     private authToken?: string;
 
     // Stats (observable by StatusBar)
@@ -288,10 +341,17 @@ export class TokenTracker {
         return {
             pendingQueueLength: this.offlineQueue.length,
             isReporting: this.isReporting,
+            lastCollectAttemptAt: this.lastCollectAttemptAt,
             lastCollectSuccessAt: this.lastCollectSuccessAt,
             lastCollectError: this.lastCollectError,
+            lastCollectErrorCategory: this.lastCollectErrorCategory,
+            lastCollectHttpStatus: this.lastCollectHttpStatus,
+            lastCollectErrorCode: this.lastCollectErrorCode,
             lastStatsSyncAt: this.lastStatsSyncAt,
             lastStatsSyncError: this.lastStatsSyncError,
+            lastStatsSyncErrorCategory: this.lastStatsSyncErrorCategory,
+            lastStatsSyncHttpStatus: this.lastStatsSyncHttpStatus,
+            lastStatsSyncErrorCode: this.lastStatsSyncErrorCode,
             totalFailed: this.totalFailed,
             totalReported: this.totalReported,
         };
@@ -300,10 +360,15 @@ export class TokenTracker {
     async flushOfflineQueue(): Promise<void> {
         if (this.isReporting || this.offlineQueue.length === 0) return;
         if (!this.canReport()) {
+            this.lastCollectErrorCategory = 'config_incomplete';
+            this.lastCollectErrorCode = undefined;
+            this.lastCollectHttpStatus = undefined;
+            this.lastCollectError = '上报地址、工号或姓名未填写完整';
             this.persistOfflineQueue();
             return;
         }
         this.isReporting = true;
+        this.lastCollectAttemptAt = new Date().toISOString();
 
         const batch = this.offlineQueue.splice(0, Math.min(this.offlineQueue.length, 100));
         const apiRecords: ApiUsageRecord[] = batch.map(r => ({
@@ -329,6 +394,9 @@ export class TokenTracker {
             await this.postJSON(`${this.config.serverUrl}/api/collect`, apiRecords);
             this.lastCollectSuccessAt = new Date().toISOString();
             this.lastCollectError = undefined;
+            this.lastCollectErrorCategory = undefined;
+            this.lastCollectHttpStatus = undefined;
+            this.lastCollectErrorCode = undefined;
             // Clear offline cache on success
             this.persistOfflineQueue();
             
@@ -338,7 +406,11 @@ export class TokenTracker {
             // Put back for retry
             this.offlineQueue.unshift(...batch);
             this.totalFailed += batch.length;
-            this.lastCollectError = err instanceof Error ? err.message : String(err);
+            const failure = this.summarizeFailure(err, '最近一次上报失败');
+            this.lastCollectError = failure.message;
+            this.lastCollectErrorCategory = failure.category;
+            this.lastCollectHttpStatus = failure.statusCode;
+            this.lastCollectErrorCode = failure.errorCode;
             // Persist on failure
             this.persistOfflineQueue();
             console.error('[TokenTracker] Offline queue flush failed:', err);
@@ -364,6 +436,9 @@ export class TokenTracker {
             if (res && typeof res.today_tokens === 'number') {
                 this.lastStatsSyncAt = new Date().toISOString();
                 this.lastStatsSyncError = undefined;
+                this.lastStatsSyncErrorCategory = undefined;
+                this.lastStatsSyncHttpStatus = undefined;
+                this.lastStatsSyncErrorCode = undefined;
                 // 仅查看"今日"时加上本地待发送队列；多日范围不加（pending 只影响今天）
                 const pendingReqs = this.selectedDays === 1 ? this.offlineQueue.length : 0;
                 const pendingTokens = this.selectedDays === 1 ? this.offlineQueue.reduce((sum, r) => sum + r.totalTokens, 0) : 0;
@@ -378,9 +453,83 @@ export class TokenTracker {
                 }
             }
         } catch (e) {
-            this.lastStatsSyncError = e instanceof Error ? e.message : String(e);
+            const failure = this.summarizeFailure(e, 'my-stats 同步失败');
+            this.lastStatsSyncError = failure.message;
+            this.lastStatsSyncErrorCategory = failure.category;
+            this.lastStatsSyncHttpStatus = failure.statusCode;
+            this.lastStatsSyncErrorCode = failure.errorCode;
             console.error('[TokenTracker] syncStats failed:', e);
         }
+    }
+
+    private summarizeFailure(error: unknown, prefix: string): TrackerFailureSnapshot {
+        if (error instanceof TrackerRequestError) {
+            const detail = this.extractErrorDetail(error.responseBody);
+            const errorCode = detail?.code || error.errorCode;
+            const category = this.categorizeError(error, errorCode);
+            const message = detail?.message
+                ? `${prefix}：${detail.message}`
+                : `${prefix}：${error.message}`;
+            return {
+                message,
+                category,
+                statusCode: error.statusCode,
+                errorCode,
+            };
+        }
+
+        const fallbackMessage = error instanceof Error ? error.message : String(error);
+        return {
+            message: `${prefix}：${fallbackMessage}`,
+            category: this.categorizeError(error),
+        };
+    }
+
+    private categorizeError(error: unknown, errorCode?: string): TrackerErrorCategory {
+        if (errorCode === 'identity_conflict') {
+            return 'identity_conflict';
+        }
+        if (error instanceof TrackerRequestError) {
+            if (error.category !== 'unknown') {
+                return error.category;
+            }
+            if (typeof error.statusCode === 'number') {
+                return 'http_error';
+            }
+        }
+
+        const message = error instanceof Error ? error.message : String(error);
+        if (/timeout/i.test(message)) {
+            return 'timeout';
+        }
+        if (/ECONNREFUSED|ENOTFOUND|EAI_AGAIN|socket hang up|fetch failed|connect/i.test(message)) {
+            return 'server_unreachable';
+        }
+        if (/HTTP\s+\d+/i.test(message)) {
+            return 'http_error';
+        }
+        return 'unknown';
+    }
+
+    private extractErrorDetail(body?: string): { code?: string; message?: string } | undefined {
+        if (!body) {
+            return undefined;
+        }
+        try {
+            const parsed = JSON.parse(body) as { detail?: string | { code?: string; message?: string } };
+            if (typeof parsed.detail === 'string') {
+                return { message: parsed.detail };
+            }
+            if (parsed.detail && typeof parsed.detail === 'object') {
+                return {
+                    code: parsed.detail.code,
+                    message: parsed.detail.message,
+                };
+            }
+        } catch {
+            return undefined;
+        }
+        return undefined;
     }
 
     private getJSON<T>(url: string): Promise<T> {
@@ -410,14 +559,17 @@ export class TokenTracker {
                             reject(e);
                         }
                     } else {
-                        reject(new Error(`HTTP ${res.statusCode}: ${body}`));
+                        reject(new TrackerRequestError(`HTTP ${res.statusCode}: ${body}`, {
+                            statusCode: res.statusCode,
+                            responseBody: body,
+                        }));
                     }
                 });
             });
             req.on('error', reject);
             req.on('timeout', () => {
                 req.destroy();
-                reject(new Error('GET JSON timeout'));
+                reject(new TrackerRequestError('GET JSON timeout', { category: 'timeout' }));
             });
             req.end();
         });
@@ -449,7 +601,10 @@ export class TokenTracker {
                     if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
                         resolve();
                     } else {
-                        reject(new Error(`HTTP ${res.statusCode}: ${body}`));
+                        reject(new TrackerRequestError(`HTTP ${res.statusCode}: ${body}`, {
+                            statusCode: res.statusCode,
+                            responseBody: body,
+                        }));
                     }
                 });
             });
@@ -457,7 +612,7 @@ export class TokenTracker {
             req.on('error', reject);
             req.on('timeout', () => {
                 req.destroy();
-                reject(new Error('Request timeout'));
+                reject(new TrackerRequestError('Request timeout', { category: 'timeout' }));
             });
 
             req.write(body);
