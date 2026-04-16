@@ -60,7 +60,7 @@ func TestLoadConfig_JSON(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "config.json")
 	raw := `{
-  "server_url": "http://192.168.0.135:8000",
+  "server_url": "https://otw.tech:59889",
   "port": 18090,
   "install_system_proxy": true
 }`
@@ -71,7 +71,7 @@ func TestLoadConfig_JSON(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if cfg.ServerURL != "http://192.168.0.135:8000" {
+	if cfg.ServerURL != "https://otw.tech:59889" {
 		t.Fatalf("ServerURL = %q", cfg.ServerURL)
 	}
 	if cfg.Port != 18090 {
@@ -110,7 +110,7 @@ func TestLoadConfig_MissingFile(t *testing.T) {
 func TestLoadConfig_OmitInstallSystemProxy_DefaultsFalse(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "config.json")
-	raw := `{"server_url":"http://192.168.0.135:8000","port":18090}`
+	raw := `{"server_url":"https://otw.tech:59889","port":18090}`
 	if err := os.WriteFile(path, []byte(raw), 0644); err != nil {
 		t.Fatal(err)
 	}
@@ -129,7 +129,7 @@ func TestLoadConfig_OmitInstallSystemProxy_DefaultsFalse(t *testing.T) {
 func TestLoadConfig_ValidatesOptionalUpstreamProxy(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "config.json")
-	raw := `{"server_url":"http://192.168.0.135:8000","port":18090,"upstream_proxy":"socks5://127.0.0.1:7890"}`
+	raw := `{"server_url":"https://otw.tech:59889","port":18090,"upstream_proxy":"socks5://127.0.0.1:7890"}`
 	if err := os.WriteFile(path, []byte(raw), 0644); err != nil {
 		t.Fatal(err)
 	}

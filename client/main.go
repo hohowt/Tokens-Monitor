@@ -339,7 +339,7 @@ func doInstall(certMgr *CertManager, cfg *Config, proxyAddr, bypass, noProxy str
 	fmt.Println()
 	fmt.Println("  注意: 需重新打开终端窗口，环境变量才生效。")
 	fmt.Printf("  运行 %s 即可启动监控。\n", selfBinaryName())
-	fmt.Println("  Token 记录发往 config.json 中的 server_url（默认 192.168.0.135:8000）。")
+	fmt.Println("  Token 记录发往 config.json 中的 server_url（默认 otw.tech:59889）。")
 	fmt.Printf("  卸载: %s --uninstall\n", selfBinaryName())
 	fmt.Println("  ══════════════════════════════════════════")
 }

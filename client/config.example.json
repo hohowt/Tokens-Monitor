@@ -1,6 +1,6 @@
 {
   "_说明": "内置已含 OpenAI/Copilot/Cursor/Anthropic/OpenRouter/Tabnine/Codeium/JetBrains AI/Cody/Augment/AWS Q/CodeWhisperer 等常见开发工具域名；内网或新厂商请用 extra_monitor_* 扩展。",
-  "server_url": "http://192.168.0.135:8000",
+  "server_url": "https://otw.tech:59889",
   "user_name": "张三",
   "user_id": "zhangsan",
   "department": "研发部",

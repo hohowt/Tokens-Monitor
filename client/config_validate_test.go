@@ -3,7 +3,7 @@ package main
 import "testing"
 
 func TestValidateServerURL(t *testing.T) {
-	if err := validateServerURL("http://192.168.0.135:8000"); err != nil {
+	if err := validateServerURL("https://otw.tech:59889"); err != nil {
 		t.Fatal(err)
 	}
 	if err := validateServerURL("https://api.example.com"); err != nil {

@@ -12,7 +12,7 @@ import (
 
 // DefaultServerURL is the pre-configured server address.
 // Change this before compiling to distribute to your team.
-const DefaultServerURL = "http://192.168.0.135:8000"
+const DefaultServerURL = "https://otw.tech:59889"
 
 // MonitoredSuffix 按主机名后缀匹配并打上供应商标签（用于公司自建网关、新厂商域名等）。
 type MonitoredSuffix struct {
