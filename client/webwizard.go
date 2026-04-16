@@ -617,22 +617,28 @@ func runWebWizard(configPath string, certMgr *CertManager) error {
 			messages = append(messages, "✓ 环境变量已设置 (HTTP_PROXY 等)")
 		}
 
-		// 2b. System proxy for Visual Studio / .NET apps
-		bypass := buildProxyBypassWithConfig(cfg)
+		// 2b. System proxy via PAC (with DIRECT fallback for crash safety)
+		previousAutoConfigURL := ReadCurrentAutoConfigURL()
+		pacURL, pacErr := writePACFile(actualPort, cfg)
 		saveInstallState(&InstallState{
 			SystemProxySet:        true,
 			PreviousProxyAddr:     previousSysProxy,
 			PreviousProxyEnabled:  previousSysProxy != "" && !isSelfProxy(previousSysProxy),
 			PreviousUpstreamProxy: detectedUpstream,
 			PreviousEnvVars:       previousEnvVars,
+			PACFileSet:            true,
+			PACFilePath:           pacFilePath(),
+			PreviousAutoConfigURL: previousAutoConfigURL,
 		})
-		if err := EnableSystemProxy(proxyAddr, bypass); err != nil {
-			messages = append(messages, "⚠ 系统代理设置失败: "+err.Error())
+		if pacErr != nil {
+			messages = append(messages, "⚠ PAC 文件生成失败: "+pacErr.Error())
+		} else if err := EnableSystemProxyPAC(pacURL); err != nil {
+			messages = append(messages, "⚠ 系统代理 (PAC) 设置失败: "+err.Error())
 		} else {
-			messages = append(messages, "✓ 系统代理已设置 (覆盖 Visual Studio 等)")
+			messages = append(messages, "✓ 系统代理已设置 (PAC + DIRECT 回退，异常时不断网)")
 		}
 
-		// 3. Register auto-
+		// 3. Register auto-start
 		if err := installAutoStart(absConfigPath); err != nil {
 			messages = append(messages, "⚠ 开机自启注册失败: "+err.Error())
 		} else {

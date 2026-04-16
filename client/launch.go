@@ -251,6 +251,7 @@ func runManagedProcess(cfg *Config, certMgr *CertManager, args []string, presetN
 	if err := writeInstanceInfo(runtime.listenPort); err != nil {
 		log.Printf("[launch] 写入 instance.json 失败: %v", err)
 	}
+	applySessionManagedProxy(cfg, certMgr, runtime.listenPort)
 	go func() {
 		if err := runtime.server.Serve(runtime.listener); err != nil && err != http.ErrServerClosed {
 			log.Printf("[launch] 本地 MITM 退出: %v", err)
@@ -289,6 +290,7 @@ func runManagedProcess(cfg *Config, certMgr *CertManager, args []string, presetN
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	shutdownErr := runtime.Shutdown(ctx)
+	restoreSessionManagedProxyOnShutdown()
 	if err != nil {
 		return err
 	}

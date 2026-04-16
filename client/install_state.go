@@ -20,6 +20,12 @@ type InstallState struct {
 	// so that the proxy chain is not broken after installation.
 	PreviousUpstreamProxy string            `json:"previous_upstream_proxy,omitempty"`
 	PreviousEnvVars       map[string]string `json:"previous_env_vars,omitempty"`
+	// PAC-based proxy (v2.2+). When PACFileSet is true, system proxy is
+	// configured via AutoConfigURL pointing to a local PAC file with DIRECT
+	// fallback, instead of a hardcoded ProxyServer.
+	PACFileSet            bool   `json:"pac_file_set,omitempty"`
+	PACFilePath           string `json:"pac_file_path,omitempty"`
+	PreviousAutoConfigURL string `json:"previous_auto_config_url,omitempty"`
 }
 
 func installStatePath() string {

@@ -25,3 +25,15 @@ func ClearEnvProxy(keys []string) {
 	_ = keys
 	log.Printf("[proxy] persistent environment cleanup skipped on %s", runtime.GOOS)
 }
+
+func ReadCurrentAutoConfigURL() string {
+	return ""
+}
+
+func EnableSystemProxyPAC(pacURL string) error {
+	return fmt.Errorf("PAC proxy configuration is not implemented on %s", runtime.GOOS)
+}
+
+func DisableSystemProxyPAC() {
+	log.Printf("[proxy] PAC cleanup skipped on %s", runtime.GOOS)
+}

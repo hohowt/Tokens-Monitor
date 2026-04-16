@@ -19,3 +19,7 @@ func isAutoStartInstalled() bool {
 func startBackgroundInstance(_ string) error {
 	return fmt.Errorf("后台启动仅支持 Windows")
 }
+
+func uninstallWatchdogTask() error {
+	return nil
+}

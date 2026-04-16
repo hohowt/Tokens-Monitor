@@ -166,6 +166,7 @@ func main() {
 	if err := writeInstanceInfo(runtime.listenPort); err != nil {
 		log.Printf("[singleton] 写入 instance.json 失败: %v", err)
 	}
+	applySessionManagedProxy(cfg, certMgr, runtime.listenPort)
 	if runtime.listenPort != cfg.Port {
 		log.Printf("[提示] 配置端口 %d 已被占用，已自动改用 %d（定向启动应用时请指向新端口）", cfg.Port, runtime.listenPort)
 	}
@@ -222,6 +223,7 @@ func main() {
 	if err := runtime.server.Serve(runtime.listener); err != http.ErrServerClosed {
 		log.Fatalf("  服务器启动失败: %v", err)
 	}
+	restoreSessionManagedProxyOnShutdown()
 	fmt.Println("  已关闭。")
 }
 
@@ -350,12 +352,7 @@ func doUninstall(certMgr *CertManager) {
 	fmt.Println("    ✓ done")
 
 	fmt.Println("  [2/4] 清除系统代理...")
-	if state != nil && state.PreviousProxyEnabled && state.PreviousProxyAddr != "" {
-		fmt.Printf("    ℹ 恢复之前的系统代理: %s\n", state.PreviousProxyAddr)
-		EnableSystemProxy(state.PreviousProxyAddr, "")
-	} else {
-		DisableSystemProxy()
-	}
+	restoreWinInetProxyFromState(state)
 	fmt.Println("    ✓ done")
 
 	fmt.Println("  [3/4] 恢复环境变量...")
@@ -433,11 +430,20 @@ func doGlobalInstall(certMgr *CertManager, cfg *Config, configPath string) {
 		fmt.Println("      → VS Code/Cursor/JetBrains/Claude Code/Aider/Codex 等 CLI 工具自动走监控")
 	}
 
-	// Step 3: Set Windows system proxy (for Visual Studio, .NET apps, etc.)
-	fmt.Println("  [3/4] 设置 Windows 系统代理（覆盖 Visual Studio 等 .NET 应用）...")
-	bypass := buildProxyBypassWithConfig(cfg)
+	// Step 3: Set Windows system proxy via PAC (with DIRECT fallback for crash safety)
+	fmt.Println("  [3/4] 设置 Windows 系统代理（PAC + DIRECT 回退）...")
+	previousAutoConfigURL := ReadCurrentAutoConfigURL()
 	if previousSysProxy != "" && !isSelfProxy(previousSysProxy) {
 		fmt.Printf("    ℹ 检测到现有系统代理: %s（已备份，卸载时将恢复）\n", previousSysProxy)
+	}
+	if previousAutoConfigURL != "" {
+		fmt.Printf("    ℹ 检测到现有 PAC: %s（已备份，卸载时将恢复）\n", previousAutoConfigURL)
+	}
+	pacURL, err := writePACFile(actualPort, cfg)
+	if err != nil {
+		log.Printf("    ✗ PAC 文件生成失败: %v", err)
+	} else {
+		fmt.Printf("    ✓ PAC 文件: %s\n", pacFilePath())
 	}
 	saveInstallState(&InstallState{
 		SystemProxySet:        true,
@@ -445,15 +451,17 @@ func doGlobalInstall(certMgr *CertManager, cfg *Config, configPath string) {
 		PreviousProxyEnabled:  previousSysProxy != "" && !isSelfProxy(previousSysProxy),
 		PreviousUpstreamProxy: detectedUpstream,
 		PreviousEnvVars:       previousEnvVars,
+		PACFileSet:            true,
+		PACFilePath:           pacFilePath(),
+		PreviousAutoConfigURL: previousAutoConfigURL,
 	})
-	if err := EnableSystemProxy(proxyAddr, bypass); err != nil {
-		log.Printf("    ✗ 系统代理设置失败: %v", err)
+	if err := EnableSystemProxyPAC(pacURL); err != nil {
+		log.Printf("    ✗ 系统代理 (PAC) 设置失败: %v", err)
 		fmt.Println("      Visual Studio 中的 GitHub Copilot 可能无法被监控")
 	} else {
-		fmt.Printf("    ✓ 系统代理: %s\n", proxyAddr)
-		fmt.Println("      → Visual Studio / .NET 应用的 Copilot 请求自动走监控")
-		fmt.Println("      → 浏览器/Outlook 等经系统代理的非 AI 流量走纯隧道透传，不受影响")
-		fmt.Println("      → 所有内网地址(10.*/172.16-31.*/192.168.*)已在 bypass 列表中直连")
+		fmt.Printf("    ✓ 系统代理 (PAC): %s\n", pacURL)
+		fmt.Println("      → 浏览器 / Visual Studio / .NET 应用自动走监控")
+		fmt.Println("      → MITM 异常时自动回退直连，不影响上网（无需看门狗）")
 	}
 
 	// Step 4: Register auto-start
@@ -517,23 +525,20 @@ func doGlobalUninstall(certMgr *CertManager) {
 	fmt.Println("    ✓ done")
 
 	fmt.Println("  [3/4] 恢复系统代理...")
-	if state != nil && state.SystemProxySet {
-		if state.PreviousProxyEnabled && state.PreviousProxyAddr != "" {
-			fmt.Printf("    ℹ 恢复之前的系统代理: %s\n", state.PreviousProxyAddr)
-			EnableSystemProxy(state.PreviousProxyAddr, "")
-		} else {
-			DisableSystemProxy()
-		}
-	} else {
-		DisableSystemProxy()
-	}
+	restoreProxyFromState(state)
 	fmt.Println("    ✓ done")
 
-	fmt.Println("  [4/4] 移除开机自启...")
+	fmt.Println("  [4/4] 移除计划任务（开机自启 + 旧看门狗清理）...")
 	if err := uninstallAutoStart(); err != nil {
-		log.Printf("    ⚠ %v", err)
+		log.Printf("    ⚠ 开机自启: %v", err)
 	} else {
-		fmt.Println("    ✓ done")
+		fmt.Println("    ✓ 已移除开机自启")
+	}
+	// Clean up watchdog task from previous installs (before PAC migration)
+	if err := uninstallWatchdogTask(); err != nil {
+		log.Printf("    ⚠ 看门狗: %v", err)
+	} else {
+		fmt.Println("    ✓ 已移除看门狗（如有）")
 	}
 
 	clearInstallState()
@@ -586,6 +591,124 @@ func restoreOrClearEnvVars(state *InstallState) {
 		}
 	} else {
 		ClearEnvProxy(keysToManage)
+	}
+}
+
+// restoreWinInetProxyFromState restores the user's previous WinINet proxy or disables it.
+func restoreWinInetProxyFromState(state *InstallState) {
+	if state != nil && state.PreviousProxyEnabled && state.PreviousProxyAddr != "" {
+		fmt.Printf("    ℹ 恢复之前的系统代理: %s\n", state.PreviousProxyAddr)
+		if err := EnableSystemProxy(state.PreviousProxyAddr, ""); err != nil {
+			log.Printf("    ⚠ 恢复系统代理失败: %v", err)
+		}
+	} else {
+		DisableSystemProxy()
+	}
+}
+
+// applySessionManagedProxy re-applies system proxy and user env vars when install_state
+// records a global / full install (SystemProxySet). Called each time the MITM process starts
+// so that after a prior graceful shutdown cleared env vars, the next run configures them again.
+// For PAC-based installs, regenerates the PAC file with the current listen port.
+func applySessionManagedProxy(cfg *Config, certMgr *CertManager, listenPort int) {
+	if runtime.GOOS != "windows" {
+		return
+	}
+	st := loadInstallState()
+	if st == nil || !st.SystemProxySet {
+		return
+	}
+	proxyAddr := fmt.Sprintf("localhost:%d", listenPort)
+	httpProxy := "http://" + proxyAddr
+	noProxy := buildNoProxyEnvWithConfig(cfg)
+	envVars := map[string]string{
+		"HTTP_PROXY":          httpProxy,
+		"HTTPS_PROXY":         httpProxy,
+		"NO_PROXY":            noProxy,
+		"NODE_EXTRA_CA_CERTS": certMgr.CACertPath(),
+	}
+
+	if st.PACFileSet {
+		// PAC mode: regenerate PAC file with current port (may have changed)
+		pacURL, err := writePACFile(listenPort, cfg)
+		if err != nil {
+			log.Printf("[session] PAC 文件重新生成失败: %v", err)
+		} else {
+			// Re-set AutoConfigURL to prompt WinINet to re-read the PAC file
+			if err := EnableSystemProxyPAC(pacURL); err != nil {
+				log.Printf("[session] 启用 PAC 代理失败: %v", err)
+			} else {
+				fmt.Printf("  [会话] 已更新 PAC 代理 (端口 %d)\n", listenPort)
+			}
+		}
+	} else {
+		// Legacy (pre-PAC) install: use hardcoded ProxyServer
+		bypass := buildProxyBypassWithConfig(cfg)
+		if err := EnableSystemProxy(proxyAddr, bypass); err != nil {
+			log.Printf("[session] 启用系统代理失败: %v", err)
+		} else {
+			fmt.Printf("  [会话] 已启用系统代理 %s\n", proxyAddr)
+		}
+	}
+
+	if err := SetEnvProxy(envVars); err != nil {
+		log.Printf("[session] 设置用户环境变量失败: %v", err)
+	} else {
+		fmt.Println("  [会话] 已同步用户级 HTTP(S)_PROXY")
+	}
+}
+
+// restoreSessionManagedProxyOnShutdown runs after the MITM server stops. When install_state
+// records SystemProxySet, restores environment variables so new terminals don't point at a dead proxy.
+// For PAC-based installs, the system proxy is NOT touched — the PAC file's DIRECT fallback
+// handles the dead MITM gracefully, so browsers continue working immediately.
+func restoreSessionManagedProxyOnShutdown() {
+	if runtime.GOOS != "windows" {
+		return
+	}
+	st := loadInstallState()
+	if st == nil || !st.SystemProxySet {
+		return
+	}
+
+	if st.PACFileSet {
+		// PAC mode: leave AutoConfigURL in place (DIRECT fallback keeps network alive).
+		// Only restore env vars so new terminals don't try the dead proxy.
+		fmt.Println("\n  [会话] 正在恢复用户环境变量…（PAC 代理保持，MITM 下线后自动直连）")
+		restoreOrClearEnvVars(st)
+		fmt.Println("  [会话] 已恢复环境变量。下次启动 ai-monitor 将自动恢复监控。")
+	} else {
+		// Legacy (pre-PAC) mode: restore everything
+		fmt.Println("\n  [会话] 正在恢复系统代理与用户环境变量…")
+		restoreWinInetProxyFromState(st)
+		restoreOrClearEnvVars(st)
+		fmt.Println("  [会话] 已恢复。请重新打开终端/IDE 使环境变量生效。")
+	}
+}
+
+// restoreProxyFromState undoes what doGlobalInstall set up: removes PAC file,
+// clears AutoConfigURL, and restores the user's previous proxy configuration.
+func restoreProxyFromState(state *InstallState) {
+	if state != nil && state.PACFileSet {
+		// PAC-based install: clean up PAC file and registry
+		removePACFile()
+		DisableSystemProxyPAC()
+		// Restore previous AutoConfigURL if user had one before our install
+		if state.PreviousAutoConfigURL != "" {
+			fmt.Printf("    ℹ 恢复之前的 PAC: %s\n", state.PreviousAutoConfigURL)
+			if err := EnableSystemProxyPAC(state.PreviousAutoConfigURL); err != nil {
+				log.Printf("    ⚠ 恢复 PAC 失败: %v", err)
+			}
+		} else if state.PreviousProxyEnabled && state.PreviousProxyAddr != "" {
+			// User had a manual proxy before our install
+			fmt.Printf("    ℹ 恢复之前的系统代理: %s\n", state.PreviousProxyAddr)
+			if err := EnableSystemProxy(state.PreviousProxyAddr, ""); err != nil {
+				log.Printf("    ⚠ 恢复系统代理失败: %v", err)
+			}
+		}
+	} else {
+		// Legacy (pre-PAC) install: use old restore logic
+		restoreWinInetProxyFromState(state)
 	}
 }
 

@@ -104,6 +104,9 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
                 await this.handleSetPassword(msg.data);
             } else if (msg.type === 'authLogout') {
                 await this.handleLogout();
+            } else if (msg.type === 'downloadClient') {
+                const url = `${this.config.serverUrl}/api/extension/client`;
+                void vscode.env.openExternal(vscode.Uri.parse(url));
             }
         });
     }
@@ -871,6 +874,36 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
         background: rgba(255, 255, 255, 0.015);
         min-width: 148px;
     }
+    .toolbar-btn-row {
+        display: flex;
+        gap: 8px;
+    }
+    .toolbar-btn-row .btn {
+        flex: 1;
+        min-width: 0;
+    }
+    .refresh-meta-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 6px;
+    }
+    .download-link {
+        color: var(--text-sub);
+        font-size: 10px;
+        cursor: pointer;
+        opacity: 0.7;
+        transition: opacity 0.15s, color 0.15s;
+        white-space: nowrap;
+        border: none;
+        background: none;
+        padding: 0;
+        font-family: inherit;
+    }
+    .download-link:hover {
+        color: var(--text-main);
+        opacity: 1;
+    }
     .refresh-meta {
         display: inline-flex;
         align-items: center;
@@ -1509,7 +1542,10 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
     <div class="content">
         <div class="toolbar glass-panel">
             <div class="toolbar-actions">
-                <div class="refresh-meta" id="refreshMeta">等待同步</div>
+                <div class="refresh-meta-row">
+                    <div class="refresh-meta" id="refreshMeta">等待同步</div>
+                    <button class="download-link" id="downloadBtn" type="button">⬇ 安装包</button>
+                </div>
                 <button class="btn btn-secondary refresh-btn" id="refreshBtn" type="button">刷新数据</button>
             </div>
         </div>
@@ -1778,6 +1814,14 @@ export class DashboardProvider implements vscode.WebviewViewProvider {
                 }
             });
         });
+
+        const downloadBtn = document.getElementById('downloadBtn');
+        if (downloadBtn && downloadBtn.dataset.boundClick !== '1') {
+            downloadBtn.dataset.boundClick = '1';
+            downloadBtn.addEventListener('click', () => {
+                vscMsg('downloadClient');
+            });
+        }
 
         const refreshBtn = document.getElementById('refreshBtn');
         if (refreshBtn && refreshBtn.dataset.boundClick !== '1') {

@@ -8,6 +8,7 @@ import {
   ApiOutlined,
   RobotOutlined,
   DesktopOutlined,
+  DownloadOutlined,
 } from "@ant-design/icons";
 import { api, type Overview, type TrendData, type RankingItem, type BreakdownItem } from "./api";
 import { formatNumber, formatCNY, formatTokens } from "./utils";
@@ -267,6 +268,9 @@ function App() {
             <Radio.Button value="bar">柱状图</Radio.Button>
             <Radio.Button value="line">折线图</Radio.Button>
           </Radio.Group>
+          <Button className="dashboard-refresh-btn dashboard-refresh-btn-inline" icon={<DownloadOutlined />} href="/api/extension/client" target="_blank">
+            安装包
+          </Button>
           <Button className="dashboard-refresh-btn dashboard-refresh-btn-inline" type="primary" ghost onClick={() => void fetchAll(false)} loading={isRefreshing && !isLoading}>
             刷新
           </Button>

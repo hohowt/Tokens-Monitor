@@ -43,6 +43,24 @@ func installAutoStart(configPath string) error {
 	return nil
 }
 
+// uninstallWatchdogTask removes the watchdog scheduled task left by pre-PAC installs.
+// Kept for backward compatibility: new installs no longer create a watchdog task.
+func uninstallWatchdogTask() error {
+	const watchdogTaskName = "AIMonitorWatchdog"
+	cmd := exec.Command("schtasks", "/Delete", "/TN", watchdogTaskName, "/F")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		outStr := strings.TrimSpace(string(output))
+		if strings.Contains(outStr, "ERROR: The system cannot find") ||
+			strings.Contains(outStr, "错误: 系统找不到") {
+			return nil
+		}
+		return fmt.Errorf("删除看门狗计划任务失败: %w\n%s", err, outStr)
+	}
+	log.Printf("[service] 已移除网络看门狗任务 %q", watchdogTaskName)
+	return nil
+}
+
 // uninstallAutoStart removes the scheduled task.
 func uninstallAutoStart() error {
 	cmd := exec.Command("schtasks", "/Delete", "/TN", taskName, "/F")

@@ -76,3 +76,16 @@ async def download_vsix(filename: str):
         media_type="application/octet-stream",
         filename=filename,
     )
+
+
+@router.get("/client")
+async def download_client():
+    """Download the latest ai-monitor.exe client."""
+    filepath = EXTENSION_DIR / "ai-monitor.exe"
+    if not filepath.is_file():
+        raise HTTPException(404, "ai-monitor.exe not found")
+    return FileResponse(
+        filepath,
+        media_type="application/octet-stream",
+        filename="ai-monitor.exe",
+    )

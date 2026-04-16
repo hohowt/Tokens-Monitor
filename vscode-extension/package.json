@@ -2,7 +2,7 @@
   "name": "ai-token-monitor",
   "displayName": "腾轩旅游集团 - AI Token 监控",
   "description": "腾轩旅游集团 AI 编程助手用量监控平台 — 支持 Copilot、Cursor、Claude、Continue 等 10+ 工具的 Token 统计与上报",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "publisher": "txly",
   "author": {
     "name": "Zhi.Chen",
