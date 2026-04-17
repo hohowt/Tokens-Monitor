@@ -21,7 +21,7 @@ class RegisterRequest(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
     email: str = Field(..., min_length=3, max_length=200)
     department: str | None = None
-    password: str = Field(..., min_length=4, max_length=128)
+    password: str = Field(..., min_length=6, max_length=128)
 
 
 class LoginRequest(BaseModel):
@@ -32,14 +32,20 @@ class LoginRequest(BaseModel):
 class SetPasswordRequest(BaseModel):
     email: str = Field(..., min_length=1)
     name: str = Field(..., min_length=1)
-    password: str = Field(..., min_length=4, max_length=128)
+    password: str = Field(..., min_length=6, max_length=128)
 
 
 class BindEmailRequest(BaseModel):
     employee_id: str = Field(..., min_length=1, description="原工号")
     name: str = Field(..., min_length=1, description="姓名（用于验证身份）")
     email: str = Field(..., min_length=3, max_length=200)
-    password: str = Field(..., min_length=4, max_length=128)
+    password: str = Field(..., min_length=6, max_length=128)
+
+
+class ChangePasswordRequest(BaseModel):
+    email: str = Field(..., min_length=1)
+    old_password: str = Field(..., min_length=1)
+    new_password: str = Field(..., min_length=6, max_length=128)
 
 
 class AuthResponse(BaseModel):
@@ -251,6 +257,32 @@ async def bind_email(body: BindEmailRequest, db: AsyncSession = Depends(get_db))
 
     user.email = email
     user.password_hash = _hash_password(body.password)
+    user.auth_token = _generate_token()
+    user.auth_token_created_at = datetime.now(timezone.utc)
+    await db.commit()
+
+    dept_name = await _get_department_name(db, user.department_id)
+    return _build_response(user, dept_name)
+
+
+@router.post("/change-password", response_model=AuthResponse)
+async def change_password(body: ChangePasswordRequest, db: AsyncSession = Depends(get_db)):
+    """修改密码：验证旧密码后设置新密码，同时刷新 auth_token。"""
+    user = await _find_user_by_email(db, body.email)
+
+    if not user:
+        raise HTTPException(401, "invalid_credentials")
+
+    if not user.password_hash:
+        raise HTTPException(403, "password_not_set")
+
+    if not _check_password(body.old_password, user.password_hash):
+        raise HTTPException(401, "invalid_credentials")
+
+    if body.old_password == body.new_password:
+        raise HTTPException(400, "新密码不能与旧密码相同")
+
+    user.password_hash = _hash_password(body.new_password)
     user.auth_token = _generate_token()
     user.auth_token_created_at = datetime.now(timezone.utc)
     await db.commit()

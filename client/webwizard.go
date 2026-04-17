@@ -96,6 +96,7 @@ const webWizardHTML = `<!DOCTYPE html>
       <div class="tab active" onclick="switchTab('register')">注册</div>
       <div class="tab" onclick="switchTab('login')">登录</div>
       <div class="tab" onclick="switchTab('bind')">绑定已有账号</div>
+      <div class="tab" onclick="switchTab('changepwd')">修改密码</div>
     </div>
 
     <!-- 注册表单 -->
@@ -115,7 +116,7 @@ const webWizardHTML = `<!DOCTYPE html>
       <div class="row">
         <div class="field">
           <label>密码 *</label>
-          <input id="regPwd" type="password" placeholder="至少4位" />
+          <input id="regPwd" type="password" placeholder="至少6位" />
         </div>
         <div class="field">
           <label>确认密码 *</label>
@@ -160,7 +161,7 @@ const webWizardHTML = `<!DOCTYPE html>
       <div class="row">
         <div class="field">
           <label>设置密码 *</label>
-          <input id="bindPwd" type="password" placeholder="至少4位" />
+          <input id="bindPwd" type="password" placeholder="至少6位" />
         </div>
         <div class="field">
           <label>确认密码 *</label>
@@ -169,6 +170,30 @@ const webWizardHTML = `<!DOCTYPE html>
       </div>
       <button class="btn-primary" id="bindBtn" onclick="doBind()">绑定邮箱</button>
       <div class="auth-msg" id="bindMsg"></div>
+    </div>
+
+    <!-- 修改密码表单 -->
+    <div class="auth-form" id="changepwdForm">
+      <div class="field">
+        <label>邮箱 *</label>
+        <input id="cpEmail" type="text" placeholder="注册时使用的邮箱" />
+      </div>
+      <div class="field">
+        <label>旧密码 *</label>
+        <input id="cpOldPwd" type="password" placeholder="当前密码" />
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>新密码 *</label>
+          <input id="cpNewPwd" type="password" placeholder="至少6位" />
+        </div>
+        <div class="field">
+          <label>确认新密码 *</label>
+          <input id="cpNewPwd2" type="password" placeholder="再次输入" />
+        </div>
+      </div>
+      <button class="btn-primary" id="cpBtn" onclick="doChangePassword()">修改密码</button>
+      <div class="auth-msg" id="cpMsg"></div>
     </div>
   </div>
 
@@ -211,11 +236,14 @@ function switchTab(tab) {
   } else if (tab === 'login') {
     tabs[1].classList.add('active');
     document.getElementById('loginForm').classList.add('active');
-  } else {
+  } else if (tab === 'bind') {
     tabs[2].classList.add('active');
     document.getElementById('bindForm').classList.add('active');
+  } else {
+    tabs[3].classList.add('active');
+    document.getElementById('changepwdForm').classList.add('active');
   }
-  hideMsg('regMsg'); hideMsg('loginMsg'); hideMsg('bindMsg');
+  hideMsg('regMsg'); hideMsg('loginMsg'); hideMsg('bindMsg'); hideMsg('cpMsg');
 }
 
 function showMsg(id, text, level) {
@@ -242,7 +270,7 @@ async function doRegister() {
   var pwd2 = document.getElementById('regPwd2').value;
   if (!name) { showMsg('regMsg', '请填写姓名', 'error'); return; }
   if (!email) { showMsg('regMsg', '请填写邮箱', 'error'); return; }
-  if (!pwd || pwd.length < 4) { showMsg('regMsg', '密码至少4位', 'error'); return; }
+  if (!pwd || pwd.length < 6) { showMsg('regMsg', '密码至少6位', 'error'); return; }
   if (pwd !== pwd2) { showMsg('regMsg', '两次密码不一致', 'error'); return; }
   if (!getServerUrl()) { showMsg('regMsg', '请填写上报服务器地址', 'error'); return; }
 
@@ -311,7 +339,7 @@ async function doBind() {
   if (!eid) { showMsg('bindMsg', '请填写原工号', 'error'); return; }
   if (!name) { showMsg('bindMsg', '请填写姓名', 'error'); return; }
   if (!email) { showMsg('bindMsg', '请填写邮箱', 'error'); return; }
-  if (!pwd || pwd.length < 4) { showMsg('bindMsg', '密码至少4位', 'error'); return; }
+  if (!pwd || pwd.length < 6) { showMsg('bindMsg', '密码至少6位', 'error'); return; }
   if (pwd !== pwd2) { showMsg('bindMsg', '两次密码不一致', 'error'); return; }
   if (!getServerUrl()) { showMsg('bindMsg', '请填写上报服务器地址', 'error'); return; }
 
@@ -341,6 +369,45 @@ async function doBind() {
     showMsg('bindMsg', '网络错误: ' + err.message, 'error');
   }
   btn.disabled = false; btn.textContent = '绑定邮箱';
+}
+
+async function doChangePassword() {
+  var email = document.getElementById('cpEmail').value.trim();
+  var oldPwd = document.getElementById('cpOldPwd').value;
+  var newPwd = document.getElementById('cpNewPwd').value;
+  var newPwd2 = document.getElementById('cpNewPwd2').value;
+  if (!email) { showMsg('cpMsg', '请填写邮箱', 'error'); return; }
+  if (!oldPwd) { showMsg('cpMsg', '请填写旧密码', 'error'); return; }
+  if (!newPwd || newPwd.length < 6) { showMsg('cpMsg', '新密码至少6位', 'error'); return; }
+  if (newPwd !== newPwd2) { showMsg('cpMsg', '两次新密码不一致', 'error'); return; }
+  if (oldPwd === newPwd) { showMsg('cpMsg', '新密码不能与旧密码相同', 'error'); return; }
+  if (!getServerUrl()) { showMsg('cpMsg', '请填写上报服务器地址', 'error'); return; }
+
+  var btn = document.getElementById('cpBtn');
+  btn.disabled = true; btn.textContent = '修改中…';
+  hideMsg('cpMsg');
+
+  try {
+    var resp = await fetch('/api/auth/change-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ server_url: getServerUrl(), email: email, old_password: oldPwd, new_password: newPwd }),
+    });
+    var data = await resp.json();
+    if (resp.ok && data.employee_id) {
+      authUser = { employee_id: data.employee_id, name: data.name || '', department: data.department || '', auth_token: data.auth_token || '' };
+      showMsg('cpMsg', '密码修改成功！', 'success');
+      setTimeout(function(){ goToStep2(); }, 800);
+    } else {
+      var msg = data.detail || data.message || '修改失败';
+      if (resp.status === 401) msg = '邮箱或旧密码错误';
+      if (resp.status === 400) msg = data.detail || '新密码不能与旧密码相同';
+      showMsg('cpMsg', msg, 'error');
+    }
+  } catch(err) {
+    showMsg('cpMsg', '网络错误: ' + err.message, 'error');
+  }
+  btn.disabled = false; btn.textContent = '修改密码';
 }
 
 function goToStep2() {
@@ -389,6 +456,7 @@ async function doInstall() {
         server_url: getServerUrl(),
         upstream_proxy: document.getElementById('upstreamProxy').value.trim(),
         port: parseInt(document.getElementById('port').value) || 18090,
+        auth_token: authUser.auth_token,
       }),
     });
     var result = await resp.json();
@@ -418,6 +486,7 @@ type setupRequest struct {
 	ServerURL     string `json:"server_url"`
 	UpstreamProxy string `json:"upstream_proxy"`
 	Port          int    `json:"port"`
+	AuthToken     string `json:"auth_token"`
 }
 
 type setupResponse struct {
@@ -531,6 +600,7 @@ func runWebWizard(configPath string, certMgr *CertManager) error {
 			Department:    strings.TrimSpace(req.Department),
 			Port:          req.Port,
 			UpstreamProxy: strings.TrimSpace(req.UpstreamProxy),
+			AuthToken:     strings.TrimSpace(req.AuthToken),
 		}
 		if cfg.ServerURL == "" {
 			cfg.ServerURL = DefaultServerURL
