@@ -3,7 +3,8 @@
 Usage: python scripts/deploy.py [action] [options]
 
 Actions:
-    all         完整部署（检查→上传→构建→启动→迁移）
+    all         完整部署（检查→上传→构建→启动→迁移→可选上传 VSIX/EXE）
+    artifacts   仅上传 vscode-extension/dist 下最新 VSIX 与 client 的 ai-monitor.exe 到 extensions/
     check       仅检查服务器环境
     upload      仅上传文件
     build       仅构建镜像
@@ -315,7 +316,46 @@ SYNC_INTERVAL_MINUTES=10
                 print(f"  ✓ {mf.name} applied")
 
         print("  ✓ Migration complete")
-    
+
+    def upload_artifacts(self):
+        """Upload VS Code extension VSIX and ai-monitor.exe to server extensions directory."""
+        print("\n=== 5. Extension VSIX & Client EXE ===")
+        ext_remote = f"{self.REMOTE_DIR}/extensions"
+        self.run(f"mkdir -p {ext_remote}", print_output=False)
+
+        dist = project_root / "vscode-extension" / "dist"
+        vsix_files = []
+        if dist.is_dir():
+            vsix_files = sorted(
+                dist.glob("ai-token-monitor-win32-x64-*.vsix"),
+                key=lambda p: p.stat().st_mtime,
+                reverse=True,
+            )
+            if not vsix_files:
+                vsix_files = sorted(
+                    dist.glob("ai-token-monitor-*.vsix"),
+                    key=lambda p: p.stat().st_mtime,
+                    reverse=True,
+                )
+        if vsix_files:
+            v = vsix_files[0]
+            remote_vsix = f"{ext_remote}/{v.name}"
+            self.sftp.put(str(v), remote_vsix)
+            print(f"    ↑ extensions/{v.name}")
+        else:
+            print("  ⚠ 未找到 vscode-extension/dist/*.vsix，跳过（请先运行 vscode-extension\\build.ps1）")
+
+        exe = project_root / "client" / "dist" / "ai-monitor.exe"
+        if not exe.is_file():
+            exe = project_root / "client" / "ai-monitor.exe"
+        if exe.is_file():
+            self.sftp.put(str(exe), f"{ext_remote}/ai-monitor.exe")
+            print("    ↑ extensions/ai-monitor.exe")
+        else:
+            print("  ⚠ 未找到 client/dist/ai-monitor.exe，跳过（请先运行 client\\build.ps1）")
+
+        print("  ✓ 分发物上传完成")
+
     def close(self):
         """Close connections."""
         if self.sftp:
@@ -323,7 +363,7 @@ SYNC_INTERVAL_MINUTES=10
         if self.ssh:
             self.ssh.close()
     
-    def run_all(self):
+    def run_all(self, skip_artifacts: bool = False):
         """Run full deployment."""
         try:
             self.connect()
@@ -340,12 +380,16 @@ SYNC_INTERVAL_MINUTES=10
                 return 1
 
             self.run_migration()
+            if not skip_artifacts:
+                self.upload_artifacts()
             self.status()
             
             print("\n" + "="*50)
             print("✅ Deployment Complete!")
             print(f"  Dashboard: http://{self.host}:3080")
             print(f"  API:       http://{self.host}:8000")
+            print(f"  扩展下载:   http://{self.host}:8000/api/extension/latest (VSIX)")
+            print(f"  客户端:     http://{self.host}:8000/api/extension/client (ai-monitor.exe)")
             print("="*50)
             
             return 0
@@ -359,12 +403,22 @@ SYNC_INTERVAL_MINUTES=10
 
 def main():
     parser = argparse.ArgumentParser(description="AI Token Monitor Deployment")
-    parser.add_argument("action", choices=["all", "check", "upload", "build", "start", "status", "logs", "stop", "migrate"],
-                       default="all", nargs="?", help="Action to perform")
+    parser.add_argument(
+        "action",
+        choices=["all", "check", "upload", "build", "start", "status", "logs", "stop", "migrate", "artifacts"],
+        default="all",
+        nargs="?",
+        help="Action: artifacts = 仅上传 VSIX + ai-monitor.exe 到 extensions（需已本地构建）",
+    )
     parser.add_argument("--host", help="Server host (or SSH_HOST env)")
     parser.add_argument("--user", help="SSH user (or SSH_USER env)")
     parser.add_argument("--mirror", help="Docker mirror (or DOCKER_MIRROR env)")
     parser.add_argument("--tail", type=int, default=50, help="Log tail lines")
+    parser.add_argument(
+        "--no-artifacts",
+        action="store_true",
+        help="仅部署 backend/frontend 镜像，不上传 VSIX 与 ai-monitor.exe",
+    )
     
     args = parser.parse_args()
     
@@ -372,7 +426,7 @@ def main():
         deployer = Deployer(host=args.host, user=args.user, mirror=args.mirror)
         
         if args.action == "all":
-            return deployer.run_all()
+            return deployer.run_all(skip_artifacts=args.no_artifacts)
         
         deployer.connect()
         
@@ -393,6 +447,8 @@ def main():
             deployer.stop()
         elif args.action == "migrate":
             deployer.run_migration()
+        elif args.action == "artifacts":
+            deployer.upload_artifacts()
         
         deployer.close()
         return 0

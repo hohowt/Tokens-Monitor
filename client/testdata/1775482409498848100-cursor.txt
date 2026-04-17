@@ -1,6 +1,0 @@
-
-1752806755961code-supernova-1-milliongrok-code-fast-1#claude-4-5-sonnet-20250929-thinkingclaude-4.5-sonnet-thinkingclaude-4.5-sonnetclaude-4-5-sonnet-20250929gpt-5
-gpt-5-high	gpt-5-low
-gpt-5-fastgpt-5-high-fastgpt-5-low-fastgemini-2-5-flash-latestgpt-5-codexgemini-2-5-pro-latestgemini-2-5-pro
-gpt-5-mini
-gpt-5-nano

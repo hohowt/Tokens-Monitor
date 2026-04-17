@@ -1,1 +1,0 @@
-{"meta":{"model_name":"claude-3-7-sonnet"},"choices":[{"usage":{"prompt_tokens":11,"completion_tokens":13,"total_tokens":24}}]}

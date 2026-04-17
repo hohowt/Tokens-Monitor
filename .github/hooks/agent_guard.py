@@ -16,10 +16,6 @@ DESTRUCTIVE_PATTERNS = [
 
 SENSITIVE_FILES = (
     ".github/hooks/",
-    ".github/agents/",
-    ".github/instructions/",
-    ".github/prompts/",
-    ".github/skills/",
     ".vscode/mcp.json",
 )
 
