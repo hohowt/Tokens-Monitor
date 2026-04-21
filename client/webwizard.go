@@ -709,7 +709,7 @@ func runWebWizard(configPath string, certMgr *CertManager) error {
 		}
 
 		// Save identity.json for VSCode extension to read
-		identityPath := filepath.Join(os.Getenv("APPDATA"), "ai-monitor", "identity.json")
+		identityPath := filepath.Join(appDataDir(), "identity.json")
 		os.MkdirAll(filepath.Dir(identityPath), 0755)
 		identityData, _ := json.MarshalIndent(map[string]string{
 			"user_id":    cfg.UserID,
@@ -781,10 +781,12 @@ func runWebWizard(configPath string, certMgr *CertManager) error {
 		httpProxy := "http://" + proxyAddr
 		noProxy := buildNoProxyEnvWithConfig(cfg)
 		envVars := map[string]string{
-			"HTTP_PROXY":          httpProxy,
-			"HTTPS_PROXY":         httpProxy,
-			"NO_PROXY":            noProxy,
-			"NODE_EXTRA_CA_CERTS": certMgr.CACertPath(),
+			"HTTP_PROXY":           httpProxy,
+			"HTTPS_PROXY":          httpProxy,
+			"NO_PROXY":             noProxy,
+			"NODE_EXTRA_CA_CERTS":  certMgr.CACertPath(),
+			"SSL_CERT_FILE":        certMgr.CACertPath(),
+			"CODEX_CA_CERTIFICATE": certMgr.CACertPath(),
 		}
 		if err := SetEnvProxy(envVars); err != nil {
 			messages = append(messages, "⚠ 环境变量设置失败: "+err.Error())
@@ -792,48 +794,59 @@ func runWebWizard(configPath string, certMgr *CertManager) error {
 			messages = append(messages, "✓ 环境变量已设置 (HTTP_PROXY 等)")
 		}
 
-		// 2b. System proxy via PAC (with DIRECT fallback for crash safety)
-		pacURL, pacErr := writePACFile(actualPort, cfg, previousPACBody)
-		saveInstallState(&InstallState{
-			SystemProxySet:            true,
-			PreviousProxyAddr:         previousSysProxy,
-			PreviousProxyEnabled:      previousSysProxy != "" && !isSelfProxy(previousSysProxy),
-			PreviousUpstreamProxy:     detectedUpstream,
-			PreviousEnvVars:           previousEnvVars,
-			PACFileSet:                true,
-			PACFilePath:               pacFilePath(),
-			PreviousAutoConfigURL:     previousAutoConfigURL,
-			PreviousAutoConfigURLBody: previousPACBody,
-			PreviousProxyOverride:     previousProxyOverride,
-			PreviousAutoDetect:        previousAutoDetect,
-			PreviousAutoDetectPresent: previousAutoDetectPresent,
-			PortAtInstall:             actualPort,
-			Version:                   3,
-		})
-		if pacErr != nil {
-			messages = append(messages, "⚠ PAC 文件生成失败: "+pacErr.Error())
-		} else if err := EnableSystemProxyPAC(pacURL); err != nil {
-			messages = append(messages, "⚠ 系统代理 (PAC) 设置失败: "+err.Error())
-		} else {
-			messages = append(messages, "✓ 系统代理已设置 (PAC + DIRECT 回退，异常时不断网)")
-		}
-
-		// 3. Register auto-start
-		if err := installAutoStart(absConfigPath); err != nil {
-			messages = append(messages, "⚠ 开机自启注册失败: "+err.Error())
-		} else {
-			messages = append(messages, "✓ 已注册开机自启")
-		}
-
-		// 4. Start background instance
-		if _, alive := checkExistingInstance(); !alive {
-			if err := startBackgroundInstance(absConfigPath); err != nil {
-				messages = append(messages, "⚠ 后台启动失败: "+err.Error())
+		// 2b. System proxy via PAC (Windows only)
+		if runtime.GOOS == "windows" {
+			pacURL, pacErr := writePACFile(actualPort, cfg, previousPACBody)
+			saveInstallState(&InstallState{
+				SystemProxySet:            true,
+				PreviousProxyAddr:         previousSysProxy,
+				PreviousProxyEnabled:      previousSysProxy != "" && !isSelfProxy(previousSysProxy),
+				PreviousUpstreamProxy:     detectedUpstream,
+				PreviousEnvVars:           previousEnvVars,
+				PACFileSet:                true,
+				PACFilePath:               pacFilePath(),
+				PreviousAutoConfigURL:     previousAutoConfigURL,
+				PreviousAutoConfigURLBody: previousPACBody,
+				PreviousProxyOverride:     previousProxyOverride,
+				PreviousAutoDetect:        previousAutoDetect,
+				PreviousAutoDetectPresent: previousAutoDetectPresent,
+				PortAtInstall:             actualPort,
+				Version:                   3,
+			})
+			if pacErr != nil {
+				messages = append(messages, "⚠ PAC 文件生成失败: "+pacErr.Error())
+			} else if err := EnableSystemProxyPAC(pacURL); err != nil {
+				messages = append(messages, "⚠ 系统代理 (PAC) 设置失败: "+err.Error())
 			} else {
-				messages = append(messages, "✓ ai-monitor 已在后台启动")
+				messages = append(messages, "✓ 系统代理已设置 (PAC + DIRECT 回退，异常时不断网)")
 			}
 		} else {
-			messages = append(messages, "✓ ai-monitor 已在运行中")
+			messages = append(messages, "ℹ 系统代理 (PAC) 仅 Windows 支持，已跳过")
+			messages = append(messages, "  → 请使用 --launch 模式或手动配置应用代理指向 "+proxyAddr)
+		}
+
+		// 3. Register auto-start (Windows only)
+		if runtime.GOOS == "windows" {
+			if err := installAutoStart(absConfigPath); err != nil {
+				messages = append(messages, "⚠ 开机自启注册失败: "+err.Error())
+			} else {
+				messages = append(messages, "✓ 已注册开机自启")
+			}
+		} else {
+			messages = append(messages, "ℹ 开机自启仅 Windows 支持，已跳过")
+		}
+
+		// 4. Start background instance (Windows only)
+		if runtime.GOOS == "windows" {
+			if _, alive := checkExistingInstance(); !alive {
+				if err := startBackgroundInstance(absConfigPath); err != nil {
+					messages = append(messages, "⚠ 后台启动失败: "+err.Error())
+				} else {
+					messages = append(messages, "✓ ai-monitor 已在后台启动")
+				}
+			} else {
+				messages = append(messages, "✓ ai-monitor 已在运行中")
+			}
 		}
 
 		messages = append(messages, "")

@@ -58,7 +58,8 @@ func main() {
 	uninstall := flag.Bool("uninstall", false, "卸载: 移除CA证书, 清除系统代理和环境变量")
 	setup := flag.Bool("setup", false, "傻瓜式配置向导：生成 config.json 并安装证书/代理")
 	heal := flag.Bool("heal", false, "自愈：如果上次 ai-monitor 崩溃/被杀导致系统代理指向 dead 端口，还原原始网络配置")
-	configPath := flag.String("config", "config.json", "配置文件路径")
+	defaultConfigPath := filepath.Join(appDataDir(), "config.json")
+	configPath := flag.String("config", defaultConfigPath, "配置文件路径")
 	showVersion := flag.Bool("version", false, "显示版本号并退出")
 	flag.Parse()
 
@@ -74,7 +75,7 @@ func main() {
 	fmt.Println("  ╚══════════════════════════════════════════╝")
 	fmt.Println()
 
-	dataDir := filepath.Join(os.Getenv("APPDATA"), "ai-monitor")
+	dataDir := appDataDir()
 	os.MkdirAll(dataDir, 0755)
 
 	certMgr, err := NewCertManager(dataDir)
@@ -763,9 +764,7 @@ func applySessionManagedProxy(cfg *Config, certMgr *CertManager, listenPort int)
 	// 会话重维时不知道用户原始环境（install_state 里已快照），
 	// 优先用快照里的 NODE_EXTRA_CA_CERTS；否则才带上本程序 CA。
 	var prevEnv map[string]string
-	if st != nil {
-		prevEnv = st.PreviousEnvVars
-	}
+	prevEnv = st.PreviousEnvVars
 	envVars := map[string]string{
 		"HTTP_PROXY":          httpProxy,
 		"HTTPS_PROXY":         httpProxy,

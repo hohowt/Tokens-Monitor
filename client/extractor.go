@@ -146,6 +146,12 @@ func deepExtractUsageOpenAIStyle(root map[string]interface{}, modelHint string) 
 				if um, ok := u.(map[string]interface{}); ok {
 					pt := toInt(um["prompt_tokens"])
 					ct := toInt(um["completion_tokens"])
+					if pt == 0 {
+						pt = toInt(um["input_tokens"])
+					}
+					if ct == 0 {
+						ct = toInt(um["output_tokens"])
+					}
 					tt := toInt(um["total_tokens"])
 					if tt == 0 {
 						tt = pt + ct
@@ -267,8 +273,16 @@ func extractOpenAI(resp map[string]interface{}, info *UsageInfo) *UsageInfo {
 	if !ok {
 		return nil
 	}
+	// Standard Chat Completions API: prompt_tokens / completion_tokens
 	info.PromptTokens = toInt(usage["prompt_tokens"])
 	info.CompletionTokens = toInt(usage["completion_tokens"])
+	// Responses API (Codex CLI, /v1/responses): input_tokens / output_tokens
+	if info.PromptTokens == 0 {
+		info.PromptTokens = toInt(usage["input_tokens"])
+	}
+	if info.CompletionTokens == 0 {
+		info.CompletionTokens = toInt(usage["output_tokens"])
+	}
 	info.TotalTokens = toInt(usage["total_tokens"])
 	if info.TotalTokens == 0 {
 		info.TotalTokens = info.PromptTokens + info.CompletionTokens

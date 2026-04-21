@@ -91,6 +91,15 @@ var managedLaunchPresets = []launchPreset{
 		},
 	},
 	{
+		Name:        "codex",
+		Description: "启动 Codex CLI（仅当前进程走本地 MITM）",
+		Candidates:  []string{"codex.exe", "codex"},
+		KnownPaths: []string{
+			"/usr/local/bin/codex",
+			"/opt/homebrew/bin/codex",
+		},
+	},
+	{
 		Name:        "idea",
 		Description: "启动 IntelliJ IDEA",
 		Candidates:  []string{"idea64.exe", "idea.cmd", "idea"},
@@ -176,13 +185,19 @@ func startMonitorRuntime(cfg *Config, certMgr *CertManager, sourceApp string, co
 	}
 	proxy.listenPort = listenPort
 
-	// 认证失败时自动把用户带到本地登录向导（/wizard），省去他们在日志里看指引后再找 .bat。
+	// 认证失败时引导用户到登录向导。
+	// 仅在完全没有 token 时（首次使用）自动打开浏览器；
+	// token 已存在但失效时只打日志，避免在 Mac/Linux 上反复弹出浏览器窗口。
 	reporter.OnAuthFailed = func() {
+		wizardURL := fmt.Sprintf("http://127.0.0.1:%d/wizard", listenPort)
+		if cfg.AuthToken != "" || cfg.APIKey != "" {
+			log.Printf("[认证] 令牌已失效，请访问 %s 重新登录", wizardURL)
+			return
+		}
 		// 稍等 MITM 端口监听起来，避免抢跑
 		time.Sleep(500 * time.Millisecond)
-		url := fmt.Sprintf("http://127.0.0.1:%d/wizard", listenPort)
-		log.Printf("[认证] 已打开登录向导 %s", url)
-		openBrowser(url)
+		log.Printf("[认证] 已打开登录向导 %s", wizardURL)
+		openBrowser(wizardURL)
 	}
 
 	rt := &monitorRuntime{
@@ -279,6 +294,8 @@ func runManagedProcess(cfg *Config, certMgr *CertManager, args []string, presetN
 		"AI_MONITOR_LAUNCH_MODE": "managed-process",
 		"AI_MONITOR_SOURCE_APP":  sourceApp,
 		"NODE_EXTRA_CA_CERTS":    certMgr.CACertPath(),
+		"SSL_CERT_FILE":          certMgr.CACertPath(),
+		"CODEX_CA_CERTIFICATE":   certMgr.CACertPath(),
 	}
 	if preset != nil {
 		envVars["AI_MONITOR_LAUNCH_PRESET"] = preset.Name
@@ -322,6 +339,8 @@ func launchChildWithExistingProxy(cfg *Config, certMgr *CertManager, commandArgs
 		"AI_MONITOR_LAUNCH_MODE": "managed-process",
 		"AI_MONITOR_SOURCE_APP":  sourceApp,
 		"NODE_EXTRA_CA_CERTS":    certMgr.CACertPath(),
+		"SSL_CERT_FILE":          certMgr.CACertPath(),
+		"CODEX_CA_CERTIFICATE":   certMgr.CACertPath(),
 	}
 	if preset != nil {
 		envVars["AI_MONITOR_LAUNCH_PRESET"] = preset.Name
@@ -344,7 +363,7 @@ func inferSourceApp(commandArgs []string, preset *launchPreset) string {
 	if len(commandArgs) == 0 {
 		return ""
 	}
-	base := strings.ToLower(filepath.Base(commandArgs[0]))
+	base := strings.ToLower(commandBaseName(commandArgs[0]))
 	for _, ext := range []string{".exe", ".cmd", ".bat"} {
 		base = strings.TrimSuffix(base, ext)
 	}
@@ -363,6 +382,8 @@ func inferSourceApp(commandArgs []string, preset *launchPreset) string {
 		return "trae"
 	case "zed":
 		return "zed"
+	case "codex":
+		return "codex"
 	case "idea", "idea64":
 		return "jetbrains"
 	case "webstorm", "webstorm64":
@@ -378,6 +399,15 @@ func inferSourceApp(commandArgs []string, preset *launchPreset) string {
 	default:
 		return base
 	}
+}
+
+func commandBaseName(path string) string {
+	base := filepath.Base(path)
+	if strings.Contains(base, `\`) {
+		parts := strings.Split(base, `\`)
+		base = parts[len(parts)-1]
+	}
+	return base
 }
 
 func resolveLaunchCommand(args []string, presetName string, lookPath func(string) (string, error)) ([]string, *launchPreset, error) {

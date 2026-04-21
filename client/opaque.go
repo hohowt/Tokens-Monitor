@@ -34,6 +34,8 @@ var opaqueEndpointAllowlist = []string{
 	"/completions",
 	"/generate",
 	"/invoke",
+	"/backend-api/conversation",
+	"/backend-api/codex",
 	"aiservice",
 	"cmdkservice",
 	"composerservice",
@@ -94,6 +96,35 @@ func shouldOpaqueEstimate(endpoint, modelHint string, body []byte) bool {
 		return false
 	}
 	return looksLikeBillableOpaqueModelHint(modelHint)
+}
+
+func shouldOpaqueEstimateForVendor(vendor, endpoint, modelHint string, body []byte) bool {
+	if shouldOpaqueEstimate(endpoint, modelHint, body) {
+		return true
+	}
+	if strings.EqualFold(strings.TrimSpace(vendor), "chatgpt") {
+		return shouldEstimateChatGPTWeb(endpoint, body)
+	}
+	return false
+}
+
+func shouldEstimateChatGPTWeb(endpoint string, body []byte) bool {
+	if len(body) < 32 {
+		return false
+	}
+	ep := strings.ToLower(endpoint)
+	if !(strings.Contains(ep, "/backend-api/conversation") ||
+		strings.Contains(ep, "/backend-api/codex") ||
+		strings.Contains(ep, "/responses") ||
+		strings.Contains(ep, "/chat")) {
+		return false
+	}
+	text := strings.ToLower(string(body))
+	return strings.Contains(text, "data:") ||
+		strings.Contains(text, `"message"`) ||
+		strings.Contains(text, `"conversation"`) ||
+		strings.Contains(text, `"assistant"`) ||
+		strings.Contains(text, `"codex"`)
 }
 
 // opaqueTokenSplit 按响应字节数粗算 token（约 4 字节≈1 token），并按端点类型拆分输入/输出比例；非官方口径。

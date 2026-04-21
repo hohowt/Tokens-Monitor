@@ -141,3 +141,18 @@ func TestLoadConfig_ValidatesOptionalUpstreamProxy(t *testing.T) {
 		t.Fatalf("UpstreamProxy = %q", cfg.UpstreamProxy)
 	}
 }
+
+func TestIsSelfProxyTreatsAnyLoopbackProxyAsSelf(t *testing.T) {
+	for _, proxy := range []string{
+		"http://127.0.0.1:8899",
+		"socks5://localhost:7890",
+		"http://[::1]:8080",
+	} {
+		if !isSelfProxy(proxy) {
+			t.Fatalf("%s should be treated as self/loopback proxy", proxy)
+		}
+	}
+	if isSelfProxy("http://proxy.example:8080") {
+		t.Fatal("remote proxy should not be treated as self")
+	}
+}

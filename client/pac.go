@@ -10,9 +10,9 @@ import (
 	"strings"
 )
 
-// pacFilePath returns the standard PAC file location under %APPDATA%/ai-monitor/.
+// pacFilePath returns the standard PAC file location under the ai-monitor data directory.
 func pacFilePath() string {
-	return filepath.Join(os.Getenv("APPDATA"), "ai-monitor", "proxy.pac")
+	return filepath.Join(appDataDir(), "proxy.pac")
 }
 
 // pacFileURL converts the PAC file path to a file:/// URL suitable for the

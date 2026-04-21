@@ -32,6 +32,16 @@ func TestShouldOpaqueEstimate(t *testing.T) {
 	}
 }
 
+func TestShouldOpaqueEstimateForChatGPTWeb(t *testing.T) {
+	body := []byte(`data: {"message":{"author":{"role":"assistant"},"content":{"parts":["hello"]}}}`)
+	if !shouldOpaqueEstimateForVendor("chatgpt", "/backend-api/conversation", "", body) {
+		t.Fatal("chatgpt web conversation stream should estimate without usage")
+	}
+	if shouldOpaqueEstimateForVendor("openai", "/backend-api/conversation", "", body) {
+		t.Fatal("non-chatgpt vendor should keep conservative opaque rules")
+	}
+}
+
 func TestOpaqueTokenSplit(t *testing.T) {
 	body := bytesRepeat(100)
 	pt, ct, tt := opaqueTokenSplit(body, "/v1/chat/completions")

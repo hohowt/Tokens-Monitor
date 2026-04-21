@@ -29,6 +29,11 @@ var aiDomains = map[string]string{
 	// ── OpenAI ──
 	"api.openai.com": "openai",
 
+	// ── ChatGPT Web (网页版，无标准 usage 字段，走体积估算) ──
+	"chatgpt.com":     "chatgpt",
+	"ab.chatgpt.com":  "chatgpt",
+	"chat.openai.com": "chatgpt",
+
 	// ── GitHub Copilot (VS Code, Visual Studio, Kiro 等) ──
 	"copilot-proxy.githubusercontent.com": "github-copilot",
 	"api.githubcopilot.com":               "github-copilot",
@@ -154,6 +159,7 @@ var aiWildcardDomains = []struct {
 
 // matchAIDomain 判断主机名是否应走 MITM，并返回供应商标签（内置表 + config 扩展）。
 func (s *ProxyServer) matchAIDomain(hostname string) (string, bool) {
+	hostname = normalizeProxyHostname(hostname)
 	if vendor, ok := aiDomains[hostname]; ok {
 		return vendor, true
 	}
@@ -185,6 +191,12 @@ func (s *ProxyServer) matchAIDomain(hostname string) (string, bool) {
 		}
 	}
 	return "", false
+}
+
+func normalizeProxyHostname(hostname string) string {
+	hostname = strings.TrimSpace(strings.ToLower(hostname))
+	hostname = strings.TrimSuffix(hostname, ".")
+	return hostname
 }
 
 // legacyRoutes maps vendor short names to upstream API base URLs.
@@ -321,7 +333,7 @@ func (s *ProxyServer) handleConnect(w http.ResponseWriter, r *http.Request) {
 	if !strings.Contains(host, ":") {
 		host += ":443"
 	}
-	hostname := host[:strings.LastIndex(host, ":")]
+	hostname := normalizeProxyHostname(host[:strings.LastIndex(host, ":")])
 
 	hijacker, ok := w.(http.Hijacker)
 	if !ok {
@@ -339,6 +351,9 @@ func (s *ProxyServer) handleConnect(w http.ResponseWriter, r *http.Request) {
 	if isAI && s.certMgr != nil {
 		log.Printf("[CONNECT] MITM → %s (%s)", hostname, vendor)
 		go safeGo("mitm "+hostname, func() { s.mitmConnection(clientConn, host, hostname, vendor) })
+	} else if isAI {
+		log.Printf("[CONNECT] tunnel → %s (%s, no cert manager)", hostname, vendor)
+		go safeGo("tunnel "+hostname, func() { s.tunnelConnection(clientConn, host) })
 	} else {
 		log.Printf("[CONNECT] tunnel → %s", hostname)
 		go safeGo("tunnel "+hostname, func() { s.tunnelConnection(clientConn, host) })
@@ -446,7 +461,7 @@ func (s *ProxyServer) mitmConnection(clientConn net.Conn, host, hostname, vendor
 	tlsConn := tls.Server(clientConn, &tls.Config{
 		Certificates: []tls.Certificate{*cert},
 		// 与上游一致：Copilot / 多数云 API 默认 HTTP/2（ALPN h2）；仅 http/1.1 时客户端无法对话。
-		NextProtos: []string{"h2", "http/1.1"},
+		NextProtos: mitmClientALPN(vendor),
 		MinVersion: tls.VersionTLS12,
 	})
 	if err := tlsConn.Handshake(); err != nil {
@@ -484,6 +499,11 @@ func (s *ProxyServer) mitmConnection(clientConn net.Conn, host, hostname, vendor
 		req.Header.Del("Accept-Encoding")
 		endpoint := req.URL.Path
 
+		if isWebSocketUpgrade(req) {
+			s.handleWebSocketMITM(tlsConn, req, host, hostname, vendor, endpoint, requestModel, sourceApp)
+			return
+		}
+
 		resp, err := s.transport.RoundTrip(req)
 		if err != nil {
 			log.Printf("[MITM] forward error %s%s: %v", hostname, endpoint, err)
@@ -515,6 +535,13 @@ func (s *ProxyServer) mitmConnection(clientConn net.Conn, host, hostname, vendor
 			return
 		}
 	}
+}
+
+func mitmClientALPN(vendor string) []string {
+	if strings.EqualFold(vendor, "chatgpt") {
+		return []string{"http/1.1"}
+	}
+	return []string{"h2", "http/1.1"}
 }
 
 // serveMitmHTTP2 在已协商 ALPN=h2 的 TLS 连接上处理 HTTP/2 请求（与 GitHub Copilot 等客户端一致）。
@@ -600,6 +627,255 @@ func (s *ProxyServer) serveMitmHTTP2(tlsConn *tls.Conn, hostname, vendor string)
 			}
 		}),
 	})
+}
+
+func isWebSocketUpgrade(r *http.Request) bool {
+	if r == nil {
+		return false
+	}
+	return headerHasToken(r.Header, "Connection", "upgrade") &&
+		strings.EqualFold(strings.TrimSpace(r.Header.Get("Upgrade")), "websocket")
+}
+
+func headerHasToken(h http.Header, key, token string) bool {
+	token = strings.ToLower(strings.TrimSpace(token))
+	for _, value := range h.Values(key) {
+		for _, part := range strings.Split(value, ",") {
+			if strings.ToLower(strings.TrimSpace(part)) == token {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func (s *ProxyServer) handleWebSocketMITM(clientConn net.Conn, req *http.Request, host, hostname, vendor, endpoint, requestModel, sourceApp string) {
+	upstreamConn, err := s.dialTLSUpstream(hostname, host)
+	if err != nil {
+		log.Printf("[MITM/ws] dial %s%s: %v", hostname, endpoint, err)
+		writeHTTPErrorToConn(clientConn, http.StatusBadGateway, fmt.Sprintf("proxy websocket dial: %v", err))
+		return
+	}
+	defer upstreamConn.Close()
+
+	req.Header.Del("Proxy-Connection")
+	req.Header.Del("Accept-Encoding")
+	req.RequestURI = ""
+	req.URL.Scheme = "https"
+	req.URL.Host = hostname
+
+	if err := req.Write(upstreamConn); err != nil {
+		log.Printf("[MITM/ws] write request %s%s: %v", hostname, endpoint, err)
+		return
+	}
+
+	upstreamReader := bufio.NewReader(upstreamConn)
+	resp, err := http.ReadResponse(upstreamReader, req)
+	if err != nil {
+		log.Printf("[MITM/ws] read response %s%s: %v", hostname, endpoint, err)
+		writeHTTPErrorToConn(clientConn, http.StatusBadGateway, fmt.Sprintf("proxy websocket response: %v", err))
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusSwitchingProtocols {
+		peek, _ := io.ReadAll(io.LimitReader(resp.Body, 2048))
+		log.Printf("[MITM/ws] %s %s%s → %d body=%q", req.Method, hostname, endpoint, resp.StatusCode, string(peek))
+		resp.Body = io.NopCloser(bytes.NewReader(peek))
+		resp.ContentLength = int64(len(peek))
+		resp.Header.Del("Transfer-Encoding")
+		resp.Header.Set("Content-Length", fmt.Sprintf("%d", len(peek)))
+		if err := resp.Write(clientConn); err != nil {
+			return
+		}
+		return
+	}
+
+	log.Printf("[MITM/ws] %s %s%s → %d", req.Method, hostname, endpoint, resp.StatusCode)
+	if err := resp.Write(clientConn); err != nil {
+		return
+	}
+
+	done := make(chan struct{}, 2)
+	go func() {
+		_, _ = io.Copy(upstreamConn, clientConn)
+		done <- struct{}{}
+	}()
+	go func() {
+		_ = copyWebSocketServerToClient(clientConn, upstreamReader, func(payload []byte) {
+			s.processResponseData(vendor, endpoint, requestModel, sourceApp, payload)
+		})
+		done <- struct{}{}
+	}()
+	<-done
+}
+
+func (s *ProxyServer) dialTLSUpstream(hostname, host string) (*tls.Conn, error) {
+	var rawConn net.Conn
+	var err error
+	if s.upstreamProxy != nil {
+		rawConn, err = s.dialViaUpstreamProxy(host)
+	} else {
+		rawConn, err = net.DialTimeout("tcp", host, 15*time.Second)
+	}
+	if err != nil {
+		return nil, err
+	}
+	tlsConn := tls.Client(rawConn, &tls.Config{
+		ServerName: hostname,
+		MinVersion: tls.VersionTLS12,
+		NextProtos: []string{"http/1.1"},
+	})
+	if err := tlsConn.Handshake(); err != nil {
+		rawConn.Close()
+		return nil, err
+	}
+	return tlsConn, nil
+}
+
+func writeHTTPErrorToConn(conn net.Conn, status int, msg string) {
+	resp := &http.Response{
+		StatusCode:    status,
+		Status:        fmt.Sprintf("%d %s", status, http.StatusText(status)),
+		Proto:         "HTTP/1.1",
+		ProtoMajor:    1,
+		ProtoMinor:    1,
+		Header:        http.Header{"Content-Type": {"text/plain; charset=utf-8"}, "Connection": {"close"}},
+		Body:          io.NopCloser(strings.NewReader(msg)),
+		ContentLength: int64(len(msg)),
+	}
+	_ = resp.Write(conn)
+}
+
+func copyWebSocketServerToClient(dst io.Writer, src *bufio.Reader, onMessage func([]byte)) error {
+	var acc websocketMessageAccumulator
+	for {
+		frame, err := readWebSocketFrame(src)
+		if err != nil {
+			return err
+		}
+		if _, err := dst.Write(frame.raw); err != nil {
+			return err
+		}
+		acc.observe(frame, onMessage)
+	}
+}
+
+type websocketFrame struct {
+	raw     []byte
+	opcode  byte
+	fin     bool
+	masked  bool
+	maskKey [4]byte
+	payload []byte
+}
+
+func readWebSocketFrame(r *bufio.Reader) (websocketFrame, error) {
+	var f websocketFrame
+	header := make([]byte, 2)
+	if _, err := io.ReadFull(r, header); err != nil {
+		return f, err
+	}
+	f.raw = append(f.raw, header...)
+	f.fin = header[0]&0x80 != 0
+	f.opcode = header[0] & 0x0f
+	f.masked = header[1]&0x80 != 0
+	payloadLen := uint64(header[1] & 0x7f)
+
+	switch payloadLen {
+	case 126:
+		ext := make([]byte, 2)
+		if _, err := io.ReadFull(r, ext); err != nil {
+			return f, err
+		}
+		f.raw = append(f.raw, ext...)
+		payloadLen = uint64(ext[0])<<8 | uint64(ext[1])
+	case 127:
+		ext := make([]byte, 8)
+		if _, err := io.ReadFull(r, ext); err != nil {
+			return f, err
+		}
+		f.raw = append(f.raw, ext...)
+		payloadLen = 0
+		for _, b := range ext {
+			payloadLen = payloadLen<<8 | uint64(b)
+		}
+	}
+
+	if payloadLen > recordingBodyMaxBytes {
+		return f, fmt.Errorf("websocket frame too large: %d bytes", payloadLen)
+	}
+	if f.masked {
+		if _, err := io.ReadFull(r, f.maskKey[:]); err != nil {
+			return f, err
+		}
+		f.raw = append(f.raw, f.maskKey[:]...)
+	}
+	f.payload = make([]byte, int(payloadLen))
+	if _, err := io.ReadFull(r, f.payload); err != nil {
+		return f, err
+	}
+	f.raw = append(f.raw, f.payload...)
+	return f, nil
+}
+
+type websocketMessageAccumulator struct {
+	active bool
+	opcode byte
+	buf    bytes.Buffer
+}
+
+func (a *websocketMessageAccumulator) observe(frame websocketFrame, onMessage func([]byte)) {
+	if onMessage == nil {
+		return
+	}
+	payload := framePayloadForInspect(frame)
+	switch frame.opcode {
+	case 0x1, 0x2:
+		if frame.fin {
+			onMessage(payload)
+			return
+		}
+		a.active = true
+		a.opcode = frame.opcode
+		a.buf.Reset()
+		a.write(payload)
+	case 0x0:
+		if !a.active {
+			return
+		}
+		a.write(payload)
+		if frame.fin {
+			msg := make([]byte, a.buf.Len())
+			copy(msg, a.buf.Bytes())
+			a.active = false
+			a.buf.Reset()
+			onMessage(msg)
+		}
+	}
+}
+
+func (a *websocketMessageAccumulator) write(payload []byte) {
+	if len(payload) == 0 {
+		return
+	}
+	if a.buf.Len()+len(payload) > recordingBodyMaxBytes {
+		a.active = false
+		a.buf.Reset()
+		return
+	}
+	a.buf.Write(payload)
+}
+
+func framePayloadForInspect(frame websocketFrame) []byte {
+	if !frame.masked {
+		return frame.payload
+	}
+	payload := make([]byte, len(frame.payload))
+	for i, b := range frame.payload {
+		payload[i] = b ^ frame.maskKey[i%4]
+	}
+	return payload
 }
 
 // ── HTTP forward proxy ────────────────────────────────────────
@@ -896,7 +1172,7 @@ func (s *ProxyServer) processResponseData(vendor, endpoint, requestModel, source
 	if modelHint == "" {
 		modelHint = inferModelHint(data)
 	}
-	if !shouldOpaqueEstimate(endpoint, modelHint, data) {
+	if !shouldOpaqueEstimateForVendor(vendor, endpoint, modelHint, data) {
 		return
 	}
 	pt, ct, tt := opaqueTokenSplit(data, endpoint)

@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"sync"
 	"testing"
 )
@@ -91,5 +92,36 @@ func TestReporterFlushRecordedByServer(t *testing.T) {
 	}
 	if rp.Stats.TotalReported.Load() != 1 {
 		t.Fatalf("Stats.TotalReported = %d", rp.Stats.TotalReported.Load())
+	}
+}
+
+func TestResolveReportProxyAutoIgnoresEnvProxy(t *testing.T) {
+	t.Setenv("HTTPS_PROXY", "http://127.0.0.1:8899")
+	proxyFunc := resolveReportProxy(&Config{
+		ServerURL: "https://otw.tech:59889",
+	})
+	req, _ := http.NewRequest(http.MethodPost, "https://otw.tech:59889/api/clients/heartbeat", nil)
+	got, err := proxyFunc(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got != nil {
+		t.Fatalf("auto report proxy should be direct, got %s", got.Redacted())
+	}
+}
+
+func TestResolveReportProxyExplicitURL(t *testing.T) {
+	proxyFunc := resolveReportProxy(&Config{
+		ServerURL:   "https://otw.tech:59889",
+		ReportProxy: "http://proxy.example:8080",
+	})
+	req, _ := http.NewRequest(http.MethodPost, "https://otw.tech:59889/api/collect", nil)
+	got, err := proxyFunc(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want, _ := url.Parse("http://proxy.example:8080")
+	if got.String() != want.String() {
+		t.Fatalf("proxy=%s want %s", got, want)
 	}
 }

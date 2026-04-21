@@ -21,7 +21,7 @@ type InstanceInfo struct {
 }
 
 func instanceInfoPath() string {
-	return filepath.Join(os.Getenv("APPDATA"), "ai-monitor", "instance.json")
+	return filepath.Join(appDataDir(), "instance.json")
 }
 
 func writeInstanceInfo(port int) error {

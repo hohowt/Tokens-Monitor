@@ -21,6 +21,14 @@ func TestDeepExtractUsageInChoices(t *testing.T) {
 	}
 }
 
+func TestDeepExtractUsageResponsesTokens(t *testing.T) {
+	const j = `{"type":"response.completed","response":{"model":"gpt-5.4-codex","usage":{"input_tokens":11,"output_tokens":13,"total_tokens":24}}}`
+	u := ExtractUsage("openai", []byte(j))
+	if u == nil || u.TotalTokens != 24 || u.PromptTokens != 11 || u.CompletionTokens != 13 || u.Model != "gpt-5.4-codex" {
+		t.Fatalf("got %+v", u)
+	}
+}
+
 func TestCursorVendorOpenAICompatibleJSON(t *testing.T) {
 	const j = `{"model":"cursor-small","usage":{"prompt_tokens":100,"completion_tokens":200,"total_tokens":300}}`
 	u := ExtractUsage("cursor", []byte(j))
@@ -63,6 +71,16 @@ func TestSSEUsageAndModelSplitAcrossEvents(t *testing.T) {
 	}
 }
 
+func TestSSEResponsesUsageAndModelSplitAcrossEvents(t *testing.T) {
+	const sse = "data: {\"response\":{\"model\":\"gpt-5.4-codex\"},\"type\":\"response.started\"}\n\n" +
+		"data: {\"response\":{\"usage\":{\"input_tokens\":8,\"output_tokens\":9,\"total_tokens\":17}}}\n\n" +
+		"data: [DONE]\n"
+	u := ExtractUsage("openai", []byte(sse))
+	if u == nil || u.TotalTokens != 17 || u.PromptTokens != 8 || u.CompletionTokens != 9 || u.Model != "gpt-5.4-codex" {
+		t.Fatalf("got %+v", u)
+	}
+}
+
 func TestInferModelHintFromBinaryPayload(t *testing.T) {
 	payload := append([]byte{0x00, 0x02, 0xff, 0x10}, []byte("grpc-bin gpt-5.4 candidate")...)
 	if got := inferModelHint(payload); got != "gpt-5.4" {
@@ -79,19 +97,19 @@ func TestInferModelHintFromKeyValuePayload(t *testing.T) {
 
 func TestInferModelHintFromExpandedFamilies(t *testing.T) {
 	cases := map[string]string{
-		"glm-5 binary payload":          "glm-5",
-		"gemma-3 metadata":             "gemma-3",
-		"internlm-3 trace":             "internlm-3",
-		"baichuan-3 request":           "baichuan-3",
-		"phi-3-mini response":          "phi-3-mini",
-		"mixtral-8x22b chunk":          "mixtral-8x22b",
-		"falcon-180b body":             "falcon-180b",
-		"skywork-pro":                  "skywork-pro",
-		"chatglm3-32k":                 "chatglm3-32k",
-		"pplx-70b-online":              "pplx-70b-online",
-		"replit-code-v1":               "replit-code-v1",
-		"command-r-plus":               "command-r-plus",
-		"kimi-k2.5":                    "kimi-k2.5",
+		"glm-5 binary payload": "glm-5",
+		"gemma-3 metadata":     "gemma-3",
+		"internlm-3 trace":     "internlm-3",
+		"baichuan-3 request":   "baichuan-3",
+		"phi-3-mini response":  "phi-3-mini",
+		"mixtral-8x22b chunk":  "mixtral-8x22b",
+		"falcon-180b body":     "falcon-180b",
+		"skywork-pro":          "skywork-pro",
+		"chatglm3-32k":         "chatglm3-32k",
+		"pplx-70b-online":      "pplx-70b-online",
+		"replit-code-v1":       "replit-code-v1",
+		"command-r-plus":       "command-r-plus",
+		"kimi-k2.5":            "kimi-k2.5",
 	}
 	for payload, want := range cases {
 		if got := inferModelHint([]byte(payload)); got != want {

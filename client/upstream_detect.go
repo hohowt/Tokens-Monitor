@@ -121,6 +121,5 @@ func isSelfProxy(proxy string) bool {
 		}
 		port = port*10 + int(c-'0')
 	}
-	// ai-monitor uses port range 18090 – 18090+(mitmPortMaxFallback-1) = 18153
-	return port >= 18090 && port <= 18090+mitmPortMaxFallback-1
+	return true
 }

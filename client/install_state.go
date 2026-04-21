@@ -46,7 +46,7 @@ type InstallState struct {
 }
 
 func installStatePath() string {
-	return filepath.Join(os.Getenv("APPDATA"), "ai-monitor", "install_state.json")
+	return filepath.Join(appDataDir(), "install_state.json")
 }
 
 func saveInstallState(state *InstallState) error {

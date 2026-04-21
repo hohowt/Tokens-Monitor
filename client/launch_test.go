@@ -107,6 +107,7 @@ func TestInferSourceApp(t *testing.T) {
 	}{
 		{name: "preset wins", args: []string{"C:\\Tools\\cursor.exe"}, preset: &launchPreset{Name: "cursor"}, wantApp: "cursor"},
 		{name: "vscode command", args: []string{"code.cmd"}, wantApp: "vscode"},
+		{name: "codex command", args: []string{"/usr/local/bin/codex"}, wantApp: "codex"},
 		{name: "powershell exe", args: []string{"C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"}, wantApp: "powershell"},
 		{name: "custom command", args: []string{"python.exe"}, wantApp: "python"},
 		{name: "empty args", args: nil, wantApp: ""},

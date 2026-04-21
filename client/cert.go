@@ -14,6 +14,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"sync"
 	"time"
 )
@@ -222,22 +223,33 @@ func (cm *CertManager) CACertPath() string {
 
 // InstallCA installs the CA certificate to the current user's trusted root store.
 func (cm *CertManager) InstallCA() error {
-	if runtime.GOOS != "windows" {
+	switch runtime.GOOS {
+	case "windows":
+		// Use PowerShell Import-Certificate to avoid Windows security dialog popup
+		psCmd := fmt.Sprintf(`Import-Certificate -FilePath "%s" -CertStoreLocation Cert:\CurrentUser\Root`, cm.CACertPath())
+		out, err := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-Command", psCmd).CombinedOutput()
+		if err != nil {
+			// Fallback to certutil if PowerShell fails
+			out2, err2 := exec.Command("certutil", "-addstore", "-user", "-f", "Root", cm.CACertPath()).CombinedOutput()
+			if err2 != nil {
+				return fmt.Errorf("powershell: %s; certutil: %s: %w", string(out), string(out2), err2)
+			}
+		}
+		_ = out
+		return nil
+	case "darwin":
+		// Without -d flag: modifies user-level Trust Settings,
+		// which triggers a GUI authentication dialog automatically.
+		out, err := exec.Command("security", "add-trusted-cert",
+			"-r", "trustRoot",
+			cm.CACertPath()).CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("security add-trusted-cert: %s: %w", strings.TrimSpace(string(out)), err)
+		}
+		return nil
+	default:
 		return fmt.Errorf("automatic CA installation is not implemented on %s yet; trust %s manually", runtime.GOOS, cm.CACertPath())
 	}
-
-	// Use PowerShell Import-Certificate to avoid Windows security dialog popup
-	psCmd := fmt.Sprintf(`Import-Certificate -FilePath "%s" -CertStoreLocation Cert:\CurrentUser\Root`, cm.CACertPath())
-	out, err := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-Command", psCmd).CombinedOutput()
-	if err != nil {
-		// Fallback to certutil if PowerShell fails
-		out2, err2 := exec.Command("certutil", "-addstore", "-user", "-f", "Root", cm.CACertPath()).CombinedOutput()
-		if err2 != nil {
-			return fmt.Errorf("powershell: %s; certutil: %s: %w", string(out), string(out2), err2)
-		}
-	}
-	_ = out
-	return nil
 }
 
 // UninstallCA removes the CA certificate from the user's trusted root store.
